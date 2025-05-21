@@ -4,7 +4,7 @@
 export class Element {
   private static willFlush = false;
 
-  // @ts-ignore set in constructor
+  // @ts-expect-error set in constructor
   private readonly element: ElementNode;
 
   constructor(element: ElementNode) {
@@ -62,7 +62,7 @@ export class Element {
       __InvokeUIMethod(
         this.element,
         methodName,
-        params || {},
+        params ?? {},
         (res: { code: number; data: any }) => {
           if (res.code === 0) {
             resolve(res.data);
@@ -80,7 +80,7 @@ export class Element {
       return;
     }
     Element.willFlush = true;
-    Promise.resolve().then(() => {
+    void Promise.resolve().then(() => {
       Element.willFlush = false;
       __FlushElementTree();
     });

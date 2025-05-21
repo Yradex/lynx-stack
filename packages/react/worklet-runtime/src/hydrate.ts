@@ -2,9 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { Element } from './api/element.js';
 import type { ClosureValueType, JsFnHandle, Worklet, WorkletRefId, WorkletRefImpl } from './bindings/index.js';
 import { profile } from './utils/profile.js';
-import { Element } from './api/element.js';
 
 /**
  * Hydrates a Worklet context with data from a first-screen Worklet context.
@@ -84,7 +84,7 @@ function hydrateDelayRunOnBackgroundTasks(
 ) {
   for (const fnName in fnObjs) {
     const fnObj = fnObjs[fnName]!;
-    const firstScreenFnObj: JsFnHandle | undefined = firstScreenFnObjs[fnName]!;
+    const firstScreenFnObj: JsFnHandle | undefined = firstScreenFnObjs[fnName];
     if (!firstScreenFnObj?._delayIndices) {
       continue;
     }

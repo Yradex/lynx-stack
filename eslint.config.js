@@ -69,7 +69,6 @@ export default tseslint.config(
       'examples/**',
       'packages/react/types/**',
       'packages/react/runtime/**',
-      'packages/react/worklet-runtime/**',
 
       // TODO: enable eslint for tools
       // tools

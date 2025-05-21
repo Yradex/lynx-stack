@@ -26,7 +26,7 @@ declare function __InvokeUIMethod(
 
 declare function __LoadLepusChunk(
   name: string,
-  cfg: { chunkType: number },
+  cfg: { chunkType: number; dynamicComponentEntry?: string | undefined },
 ): boolean;
 
 declare function __QuerySelector(
