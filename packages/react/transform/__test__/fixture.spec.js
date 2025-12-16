@@ -118,6 +118,79 @@ export class A extends Component {
   });
 });
 
+describe('element template (experimental)', () => {
+  it('should output element template without snapshot', async () => {
+    const inputContent = `
+import { Component } from "@lynx-js/react-runtime";
+export class A extends Component {
+  render(){
+    return <view className="Logo" id="a" style="color:red;">Hello, {name}</view>
+  }
+}
+`;
+
+    const result = await transformReactLynx(inputContent, {
+      mode: 'test',
+      pluginName: '',
+      filename: 'test.js',
+      sourcemap: false,
+      cssScope: false,
+      snapshot: {
+        preserveJsx: false,
+        runtimePkg: '@lynx-js/react',
+        filename: 'test.js',
+        target: 'LEPUS',
+        experimentalEnableElementTemplate: true,
+      },
+      directiveDCE: false,
+      defineDCE: false,
+      shake: false,
+      compat: true,
+      worklet: false,
+      refresh: false,
+    });
+
+    expect(result.code).toMatchInlineSnapshot(`
+      "import { jsx as _jsx } from "react/jsx-runtime";
+      import * as ReactLynx from "@lynx-js/react";
+      import { Component } from "@lynx-js/react/legacy-react-runtime";
+      const __snapshot_2d408_test_1 = "__snapshot_2d408_test_1";
+      const __template_2d408_test_1 = {
+          tag: "view",
+          attributes: {
+              class: "Logo",
+              id: "a",
+              style: "color:red;"
+          },
+          children: [
+              {
+                  tag: "text",
+                  attributes: {
+                      text: "Hello, "
+                  }
+              },
+              {
+                  tag: "slot",
+                  attributes: {
+                      "part-id": 0
+                  }
+              }
+          ]
+      };
+      ReactLynx.__elementTemplateMap = ReactLynx.__elementTemplateMap || {};
+      ReactLynx.__elementTemplateMap[__snapshot_2d408_test_1] = __template_2d408_test_1;
+      export class A extends Component {
+          render() {
+              return /*#__PURE__*/ _jsx(__snapshot_2d408_test_1, {
+                  children: name
+              });
+          }
+      }
+      "
+    `);
+  });
+});
+
 describe('jsx', () => {
   it('should allow JSXNamespace', async () => {
     const result = await transformReactLynx('const jsx = <Foo main-thread:foo={foo} />', {

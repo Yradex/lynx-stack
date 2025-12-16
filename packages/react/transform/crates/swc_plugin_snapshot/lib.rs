@@ -108,7 +108,7 @@ static NO_FLATTEN_ATTRIBUTES: Lazy<HashSet<String>> = Lazy::new(|| {
 pub enum DynamicPart {
   Attr(Expr, i32, AttrName),
   Spread(Expr, i32),
-  Slot(JSXElement, i32),
+  Slot(JSXElementChild, i32),
   Children(Expr, i32),
   ListChildren(Expr, i32),
 }
@@ -260,13 +260,20 @@ where
   dynamic_parts: Vec<DynamicPart>,
   dynamic_part_visitor: &'a mut V,
   key: Option<JSXAttrValue>,
+  id_counter: i32,
+  enable_element_template: bool,
 }
 
 impl<'a, V> DynamicPartExtractor<'a, V>
 where
   V: VisitMut,
 {
-  fn new(runtime_id: Expr, dynamic_part_count: i32, dynamic_part_visitor: &'a mut V) -> Self {
+  fn new(
+    runtime_id: Expr,
+    dynamic_part_count: i32,
+    dynamic_part_visitor: &'a mut V,
+    enable_element_template: bool,
+  ) -> Self {
     DynamicPartExtractor {
       page_id: Lazy::new(|| private_ident!("pageId")),
       runtime_id,
@@ -280,6 +287,8 @@ where
       dynamic_parts: vec![],
       dynamic_part_visitor,
       key: None,
+      id_counter: 0,
+      enable_element_template,
     }
   }
 
@@ -370,13 +379,43 @@ where
 {
   fn visit_mut_jsx_element(&mut self, n: &mut JSXElement) {
     if jsx_is_internal_slot(n) {
-      if self.dynamic_part_count > 1 {
+      if self.dynamic_part_count > 1 || self.enable_element_template {
         n.visit_mut_children_with(self.dynamic_part_visitor);
-        self.dynamic_parts.push(DynamicPart::Slot(
-          jsx_unwrap_internal_slot(n.take()),
-          self.element_index,
-        ));
-        *n = WRAPPER_NODE_2.clone();
+        let id = if self.enable_element_template {
+          let id = self.id_counter;
+          self.id_counter += 1;
+          id
+        } else {
+          self.element_index
+        };
+
+        if self.enable_element_template {
+          let wrapper = jsx_unwrap_internal_slot(n.take());
+          if let Some(child) = wrapper.children.into_iter().next() {
+            self.dynamic_parts.push(DynamicPart::Slot(child, id));
+          }
+        } else {
+          self.dynamic_parts.push(DynamicPart::Slot(
+            JSXElementChild::JSXElement(Box::new(jsx_unwrap_internal_slot(n.take()))),
+            id,
+          ));
+        }
+        let mut wrapper = WRAPPER_NODE_2.clone();
+        if self.enable_element_template {
+          wrapper
+            .opening
+            .attrs
+            .push(JSXAttrOrSpread::JSXAttr(JSXAttr {
+              span: DUMMY_SP,
+              name: JSXAttrName::Ident(IdentName::new("__lynx_part_id".into(), DUMMY_SP)),
+              value: Some(JSXAttrValue::Str(Str {
+                span: DUMMY_SP,
+                value: id.to_string().into(),
+                raw: None,
+              })),
+            }));
+        }
+        *n = wrapper;
       } else {
         *n = jsx_unwrap_internal_slot(n.take());
       }
@@ -646,57 +685,74 @@ where
                       ));
                     }
                     AttrName::Style => {
-                      match value {
-                        None => {}
-                        Some(JSXAttrValue::Str(s)) => {
-                          // <view style="width: 100rpx" />;
-                          let value = transform_jsx_attr_str(&s.value);
+                      let mut static_style_val = None;
+                      if let Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+                        expr: JSXExpr::Expr(expr),
+                        span,
+                        ..
+                      })) = value
+                      {
+                        let expr = &**expr;
+                        if is_literal(expr) {
+                          if let Some(s) = get_string_inline_style_from_literal(expr, span) {
+                            static_style_val = Some((s, *span));
+                          }
+                        }
+                      }
+
+                      if let Some((s_val, span)) = static_style_val {
+                        if self.enable_element_template {
+                          *value = Some(JSXAttrValue::Str(Str {
+                            span,
+                            value: s_val.into(),
+                            raw: None,
+                          }));
+                        } else {
+                          // <view style={{backgroundColor: "red"}} />;
+                          // <view style={`background-color: red;`} />;
+                          let s = Lit::Str(Str {
+                            span,
+                            value: s_val.into(),
+                            raw: None,
+                          });
                           let stmt = quote!(
-                              r#"__SetInlineStyles($element, $value)"# as Stmt,
-                              element: Expr = el.clone(),
-                              value: Expr = Expr::Lit(Lit::Str(Str { span: s.span, value: value.into(), raw: None }))
+                            r#"__SetInlineStyles($element, $value)"# as Stmt,
+                            element: Expr = el.clone(),
+                            value: Expr = Expr::Lit(s)
                           );
                           self.static_stmts.push(RefCell::new(stmt));
                         }
-                        Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-                          expr: JSXExpr::Expr(expr),
-                          span,
-                          ..
-                        })) => {
-                          let expr = &**expr;
-                          if is_literal(expr) {
-                            let s = get_string_inline_style_from_literal(expr, span);
-
-                            if s.is_some() {
-                              // <view style={{backgroundColor: "red"}} />;
-                              // <view style={`background-color: red;`} />;
-                              let s = Lit::Str(Str {
-                                span: *span,
-                                value: s.unwrap().into(),
-                                raw: None,
-                              });
-                              let stmt = quote!(
+                      } else {
+                        match value {
+                          None => {}
+                          Some(JSXAttrValue::Str(s)) => {
+                            // <view style="width: 100rpx" />;
+                            let value = transform_jsx_attr_str(&s.value);
+                            let stmt = quote!(
                                 r#"__SetInlineStyles($element, $value)"# as Stmt,
                                 element: Expr = el.clone(),
-                                value: Expr = Expr::Lit(s)
-                              );
-                              self.static_stmts.push(RefCell::new(stmt));
-                            }
-                          } else {
+                                value: Expr = Expr::Lit(Lit::Str(Str { span: s.span, value: value.into(), raw: None }))
+                            );
+                            self.static_stmts.push(RefCell::new(stmt));
+                          }
+                          Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+                            expr: JSXExpr::Expr(expr),
+                            ..
+                          })) => {
                             self.dynamic_parts.push(DynamicPart::Attr(
-                              expr.clone(),
+                              *expr.clone(),
                               self.element_index,
                               attr_name.clone(),
                             ));
                           }
+                          Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+                            expr: JSXExpr::JSXEmptyExpr(_),
+                            ..
+                          })) => {}
+                          Some(JSXAttrValue::JSXElement(_)) => unreachable!("Unexpected JSXElement in JSX attribute value - not supported"),
+                          Some(JSXAttrValue::JSXFragment(_)) => unreachable!("Unexpected JSXFragment in JSX attribute value - not supported"),
                         }
-                        Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-                          expr: JSXExpr::JSXEmptyExpr(_),
-                          ..
-                        })) => {}
-                        Some(JSXAttrValue::JSXElement(_)) => unreachable!("Unexpected JSXElement in JSX attribute value - not supported"),
-                        Some(JSXAttrValue::JSXFragment(_)) => unreachable!("Unexpected JSXFragment in JSX attribute value - not supported"),
-                      };
+                      }
                     }
                     AttrName::Class => {
                       match value {
@@ -800,6 +856,27 @@ where
               };
             }
           });
+      }
+
+      // Check if this element has any dynamic parts (Attr or Spread)
+      let element_has_dynamic_parts = self.dynamic_parts.iter().any(|part| match part {
+        DynamicPart::Attr(_, index, _) => *index == self.element_index,
+        DynamicPart::Spread(_, index) => *index == self.element_index,
+        _ => false,
+      });
+
+      if element_has_dynamic_parts && self.enable_element_template {
+        let part_id = self.id_counter;
+        self.id_counter += 1;
+        n.opening.attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
+          span: DUMMY_SP,
+          name: JSXAttrName::Ident(IdentName::new("__lynx_part_id".into(), DUMMY_SP)),
+          value: Some(JSXAttrValue::Str(Str {
+            span: DUMMY_SP,
+            value: part_id.to_string().into(),
+            raw: None,
+          })),
+        }));
       }
 
       if let Some(parent_el) = &self.parent_element {
@@ -994,6 +1071,8 @@ pub struct JSXTransformerConfig {
   pub target: TransformTarget,
   /// @internal
   pub is_dynamic_component: Option<bool>,
+  /// @internal
+  pub experimental_enable_element_template: bool,
 }
 
 impl Default for JSXTransformerConfig {
@@ -1005,6 +1084,7 @@ impl Default for JSXTransformerConfig {
       filename: Default::default(),
       target: TransformTarget::LEPUS,
       is_dynamic_component: Some(false),
+      experimental_enable_element_template: false,
     }
   }
 }
@@ -1098,6 +1178,316 @@ where
       }
     });
   }
+
+  fn element_template_from_jsx_children(
+    &self,
+    children: &[JSXElementChild],
+    slot_index: &mut i32,
+  ) -> Vec<ExprOrSpread> {
+    let mut out: Vec<ExprOrSpread> = vec![];
+
+    for child in children {
+      match child {
+        JSXElementChild::JSXText(txt) => {
+          let s = jsx_text_to_str(&txt.value);
+          let tag_value = s.clone();
+          if s.trim().is_empty() {
+            continue;
+          }
+
+          let expr = Expr::Object(ObjectLit {
+            span: DUMMY_SP,
+            props: vec![
+              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
+                value: Box::new(Expr::Lit(Lit::Str(Str {
+                  span: DUMMY_SP,
+                  raw: None,
+                  value: "text".into(),
+                }))),
+              }))),
+              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
+                value: Box::new(Expr::Object(ObjectLit {
+                  span: DUMMY_SP,
+                  props: vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                    key: PropName::Ident(IdentName::new("text".into(), DUMMY_SP)),
+                    value: Box::new(Expr::Lit(Lit::Str(Str {
+                      span: DUMMY_SP,
+                      raw: None,
+                      value: tag_value.into(),
+                    }))),
+                  })))],
+                })),
+              }))),
+            ],
+          });
+          out.push(ExprOrSpread {
+            spread: None,
+            expr: Box::new(expr),
+          });
+        }
+        JSXElementChild::JSXElement(el) => {
+          out.push(ExprOrSpread {
+            spread: None,
+            expr: Box::new(self.element_template_from_jsx_element(el, slot_index)),
+          });
+        }
+        JSXElementChild::JSXFragment(frag) => {
+          out.extend(self.element_template_from_jsx_children(&frag.children, slot_index));
+        }
+        JSXElementChild::JSXExprContainer(JSXExprContainer {
+          expr: JSXExpr::Expr(_),
+          ..
+        }) => {
+          let idx = *slot_index;
+          *slot_index += 1;
+          let expr = Expr::Object(ObjectLit {
+            span: DUMMY_SP,
+            props: vec![
+              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
+                value: Box::new(Expr::Lit(Lit::Str("slot".into()))),
+              }))),
+              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
+                value: Box::new(Expr::Object(ObjectLit {
+                  span: DUMMY_SP,
+                  props: vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                    key: PropName::Str(Str {
+                      span: DUMMY_SP,
+                      raw: Some("\"part-id\"".into()),
+                      value: "part-id".into(),
+                    }),
+                    value: Box::new(Expr::Lit(Lit::Num(Number {
+                      span: DUMMY_SP,
+                      value: idx as f64,
+                      raw: None,
+                    }))),
+                  })))],
+                })),
+              }))),
+            ],
+          });
+          out.push(ExprOrSpread {
+            spread: None,
+            expr: Box::new(expr),
+          });
+        }
+        JSXElementChild::JSXExprContainer(JSXExprContainer {
+          expr: JSXExpr::JSXEmptyExpr(_),
+          ..
+        }) => {}
+        JSXElementChild::JSXSpreadChild(_) => {
+          let idx = *slot_index;
+          *slot_index += 1;
+          let expr = Expr::Object(ObjectLit {
+            span: DUMMY_SP,
+            props: vec![
+              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
+                value: Box::new(Expr::Lit(Lit::Str("slot".into()))),
+              }))),
+              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
+                value: Box::new(Expr::Object(ObjectLit {
+                  span: DUMMY_SP,
+                  props: vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                    key: PropName::Str(Str {
+                      span: DUMMY_SP,
+                      raw: Some("\"part-id\"".into()),
+                      value: "part-id".into(),
+                    }),
+                    value: Box::new(Expr::Lit(Lit::Num(Number {
+                      span: DUMMY_SP,
+                      value: idx as f64,
+                      raw: None,
+                    }))),
+                  })))],
+                })),
+              }))),
+            ],
+          });
+          out.push(ExprOrSpread {
+            spread: None,
+            expr: Box::new(expr),
+          });
+        }
+      }
+    }
+
+    out
+  }
+
+  fn element_template_from_jsx_element(&self, n: &JSXElement, slot_index: &mut i32) -> Expr {
+    let tag_expr = jsx_name(n.opening.name.clone());
+    let tag_value = match *tag_expr {
+      Expr::Lit(Lit::Str(s)) => s.value,
+      _ => "".into(),
+    };
+
+    let mut attributes_props: Vec<PropOrSpread> = vec![];
+    let mut part_id: Option<i32> = None;
+
+    for attr in &n.opening.attrs {
+      let JSXAttrOrSpread::JSXAttr(attr) = attr else {
+        continue;
+      };
+
+      let JSXAttrName::Ident(name) = &attr.name else {
+        continue;
+      };
+
+      let Some(value) = &attr.value else {
+        continue;
+      };
+
+      if name.sym == "__lynx_part_id" {
+        if let JSXAttrValue::Str(s) = value {
+          if let Ok(pid) = s.value.to_string_lossy().parse::<i32>() {
+            part_id = Some(pid);
+          }
+        }
+        continue;
+      }
+
+      let lit_val = match value {
+        JSXAttrValue::Str(s) => Some(Expr::Lit(Lit::Str(s.clone()))),
+        JSXAttrValue::JSXExprContainer(JSXExprContainer {
+          expr: JSXExpr::Expr(expr),
+          ..
+        }) => match &**expr {
+          Expr::Lit(Lit::Str(s)) => Some(Expr::Lit(Lit::Str(s.clone()))),
+          Expr::Lit(Lit::Num(n)) => Some(Expr::Lit(Lit::Num(n.clone()))),
+          Expr::Lit(Lit::Bool(b)) => Some(Expr::Lit(Lit::Bool(*b))),
+          // TODO: Support complex static values (Object, Array, Null, Template Literal without expressions)
+          // See ElementTemplate/Todo-StaticAttributesOpts.md
+          _ => None,
+        },
+        _ => None,
+      };
+
+      let Some(lit_val) = lit_val else {
+        continue;
+      };
+
+      let key_sym = name.sym.as_ref();
+      let key = if key_sym == "className" {
+        "class"
+      } else {
+        key_sym
+      };
+
+      let prop_name = if key.contains('-') {
+        PropName::Str(Str {
+          span: DUMMY_SP,
+          raw: Some(format!("\"{}\"", key).into()),
+          value: key.into(),
+        })
+      } else {
+        PropName::Ident(IdentName::new(key.into(), DUMMY_SP))
+      };
+
+      attributes_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+        key: prop_name,
+        value: Box::new(lit_val),
+      }))));
+    }
+
+    if let Some(pid) = part_id {
+      attributes_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+        key: PropName::Str(Str {
+          span: DUMMY_SP,
+          raw: Some("\"part-id\"".into()),
+          value: "part-id".into(),
+        }),
+        value: Box::new(Expr::Lit(Lit::Num(Number {
+          span: DUMMY_SP,
+          value: pid as f64,
+          raw: None,
+        }))),
+      }))));
+    }
+
+    let final_tag = if tag_value == "wrapper" {
+      "slot".into()
+    } else {
+      tag_value
+    };
+
+    // Optimization for text tags:
+    // If <text> (or similar) has only one static text child, use `text` attribute instead of checking children.
+    let is_text_tag = final_tag == "text"
+      || final_tag == "raw-text"
+      || final_tag == "inline-text"
+      || final_tag == "x-text"
+      || final_tag == "x-inline-text";
+    let mut text_child_optimized = false;
+
+    let mut props: Vec<PropOrSpread> =
+      vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+        key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
+        value: Box::new(Expr::Lit(Lit::Str(Str {
+          span: DUMMY_SP,
+          raw: None,
+          value: final_tag,
+        }))),
+      })))];
+
+    if is_text_tag {
+      let valid_children: Vec<&JSXElementChild> = n
+        .children
+        .iter()
+        .filter(|c| match c {
+          JSXElementChild::JSXText(t) => !jsx_text_to_str(&t.value).trim().is_empty(),
+          _ => true,
+        })
+        .collect();
+
+      if valid_children.len() == 1 {
+        if let JSXElementChild::JSXText(txt) = valid_children[0] {
+          let s = jsx_text_to_str(&txt.value);
+          attributes_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+            key: PropName::Ident(IdentName::new("text".into(), DUMMY_SP)),
+            value: Box::new(Expr::Lit(Lit::Str(Str {
+              span: DUMMY_SP,
+              raw: None,
+              value: s.into(),
+            }))),
+          }))));
+          text_child_optimized = true;
+        }
+      }
+    }
+
+    if !attributes_props.is_empty() {
+      props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+        key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
+        value: Box::new(Expr::Object(ObjectLit {
+          span: DUMMY_SP,
+          props: attributes_props,
+        })),
+      }))));
+    }
+
+    if !text_child_optimized {
+      let children_exprs = self.element_template_from_jsx_children(&n.children, slot_index);
+      if !children_exprs.is_empty() {
+        props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+          key: PropName::Ident(IdentName::new("children".into(), DUMMY_SP)),
+          value: Box::new(Expr::Array(ArrayLit {
+            span: DUMMY_SP,
+            elems: children_exprs.into_iter().map(Some).collect(),
+          })),
+        }))));
+      }
+    }
+
+    Expr::Object(ObjectLit {
+      span: DUMMY_SP,
+      props,
+    })
+  }
 }
 
 impl<C> VisitMut for JSXTransformer<C>
@@ -1172,6 +1562,7 @@ where
     let mut wrap_dynamic_part = WrapperMarker {
       current_is_children_full_dynamic: false,
       dynamic_part_count: 0,
+      enable_element_template: self.cfg.experimental_enable_element_template,
     };
     node.visit_mut_with(&mut wrap_dynamic_part);
 
@@ -1181,6 +1572,7 @@ where
       self.runtime_id.clone(),
       wrap_dynamic_part.dynamic_part_count,
       self,
+      self.cfg.experimental_enable_element_template,
     );
 
     node.visit_mut_with(&mut dynamic_part_extractor);
@@ -1393,7 +1785,7 @@ where
             }
             DynamicPart::Slot(jsx, element_index) => {
               // snapshot_values.push(None);
-              snapshot_children.push(JSXElementChild::JSXElement(Box::new(jsx)));
+              snapshot_children.push(jsx);
               snapshot_slot_def.push(Some(ExprOrSpread {
                 spread: None,
                 expr: Box::new(quote!(
@@ -1421,6 +1813,8 @@ where
         function: Box::new(dynamic_part_extractor.snapshot_creator.unwrap()),
       })
     };
+
+    let use_element_template = self.cfg.experimental_enable_element_template;
 
     let snapshot_create_call = quote!(
         r#"$runtime_id.snapshotCreatorMap[$snapshot_id] = ($snapshot_id) => $runtime_id.createSnapshot(
@@ -1464,15 +1858,46 @@ where
         snapshot_id = snapshot_id.clone(),
         entry_snapshot_uid: Expr = entry_snapshot_uid.clone(),
     ));
-    let snapshot_def = ModuleItem::Stmt(quote!(
-        r#"$snapshot_create_call"#
-            as Stmt,
-        snapshot_create_call: Expr = snapshot_create_call,
-    ));
-
     self.current_snapshot_id = Some(snapshot_id.clone());
     self.current_snapshot_defs.push(entry_snapshot_uid_def);
-    self.current_snapshot_defs.push(snapshot_def);
+
+    if use_element_template {
+      let mut slot_index: i32 = 0;
+      let template_expr = self.element_template_from_jsx_element(node, &mut slot_index);
+      let suffix = snapshot_uid
+        .strip_prefix("__snapshot_")
+        .unwrap_or(snapshot_uid.as_str());
+      let template_id = Ident::new(
+        format!("__template_{suffix}").into(),
+        DUMMY_SP,
+        SyntaxContext::default().apply_mark(Mark::fresh(Mark::root())),
+      );
+
+      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
+          r#"const $template_id = $template_expr"# as Stmt,
+          template_id: Ident = template_id.clone(),
+          template_expr: Expr = template_expr,
+      )));
+
+      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
+          r#"$runtime_id.__elementTemplateMap = $runtime_id.__elementTemplateMap || {}"# as Stmt,
+          runtime_id: Expr = self.runtime_id.clone(),
+      )));
+
+      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
+          r#"$runtime_id.__elementTemplateMap[$snapshot_id] = $template_id"# as Stmt,
+          runtime_id: Expr = self.runtime_id.clone(),
+          snapshot_id: Ident = snapshot_id.clone(),
+          template_id: Ident = template_id,
+      )));
+    } else {
+      let snapshot_def = ModuleItem::Stmt(quote!(
+          r#"$snapshot_create_call"#
+              as Stmt,
+          snapshot_create_call: Expr = snapshot_create_call,
+      ));
+      self.current_snapshot_defs.push(snapshot_def);
+    }
 
     *node = JSXElement {
       span: node.span(),

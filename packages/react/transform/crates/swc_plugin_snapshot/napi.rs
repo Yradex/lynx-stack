@@ -26,6 +26,8 @@ pub struct JSXTransformerConfig {
   pub target: TransformTarget,
   /// @internal
   pub is_dynamic_component: Option<bool>,
+  /// @internal
+  pub experimental_enable_element_template: Option<bool>,
 }
 
 impl Default for JSXTransformerConfig {
@@ -37,6 +39,7 @@ impl Default for JSXTransformerConfig {
       filename: Default::default(),
       target: TransformTarget::LEPUS,
       is_dynamic_component: Some(false),
+      experimental_enable_element_template: None,
     }
   }
 }
@@ -50,6 +53,9 @@ impl From<JSXTransformerConfig> for CoreJSXTransformerConfig {
       filename: val.filename,
       target: val.target.into(),
       is_dynamic_component: val.is_dynamic_component,
+      experimental_enable_element_template: val
+        .experimental_enable_element_template
+        .unwrap_or(false),
     }
   }
 }
@@ -63,6 +69,7 @@ impl From<CoreJSXTransformerConfig> for JSXTransformerConfig {
       filename: val.filename,
       target: val.target.into(),
       is_dynamic_component: val.is_dynamic_component,
+      experimental_enable_element_template: Some(val.experimental_enable_element_template),
     }
   }
 }
