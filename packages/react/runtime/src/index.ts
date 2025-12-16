@@ -84,3 +84,10 @@ export {
 };
 
 export * from './lynx-api.js';
+export {
+  createElementTemplateHandle,
+  patchElementTemplateHandle,
+  destroyElementTemplateHandle,
+  type ElementTemplateHandle,
+} from './element-template/elementTemplateHandle.js';
+export { ElementTemplateRegistry } from './element-template/elementTemplateRegistry.js';

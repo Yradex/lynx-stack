@@ -116,6 +116,21 @@ declare global {
     relationMap: Record<string, number[]>,
   ): void;
 
+  declare interface ElementRef {}
+
+  declare function __ElementFromBinary(
+    customSectionsPath: string,
+    bundleUrl: string | null | undefined,
+    opcodes: any[] | null | undefined,
+    options: Map<string, any> | undefined | null,
+  ): ElementRef;
+
+  declare function __PatchElementTemplate(
+    templateInstance: ElementRef,
+    opcodes: any[],
+    options: Map<string, any> | undefined | null,
+  ): void;
+
   declare interface FiberElement {}
 
   declare type ComponentAtIndexCallback = (
