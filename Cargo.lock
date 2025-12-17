@@ -1249,6 +1249,8 @@ dependencies = [
  "ctor",
  "napi-sys",
  "once_cell",
+ "serde",
+ "serde_json",
  "thread_local",
 ]
 

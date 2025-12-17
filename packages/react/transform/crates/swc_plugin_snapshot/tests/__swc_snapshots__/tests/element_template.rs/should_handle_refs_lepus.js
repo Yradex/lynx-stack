@@ -1,6 +1,6 @@
 import * as ReactLynx from "@lynx-js/react";
 const __snapshot_da39a_test_1 = "__snapshot_da39a_test_1";
-const __template_da39a_test_1 = {
+const _et_da39a_test_1 = {
     tag: "view",
     attributes: {
         "part-id": 0
@@ -14,8 +14,8 @@ const __template_da39a_test_1 = {
         }
     ]
 };
-ReactLynx.__elementTemplateMap = ReactLynx.__elementTemplateMap || {};
-ReactLynx.__elementTemplateMap[__snapshot_da39a_test_1] = __template_da39a_test_1;
+globalThis.__elementTemplateMap = globalThis.__elementTemplateMap || {};
+globalThis.__elementTemplateMap[__snapshot_da39a_test_1] = _et_da39a_test_1;
 <__snapshot_da39a_test_1 values={[
     1
 ]}/>;

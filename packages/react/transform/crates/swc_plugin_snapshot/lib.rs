@@ -24,6 +24,16 @@ use swc_core::{
 mod attr_name;
 mod slot_marker;
 
+use serde::Serialize;
+use std::rc::Rc;
+
+#[derive(Serialize, Debug, Clone)]
+pub struct ElementTemplateAsset {
+  pub template_id: String,
+  pub compiled_template: serde_json::Value,
+  pub source_file: String,
+}
+
 pub mod napi;
 
 use swc_plugins_shared::{
@@ -1096,11 +1106,12 @@ where
   // react_transformer: Box<dyn Fold>,
   cfg: JSXTransformerConfig,
   filename_hash: String,
-  content_hash: String,
+  pub content_hash: String,
   runtime_id: Lazy<Expr>,
   runtime_components_ident: Ident,
   runtime_components_module_item: Option<ModuleItem>,
   css_id_value: Option<Expr>,
+  pub element_templates: Option<Rc<RefCell<Vec<ElementTemplateAsset>>>>,
   snapshot_counter: u32,
   current_snapshot_defs: Vec<ModuleItem>,
   current_snapshot_id: Option<Ident>,
@@ -1116,7 +1127,12 @@ where
     self
   }
 
-  pub fn new(cfg: JSXTransformerConfig, comments: Option<C>, mode: TransformMode) -> Self {
+  pub fn new(
+    cfg: JSXTransformerConfig,
+    comments: Option<C>,
+    mode: TransformMode,
+    element_templates: Option<Rc<RefCell<Vec<ElementTemplateAsset>>>>,
+  ) -> Self {
     JSXTransformer {
       filename_hash: calc_hash(&cfg.filename.clone()),
       content_hash: "test".into(),
@@ -1131,6 +1147,7 @@ where
       },
       runtime_components_ident: private_ident!("ReactLynxRuntimeComponents"),
       runtime_components_module_item: None,
+      element_templates,
       cfg,
       css_id_value: None,
       snapshot_counter: 0,
@@ -1177,6 +1194,53 @@ where
         }
       }
     });
+  }
+
+  fn element_template_to_json(&self, expr: &Expr) -> serde_json::Value {
+    match expr {
+      Expr::Lit(lit) => match lit {
+        Lit::Str(s) => serde_json::Value::String(s.value.as_str().unwrap_or("").to_string()),
+        Lit::Num(n) => serde_json::Value::Number(serde_json::Number::from_f64(n.value).unwrap()),
+        Lit::Bool(b) => serde_json::Value::Bool(b.value),
+        Lit::Null(_) => serde_json::Value::Null,
+        _ => serde_json::Value::Null,
+      },
+      Expr::Array(arr) => {
+        let elems: Vec<serde_json::Value> = arr
+          .elems
+          .iter()
+          .map(|elem| {
+            if let Some(elem) = elem {
+              self.element_template_to_json(&elem.expr)
+            } else {
+              serde_json::Value::Null
+            }
+          })
+          .collect();
+        serde_json::Value::Array(elems)
+      }
+      Expr::Object(obj) => {
+        let mut map = serde_json::Map::new();
+        for prop in &obj.props {
+          if let PropOrSpread::Prop(prop) = prop {
+            if let Prop::KeyValue(kv) = &**prop {
+              let key;
+              if let PropName::Ident(ident) = &kv.key {
+                key = ident.sym.as_str().to_string();
+              } else if let PropName::Str(s) = &kv.key {
+                key = s.value.as_str().unwrap_or("").to_string();
+              } else {
+                continue;
+              };
+              let value = self.element_template_to_json(&kv.value);
+              map.insert(key, value);
+            }
+          }
+        }
+        serde_json::Value::Object(map)
+      }
+      _ => serde_json::Value::Null,
+    }
   }
 
   fn element_template_from_jsx_children(
@@ -1868,7 +1932,7 @@ where
         .strip_prefix("__snapshot_")
         .unwrap_or(snapshot_uid.as_str());
       let template_id = Ident::new(
-        format!("__template_{suffix}").into(),
+        format!("_et_{suffix}").into(),
         DUMMY_SP,
         SyntaxContext::default().apply_mark(Mark::fresh(Mark::root())),
       );
@@ -1876,17 +1940,24 @@ where
       self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
           r#"const $template_id = $template_expr"# as Stmt,
           template_id: Ident = template_id.clone(),
-          template_expr: Expr = template_expr,
+          template_expr: Expr = template_expr.clone(),
+      )));
+
+      if let Some(element_templates) = &self.element_templates {
+        let compiled_template = self.element_template_to_json(&template_expr);
+        element_templates.borrow_mut().push(ElementTemplateAsset {
+          template_id: format!("_et_{suffix}"),
+          compiled_template,
+          source_file: self.cfg.filename.clone(),
+        });
+      }
+
+      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
+        r#"globalThis.__elementTemplateMap = globalThis.__elementTemplateMap || {}"# as Stmt,
       )));
 
       self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
-          r#"$runtime_id.__elementTemplateMap = $runtime_id.__elementTemplateMap || {}"# as Stmt,
-          runtime_id: Expr = self.runtime_id.clone(),
-      )));
-
-      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
-          r#"$runtime_id.__elementTemplateMap[$snapshot_id] = $template_id"# as Stmt,
-          runtime_id: Expr = self.runtime_id.clone(),
+          r#"globalThis.__elementTemplateMap[$snapshot_id] = $template_id"# as Stmt,
           snapshot_id: Ident = snapshot_id.clone(),
           template_id: Ident = template_id,
       )));
@@ -2033,6 +2104,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2065,6 +2137,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2097,6 +2170,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2131,6 +2205,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2167,6 +2242,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2199,6 +2275,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2226,6 +2303,7 @@ mod tests {
           },
           Some(t.comments.clone()),
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2254,6 +2332,7 @@ mod tests {
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     basic_component,
     // Input codes
@@ -2277,6 +2356,7 @@ mod tests {
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     page_component,
     // Input codes
@@ -2303,6 +2383,7 @@ mod tests {
       },
       Some(t.comments.clone()),
       TransformMode::Development,
+      None
     )),
     page_element_dev,
     // Input codes
@@ -2329,6 +2410,7 @@ mod tests {
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     page_element,
     // Input codes
@@ -2354,7 +2436,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     basic_component_with_static_sibling,
     // Input codes
@@ -2383,6 +2466,7 @@ mod tests {
           },
           None,
           TransformMode::Test,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -2430,6 +2514,7 @@ mod tests {
           },
           None,
           TransformMode::Test,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -2472,7 +2557,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     basic_expr_container,
     // Input codes
@@ -2495,7 +2581,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     basic_expr_container_with_static_sibling,
     // Input codes
@@ -2519,7 +2606,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_inject_implicit_flatten,
     // Input codes
@@ -2553,7 +2641,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     basic_list,
     // Input codes
@@ -2579,7 +2668,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     basic_list_with_fragment,
     // Input codes
@@ -2615,6 +2705,7 @@ mod tests {
           },
           None,
           TransformMode::Test,
+          None,
         )),
       )
     },
@@ -2640,7 +2731,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_static_extract_inline_style,
     // Input codes
@@ -2671,7 +2763,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_static_extract_dynamic_inline_style,
     // Input codes
@@ -2695,7 +2788,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_extract_css_id_without_css_id,
     // Input codes
@@ -2719,7 +2813,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_extract_css_id,
     // Input codes
@@ -2747,7 +2842,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_extract_css_id_dynamic_component,
     // Input codes
@@ -2775,7 +2871,8 @@ mod tests {
         ..Default::default()
       },
       Some(t.comments.clone()),
-      TransformMode::Test
+      TransformMode::Test,
+      None
     )),
     should_extract_css_id_dynamic_component_without_css_id,
     // Input codes
@@ -2804,6 +2901,7 @@ mod tests {
           },
           None,
           TransformMode::Test,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -2847,6 +2945,7 @@ mod tests {
         },
         None,
         TransformMode::Test,
+        None,
       ))
     },
     inline_style_literal,
@@ -2871,6 +2970,7 @@ mod tests {
         },
         None,
         TransformMode::Test,
+        None,
       ))
     },
     inline_style_literal_unknown_property,
@@ -2895,6 +2995,7 @@ mod tests {
         },
         None,
         TransformMode::Test,
+        None,
       ))
     },
     empty_module,
@@ -2919,6 +3020,7 @@ mod tests {
         },
         None,
         TransformMode::Development,
+        None,
       ))
     },
     mode_development_spread,
@@ -2947,6 +3049,7 @@ mod tests {
           },
           None,
           TransformMode::Development,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -2999,6 +3102,7 @@ mod tests {
           },
           None,
           TransformMode::Development,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -3053,6 +3157,7 @@ mod tests {
           },
           None,
           TransformMode::Development,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -3107,6 +3212,7 @@ mod tests {
           },
           None,
           TransformMode::Development,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -3159,6 +3265,7 @@ mod tests {
           },
           None,
           TransformMode::Development,
+          None,
         )),
         react::react::<&SingleThreadedComments>(
           t.cm.clone(),
@@ -3205,6 +3312,7 @@ mod tests {
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     should_escape_newline_character,
     // Input codes
@@ -3255,6 +3363,7 @@ aaaaa
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     should_wrap_dynamic_key,
     // Input codes
@@ -3280,6 +3389,7 @@ aaaaa
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     should_set_attribute_for_text_node,
     // Input codes
@@ -3308,6 +3418,7 @@ aaaaa
       },
       Some(t.comments.clone()),
       TransformMode::Test,
+      None
     )),
     should_create_raw_text_node_for_text_node,
     // Input codes

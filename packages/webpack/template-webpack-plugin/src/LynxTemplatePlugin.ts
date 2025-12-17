@@ -328,6 +328,7 @@ interface EncodeRawData {
     appType: string;
     config: Record<string, unknown>;
   };
+  elementTemplateDebug: Record<string, unknown>;
   [k: string]: unknown;
 }
 
@@ -806,6 +807,7 @@ class LynxTemplatePluginImpl {
         }),
       ),
       customSections: {},
+      elementTemplateDebug: {},
     };
     const hooks = LynxTemplatePlugin.getLynxTemplatePluginHooks(
       compilation,

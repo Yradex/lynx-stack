@@ -58,7 +58,7 @@ use swc_plugin_dynamic_import::napi::{DynamicImportVisitor, DynamicImportVisitor
 use swc_plugin_inject::napi::{InjectVisitor, InjectVisitorConfig};
 use swc_plugin_refresh::{RefreshVisitor, RefreshVisitorConfig};
 use swc_plugin_shake::napi::{ShakeVisitor, ShakeVisitorConfig};
-use swc_plugin_snapshot::napi::{JSXTransformer, JSXTransformerConfig};
+use swc_plugin_snapshot::napi::{ElementTemplateAsset, JSXTransformer, JSXTransformerConfig};
 use swc_plugin_worklet::napi::{WorkletVisitor, WorkletVisitorConfig};
 use swc_plugins_shared::{
   engine_version::is_engine_version_ge,
@@ -250,6 +250,8 @@ pub struct TransformNodiffOutput {
   pub errors: Vec<esbuild::PartialMessage>,
   // #[napi(ts_type = "Array<import('esbuild').PartialMessage>")]
   pub warnings: Vec<esbuild::PartialMessage>,
+  #[napi(js_name = "elementTemplates")]
+  pub element_templates: Option<Vec<ElementTemplateAsset>>,
 }
 
 /// A multi emitter that forwards to multiple emitters.
@@ -313,6 +315,7 @@ fn transform_react_lynx_inner(
           map: None,
           errors: errors.read().unwrap().clone(),
           warnings: warnings.read().unwrap().clone(),
+          element_templates: None,
         };
       }
     };
@@ -422,17 +425,36 @@ fn transform_react_lynx_inner(
       enabled && !snapshot_plugin_config.preserve_jsx,
     );
 
-    let snapshot_plugin = Optional::new(
-      visit_mut_pass(
-        JSXTransformer::new(
-          snapshot_plugin_config,
-          Some(&comments),
-          options.mode.unwrap_or(TransformMode::Production),
-        )
-        .with_content_hash(content_hash.clone()),
-      ),
-      enabled,
-    );
+    let (snapshot_plugin, element_templates_collector) = if enabled {
+      let export_element_templates = snapshot_plugin_config
+        .experimental_enable_element_template
+        .unwrap_or(false);
+
+      let transformer = JSXTransformer::new(
+        snapshot_plugin_config,
+        Some(&comments),
+        options.mode.unwrap_or(TransformMode::Production),
+      )
+      .with_content_hash(content_hash.clone());
+      let collector = if export_element_templates {
+        Some(transformer.element_templates.clone())
+      } else {
+        None
+      };
+      (Optional::new(visit_mut_pass(transformer), true), collector)
+    } else {
+      (
+        Optional::new(
+          visit_mut_pass(JSXTransformer::new(
+            Default::default(),
+            None,
+            TransformMode::Production,
+          )),
+          false,
+        ),
+        None,
+      )
+    };
 
     let list_plugin = Optional::new(
       visit_mut_pass(swc_plugin_list::ListVisitor::new(Some(&comments))),
@@ -626,31 +648,38 @@ fn transform_react_lynx_inner(
     );
 
     match result {
-      Ok(result) => TransformNodiffOutput {
-        code: result.code,
-        map: result.map,
-        errors: vec![],
-        warnings: vec![],
-      },
+      Ok(result) => {
+        let element_templates = element_templates_collector.and_then(|c| {
+          let templates: Vec<ElementTemplateAsset> =
+            c.borrow_mut().drain(..).map(|t| t.into()).collect();
+          if templates.is_empty() {
+            None
+          } else {
+            Some(templates)
+          }
+        });
+
+        TransformNodiffOutput {
+          code: result.code,
+          map: result.map,
+          errors: errors.read().unwrap().clone(),
+          warnings: warnings.read().unwrap().clone(),
+          element_templates,
+        }
+      }
       Err(_) => {
         return TransformNodiffOutput {
           code: "".into(),
           map: None,
           errors: errors.read().unwrap().clone(),
           warnings: warnings.read().unwrap().clone(),
+          element_templates: None,
         };
       }
     }
   });
 
-  let r = TransformNodiffOutput {
-    code: result.code,
-    map: result.map,
-    errors: errors.read().unwrap().clone(),
-    warnings: warnings.read().unwrap().clone(),
-  };
-
-  r
+  result
 }
 
 #[napi]

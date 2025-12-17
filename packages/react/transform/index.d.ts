@@ -563,6 +563,8 @@ export interface JsxTransformerConfig {
   target: 'LEPUS' | 'JS' | 'MIXED'
   /** @internal */
   isDynamicComponent?: boolean
+  /** @internal */
+  experimentalEnableElementTemplate?: boolean
 }
 export interface WorkletVisitorConfig {
   /**
@@ -617,6 +619,13 @@ export interface TransformNodiffOutput {
   map?: string
   errors: Array<PartialMessage>
   warnings: Array<PartialMessage>
+  elementTemplates?: Array<ElementTemplateAsset>
+}
+
+export interface ElementTemplateAsset {
+  templateId: string
+  compiledTemplate: Record<string, unknown>
+  sourceFile: string
 }
 export function transformReactLynxSync(code: string, options?: TransformNodiffOptions | undefined | null): TransformNodiffOutput
 export function transformReactLynx(code: string, options?: TransformNodiffOptions | undefined | null): Promise<TransformNodiffOutput>

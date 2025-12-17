@@ -22,6 +22,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_output_element_template_simple_lepus,
   // Input codes
@@ -72,6 +73,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_output_template_with_static_attributes,
   // Input codes
@@ -96,6 +98,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_not_output_template_when_flag_is_false,
   // Input codes
@@ -120,6 +123,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_dataset_attributes,
   // Input codes
@@ -144,6 +148,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_nested_structure_and_dynamic_content,
   // Input codes
@@ -179,6 +184,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_ignore_dynamic_attributes,
   // Input codes
@@ -203,6 +209,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_mixed_content,
   // Input codes
@@ -230,6 +237,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_boolean_and_number_attributes,
   // Input codes
@@ -254,6 +262,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_generate_part_ids_for_dynamic_attributes,
   // Input codes
@@ -279,6 +288,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_complex_text_structure,
   // Input codes
@@ -312,6 +322,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_spread_attributes,
   // Input codes
@@ -337,6 +348,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_events_lepus,
   // Input codes
@@ -387,6 +399,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_inline_styles,
   // Input codes
@@ -413,6 +426,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_refs_lepus,
   // Input codes
@@ -463,6 +477,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_css_id,
   // Input codes
@@ -490,6 +505,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_page_element,
   // Input codes
@@ -514,6 +530,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_text_attributes,
   // Input codes
@@ -539,6 +556,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_dynamic_class_attributes,
   // Input codes
@@ -563,6 +581,7 @@ test!(
     },
     Some(t.comments.clone()),
     TransformMode::Test,
+    None,
   )),
   should_handle_id_attributes,
   // Input codes
@@ -572,3 +591,75 @@ test!(
     </view>
     "#
 );
+
+#[test]
+fn should_collect_element_templates_manually() {
+  use std::cell::RefCell;
+  use std::rc::Rc;
+  use swc_core::common::{comments::SingleThreadedComments, FileName, Globals, SourceMap, GLOBALS};
+  use swc_core::ecma::parser::{lexer::Lexer, Parser, StringInput};
+  use swc_core::ecma::visit::VisitMutWith;
+
+  GLOBALS.set(&Globals::new(), || {
+    let cm = Rc::new(SourceMap::default());
+    let fm = cm.new_source_file(
+      FileName::Anon.into(),
+      String::from(
+        r#"
+      <view>
+          <text>Hello</text>
+      </view>
+  "#,
+      ),
+    );
+
+    let lexer = Lexer::new(
+      Syntax::Es(EsSyntax {
+        jsx: true,
+        ..Default::default()
+      }),
+      Default::default(),
+      StringInput::from(&*fm),
+      None,
+    );
+
+    let mut parser = Parser::new_from(lexer);
+    let module_result = parser.parse_module();
+    let mut module = module_result.expect("Failed to parse module");
+
+    let comments = SingleThreadedComments::default();
+
+    let element_templates = Rc::new(RefCell::new(vec![]));
+
+    let mut transformer = JSXTransformer::new(
+      JSXTransformerConfig {
+        preserve_jsx: true,
+        experimental_enable_element_template: true,
+        ..Default::default()
+      },
+      Some(comments),
+      TransformMode::Test,
+      Some(element_templates.clone()),
+    );
+
+    module.visit_mut_with(&mut transformer);
+
+    let templates = element_templates.borrow();
+    assert!(!templates.is_empty(), "Should collect element templates");
+    assert_eq!(templates.len(), 1, "Should optimize 1 element template");
+
+    let template = &templates[0];
+    let json = &template.compiled_template;
+
+    let expected = serde_json::json!({
+      "tag": "view",
+      "children": [
+        {
+          "tag": "text",
+          "attributes": { "text": "Hello" },
+        },
+      ],
+    });
+    assert_eq!(json, &expected);
+  });
+}

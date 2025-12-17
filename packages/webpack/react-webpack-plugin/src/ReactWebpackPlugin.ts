@@ -69,6 +69,13 @@ interface ReactWebpackPluginOptions {
    * The file path of `@lynx-js/react/worklet-runtime`.
    */
   workletRuntimePath: string;
+
+  /**
+   * Whether to enable element template.
+   *
+   * @experimental
+   */
+  experimental_enableElementTemplate?: boolean;
 }
 
 /**
@@ -143,6 +150,7 @@ class ReactWebpackPlugin {
       experimental_isLazyBundle: false,
       profile: undefined,
       workletRuntimePath: '',
+      experimental_enableElementTemplate: false,
     });
 
   /**
@@ -321,6 +329,37 @@ class ReactWebpackPlugin {
             ?.replaceAll(`-react__background`, '')
             ?.replaceAll(`-react__main-thread`, ''),
       );
+
+      if (options.experimental_enableElementTemplate) {
+        hooks.beforeEncode.tap(
+          this.constructor.name + '.ElementTemplate',
+          (args) => {
+            const collectedTemplates: Record<string, Record<string, unknown>> =
+              {};
+            for (const module of compilation.modules) {
+              const buildInfo = module.buildInfo as unknown as
+                | Record<string, unknown>
+                | undefined;
+              const templates = buildInfo?.['lynx:element-templates'] as
+                | Array<{
+                  templateId: string;
+                  compiledTemplate: Record<string, unknown>;
+                }>
+                | undefined;
+              if (templates) {
+                for (const template of templates) {
+                  const { templateId, compiledTemplate } = template;
+                  collectedTemplates[templateId] = compiledTemplate;
+                }
+              }
+            }
+
+            args.encodeData.elementTemplateDebug = collectedTemplates;
+
+            return args;
+          },
+        );
+      }
     });
   }
 

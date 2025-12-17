@@ -6,8 +6,33 @@ use swc_core::{
 use swc_plugins_shared::{target_napi::TransformTarget, transform_mode_napi::TransformMode};
 
 use crate::{
-  JSXTransformer as CoreJSXTransformer, JSXTransformerConfig as CoreJSXTransformerConfig,
+  ElementTemplateAsset as CoreElementTemplateAsset, JSXTransformer as CoreJSXTransformer,
+  JSXTransformerConfig as CoreJSXTransformerConfig,
 };
+use std::cell::RefCell;
+use std::rc::Rc;
+
+/// @internal
+#[napi(object)]
+#[derive(Clone, Debug)]
+pub struct ElementTemplateAsset {
+  #[napi(js_name = "templateId")]
+  pub template_id: String,
+  #[napi(js_name = "compiledTemplate")]
+  pub compiled_template: serde_json::Value,
+  #[napi(js_name = "sourceFile")]
+  pub source_file: String,
+}
+
+impl From<CoreElementTemplateAsset> for ElementTemplateAsset {
+  fn from(val: CoreElementTemplateAsset) -> Self {
+    Self {
+      template_id: val.template_id,
+      compiled_template: val.compiled_template,
+      source_file: val.source_file,
+    }
+  }
+}
 
 /// @internal
 #[napi(object)]
@@ -79,6 +104,7 @@ where
   C: Comments + Clone,
 {
   inner: CoreJSXTransformer<C>,
+  pub element_templates: Rc<RefCell<Vec<CoreElementTemplateAsset>>>,
 }
 
 impl<C> JSXTransformer<C>
@@ -91,9 +117,20 @@ where
   }
 
   pub fn new(cfg: JSXTransformerConfig, comments: Option<C>, mode: TransformMode) -> Self {
+    let element_templates = Rc::new(RefCell::new(vec![]));
     Self {
-      inner: CoreJSXTransformer::new(cfg.into(), comments, mode.into()),
+      inner: CoreJSXTransformer::new(
+        cfg.into(),
+        comments,
+        mode.into(),
+        Some(element_templates.clone()),
+      ),
+      element_templates,
     }
+  }
+
+  pub fn take_element_templates(&self) -> Vec<CoreElementTemplateAsset> {
+    self.element_templates.borrow_mut().drain(..).collect()
   }
 }
 
