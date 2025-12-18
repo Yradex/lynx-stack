@@ -592,26 +592,22 @@ test!(
     "#
 );
 
-#[test]
-fn should_collect_element_templates_manually() {
+#[track_caller]
+fn verify_template_json(input: &str, snapshot_name: &str) {
   use std::cell::RefCell;
   use std::rc::Rc;
   use swc_core::common::{comments::SingleThreadedComments, FileName, Globals, SourceMap, GLOBALS};
   use swc_core::ecma::parser::{lexer::Lexer, Parser, StringInput};
   use swc_core::ecma::visit::VisitMutWith;
 
+  // Adapt UPDATE=1 to INSTA_UPDATE=always for backward compatibility/convenience
+  if std::env::var("UPDATE").as_deref() == Ok("1") {
+    std::env::set_var("INSTA_UPDATE", "always");
+  }
+
   GLOBALS.set(&Globals::new(), || {
     let cm = Rc::new(SourceMap::default());
-    let fm = cm.new_source_file(
-      FileName::Anon.into(),
-      String::from(
-        r#"
-      <view>
-          <text>Hello</text>
-      </view>
-  "#,
-      ),
-    );
+    let fm = cm.new_source_file(FileName::Anon.into(), input.to_string());
 
     let lexer = Lexer::new(
       Syntax::Es(EsSyntax {
@@ -628,7 +624,6 @@ fn should_collect_element_templates_manually() {
     let mut module = module_result.expect("Failed to parse module");
 
     let comments = SingleThreadedComments::default();
-
     let element_templates = Rc::new(RefCell::new(vec![]));
 
     let mut transformer = JSXTransformer::new(
@@ -646,20 +641,163 @@ fn should_collect_element_templates_manually() {
 
     let templates = element_templates.borrow();
     assert!(!templates.is_empty(), "Should collect element templates");
-    assert_eq!(templates.len(), 1, "Should optimize 1 element template");
 
+    // Assuming single root/template for the helper
     let template = &templates[0];
-    let json = &template.compiled_template;
-
-    let expected = serde_json::json!({
-      "tag": "view",
-      "children": [
-        {
-          "tag": "text",
-          "attributes": { "text": "Hello" },
-        },
-      ],
+    let actual_json = &template.compiled_template;
+    insta::with_settings!({
+        snapshot_path => "__json_snapshots__",
+        prepend_module_to_snapshot => false,
+    }, {
+        insta::assert_json_snapshot!(snapshot_name, actual_json);
     });
-    assert_eq!(json, &expected);
   });
+}
+
+#[test]
+fn should_verify_template_structure_complex() {
+  verify_template_json(
+    r#"
+    <view class="container" id={dynamicId}>
+        <text>Static</text>
+        <image src={url} />
+    </view>
+    "#,
+    "complex_usage",
+  );
+}
+
+#[track_caller]
+fn transform_to_code_and_templates(
+  input: &str,
+  cfg: JSXTransformerConfig,
+) -> (String, Vec<swc_plugin_snapshot::ElementTemplateAsset>) {
+  use std::cell::RefCell;
+  use std::rc::Rc;
+  use std::sync::Arc;
+  use swc_core::common::{comments::SingleThreadedComments, FileName, Globals, SourceMap, GLOBALS};
+  use swc_core::ecma::codegen::{text_writer::JsWriter, Emitter};
+  use swc_core::ecma::parser::{lexer::Lexer, Parser, StringInput};
+  use swc_core::ecma::visit::VisitMutWith;
+
+  GLOBALS.set(&Globals::new(), || {
+    let cm: Arc<SourceMap> = Arc::new(SourceMap::default());
+    let fm = cm.new_source_file(FileName::Anon.into(), input.to_string());
+
+    let lexer = Lexer::new(
+      Syntax::Es(EsSyntax {
+        jsx: true,
+        ..Default::default()
+      }),
+      Default::default(),
+      StringInput::from(&*fm),
+      None,
+    );
+
+    let mut parser = Parser::new_from(lexer);
+    let module_result = parser.parse_module();
+    let mut module = module_result.expect("Failed to parse module");
+
+    let comments = SingleThreadedComments::default();
+    let element_templates = Rc::new(RefCell::new(vec![]));
+
+    let mut transformer = JSXTransformer::new(
+      cfg,
+      Some(comments),
+      TransformMode::Test,
+      Some(element_templates.clone()),
+    );
+
+    module.visit_mut_with(&mut transformer);
+
+    let mut buf = vec![];
+    {
+      let mut emitter = Emitter {
+        cfg: swc_core::ecma::codegen::Config::default(),
+        cm: cm.clone(),
+        comments: None,
+        wr: JsWriter::new(cm.clone(), "\n", &mut buf, None),
+      };
+      emitter.emit_module(&module).expect("Failed to emit module");
+    }
+
+    let code = String::from_utf8(buf).expect("Codegen output is not valid utf8");
+    let templates: Vec<_> = element_templates.borrow_mut().drain(..).collect();
+
+    (code, templates)
+  })
+}
+
+#[test]
+fn should_not_emit_element_template_map_in_element_template_mode() {
+  let (code, templates) = transform_to_code_and_templates(
+    r#"
+      <view class="container">
+        <text>Hello</text>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+  );
+
+  assert!(!templates.is_empty(), "Should collect element templates");
+  assert!(!code.contains("__elementTemplateMap"));
+  assert!(!code.contains("__template_"));
+  assert!(code.contains("const _et_"));
+  assert!(!code.contains("const __snapshot_"));
+
+  for template in templates {
+    assert!(template.template_id.starts_with("_et_"));
+    assert!(code.contains(&format!("\"{}\"", template.template_id)));
+  }
+}
+
+#[test]
+fn should_keep_snapshot_prefix_when_element_template_disabled() {
+  let (code, templates) = transform_to_code_and_templates(
+    r#"
+      <view>
+        <text>Hello</text>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: false,
+      ..Default::default()
+    },
+  );
+
+  assert!(templates.is_empty(), "Should not collect element templates");
+  assert!(code.contains("const __snapshot_"));
+  assert!(code.contains("snapshotCreatorMap"));
+  assert!(!code.contains("const _et_"));
+}
+
+#[test]
+fn should_collect_element_templates_for_dynamic_component_in_element_template_mode() {
+  let (code, templates) = transform_to_code_and_templates(
+    r#"
+      <view class="container">
+        <text>Hello</text>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      is_dynamic_component: Some(true),
+      ..Default::default()
+    },
+  );
+
+  assert!(!templates.is_empty(), "Should collect element templates");
+  assert!(!code.contains("__elementTemplateMap"));
+  assert!(code.contains("globDynamicComponentEntry"));
+
+  for template in templates {
+    assert!(template.template_id.starts_with("_et_"));
+    assert!(!template.template_id.contains(':'));
+  }
 }

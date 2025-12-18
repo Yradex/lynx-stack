@@ -1612,9 +1612,15 @@ where
 
     self.snapshot_counter += 1;
 
+    let use_element_template = self.cfg.experimental_enable_element_template;
+    let snapshot_uid_prefix = if use_element_template {
+      "_et"
+    } else {
+      "__snapshot"
+    };
     let snapshot_uid = format!(
-      "__snapshot_{}_{}_{}",
-      self.filename_hash, self.content_hash, self.snapshot_counter
+      "{}_{}_{}_{}",
+      snapshot_uid_prefix, self.filename_hash, self.content_hash, self.snapshot_counter
     );
     let snapshot_id = Ident::new(
       // format!("__snapshot_{}", snapshot_uid).into(),
@@ -1878,8 +1884,6 @@ where
       })
     };
 
-    let use_element_template = self.cfg.experimental_enable_element_template;
-
     let snapshot_create_call = quote!(
         r#"$runtime_id.snapshotCreatorMap[$snapshot_id] = ($snapshot_id) => $runtime_id.createSnapshot(
              $snapshot_id,
@@ -1929,19 +1933,8 @@ where
       let mut slot_index: i32 = 0;
       let template_expr = self.element_template_from_jsx_element(node, &mut slot_index);
       let suffix = snapshot_uid
-        .strip_prefix("__snapshot_")
+        .strip_prefix("_et_")
         .unwrap_or(snapshot_uid.as_str());
-      let template_id = Ident::new(
-        format!("_et_{suffix}").into(),
-        DUMMY_SP,
-        SyntaxContext::default().apply_mark(Mark::fresh(Mark::root())),
-      );
-
-      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
-          r#"const $template_id = $template_expr"# as Stmt,
-          template_id: Ident = template_id.clone(),
-          template_expr: Expr = template_expr.clone(),
-      )));
 
       if let Some(element_templates) = &self.element_templates {
         let compiled_template = self.element_template_to_json(&template_expr);
@@ -1951,16 +1944,6 @@ where
           source_file: self.cfg.filename.clone(),
         });
       }
-
-      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
-        r#"globalThis.__elementTemplateMap = globalThis.__elementTemplateMap || {}"# as Stmt,
-      )));
-
-      self.current_snapshot_defs.push(ModuleItem::Stmt(quote!(
-          r#"globalThis.__elementTemplateMap[$snapshot_id] = $template_id"# as Stmt,
-          snapshot_id: Ident = snapshot_id.clone(),
-          template_id: Ident = template_id,
-      )));
     } else {
       let snapshot_def = ModuleItem::Stmt(quote!(
           r#"$snapshot_create_call"#

@@ -153,34 +153,10 @@ export class A extends Component {
     expect(result.code).toMatchInlineSnapshot(`
       "import { jsx as _jsx } from "react/jsx-runtime";
       import { Component } from "@lynx-js/react";
-      const __snapshot_2d408_test_1 = "__snapshot_2d408_test_1";
-      const _et_2d408_test_1 = {
-          tag: "view",
-          attributes: {
-              class: "Logo",
-              id: "a",
-              style: "color:red;"
-          },
-          children: [
-              {
-                  tag: "text",
-                  attributes: {
-                      text: "Hello, "
-                  }
-              },
-              {
-                  tag: "slot",
-                  attributes: {
-                      "part-id": 0
-                  }
-              }
-          ]
-      };
-      globalThis.__elementTemplateMap = globalThis.__elementTemplateMap || {};
-      globalThis.__elementTemplateMap[__snapshot_2d408_test_1] = _et_2d408_test_1;
+      const _et_2d408_test_1 = "_et_2d408_test_1";
       export class A extends Component {
           render() {
-              return /*#__PURE__*/ _jsx(__snapshot_2d408_test_1, {
+              return /*#__PURE__*/ _jsx(_et_2d408_test_1, {
                   children: name
               });
           }
