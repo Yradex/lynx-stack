@@ -200,6 +200,9 @@ class ReactWebpackPlugin {
       __DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__: JSON.stringify(
         options.disableCreateSelectorQueryIncompatibleWarning,
       ),
+      __USE_ELEMENT_TEMPLATE__: JSON.stringify(
+        options.experimental_enableElementTemplate,
+      ),
     }).apply(compiler);
 
     compiler.hooks.thisCompilation.tap(this.constructor.name, compilation => {
