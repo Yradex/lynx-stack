@@ -18,6 +18,7 @@ export function applyLoaders(
     defineDCE,
     engineVersion,
     experimental_isLazyBundle,
+    experimentalEnableElementTemplate,
   } = options
 
   api.modifyBundlerChain((chain, { CHAIN_ID }) => {
@@ -57,6 +58,7 @@ export function applyLoaders(
           inlineSourcesContent,
           defineDCE,
           engineVersion,
+          experimental_enableElementTemplate: experimentalEnableElementTemplate,
         })
       .end()
 
@@ -97,6 +99,7 @@ export function applyLoaders(
           engineVersion,
           shake,
           defineDCE,
+          experimental_enableElementTemplate: experimentalEnableElementTemplate,
         })
       .end()
 

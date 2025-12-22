@@ -21,6 +21,7 @@ declare global {
   declare const __PROFILE__: boolean;
   declare const __ALOG__: boolean | undefined;
   declare const __ENABLE_SSR__: boolean;
+  declare const __USE_ELEMENT_TEMPLATE__: boolean;
 
   declare function __CreatePage(componentId: string, cssId: number): FiberElement;
   declare function __CreateElement(

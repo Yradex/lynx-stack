@@ -263,6 +263,13 @@ export interface PluginReactLynxOptions {
    * @alpha
    */
   experimental_isLazyBundle?: boolean
+
+  /**
+   * Whether to enable element template.
+   *
+   * @experimental
+   */
+  experimentalEnableElementTemplate?: boolean
 }
 
 /**
@@ -310,6 +317,7 @@ export function pluginReactLynx(
     extractStr: false,
 
     experimental_isLazyBundle: false,
+    experimentalEnableElementTemplate: false,
   }
   const resolvedOptions = Object.assign(defaultOptions, userOptions, {
     // Use `engineVersion` to override the default values

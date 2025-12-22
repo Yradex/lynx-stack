@@ -30,7 +30,7 @@ function renderMainThread(): void {
     }
   }
 
-  if (process.env['NODE_ENV'] === 'test') {
+  if (process.env['NODE_ENV'] === 'test' && !__USE_ELEMENT_TEMPLATE__) {
     opcodes = opcodes.map((opcode) => {
       if (isValidElement(opcode) && typeof opcode.type === 'string') {
         return Object.assign(new SnapshotInstance(opcode.type), opcode, { $$typeof: undefined });
@@ -43,9 +43,11 @@ function renderMainThread(): void {
   if (__PROFILE__) {
     profileStart('ReactLynx::renderOpcodes');
   }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  renderOpcodesInto(opcodes, __root as any);
-  if (__ENABLE_SSR__) {
+  if (!__USE_ELEMENT_TEMPLATE__) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    renderOpcodesInto(opcodes, __root as any);
+  }
+  if (__ENABLE_SSR__ || __USE_ELEMENT_TEMPLATE__) {
     __root.__opcodes = opcodes;
   }
   if (__PROFILE__) {
