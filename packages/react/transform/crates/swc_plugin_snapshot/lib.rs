@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::{
   cell::RefCell,
-  collections::{HashMap, HashSet},
+  collections::{BTreeMap, HashMap, HashSet},
 };
 
 use once_cell::sync::Lazy;
@@ -878,6 +878,21 @@ where
       if element_has_dynamic_parts && self.enable_element_template {
         let part_id = self.id_counter;
         self.id_counter += 1;
+
+        self.dynamic_parts.iter_mut().for_each(|part| match part {
+          DynamicPart::Attr(_, index, _) => {
+            if *index == self.element_index {
+              *index = part_id;
+            }
+          }
+          DynamicPart::Spread(_, index) => {
+            if *index == self.element_index {
+              *index = part_id;
+            }
+          }
+          _ => {}
+        });
+
         n.opening.attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
           span: DUMMY_SP,
           name: JSXAttrName::Ident(IdentName::new("__lynx_part_id".into(), DUMMY_SP)),
@@ -1638,22 +1653,26 @@ where
 
     let target = self.cfg.target;
     let runtime_id = self.runtime_id.clone();
+    let experimental_enable_element_template = self.cfg.experimental_enable_element_template;
     let mut dynamic_part_extractor = DynamicPartExtractor::new(
       self.runtime_id.clone(),
       wrap_dynamic_part.dynamic_part_count,
       self,
-      self.cfg.experimental_enable_element_template,
+      experimental_enable_element_template,
     );
 
     node.visit_mut_with(&mut dynamic_part_extractor);
 
-    let mut snapshot_values: Vec<Option<ExprOrSpread>> = vec![];
-    let mut snapshot_values_has_attr = false;
-    let mut snapshot_attrs: Vec<JSXAttrOrSpread> = vec![];
     let mut snapshot_children: Vec<JSXElementChild> = vec![];
     let mut snapshot_dynamic_part_def: Vec<Option<ExprOrSpread>> = vec![];
     let mut snapshot_refs_and_spread_index: Vec<Option<ExprOrSpread>> = vec![];
     let mut snapshot_slot_def: Vec<Option<ExprOrSpread>> = vec![];
+    let mut snapshot_values: Vec<Option<ExprOrSpread>> = vec![];
+    let mut snapshot_attrs: Vec<JSXAttrOrSpread> = vec![];
+    let mut snapshot_values_has_attr = false;
+
+    // Use a BTreeMap to group attributes by part-id (sorted by index)
+    let mut attrs_accumulator: BTreeMap<i32, Vec<PropOrSpread>> = BTreeMap::new();
 
     if let Some(key) = dynamic_part_extractor.key {
       snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
@@ -1731,11 +1750,33 @@ where
             DynamicPart::ListChildren(_, _) => {}
           }
 
-          match dynamic_part {
-            DynamicPart::Attr(value, _, attr_name) => {
-              snapshot_values.push(Some(ExprOrSpread {
-                spread: None,
-                expr: Box::new(if let AttrName::Event(_, _) = attr_name {
+          if experimental_enable_element_template {
+            match dynamic_part {
+              DynamicPart::Attr(value, element_index, attr_name) => {
+                let prop_key = match attr_name {
+                  AttrName::Attr(ref name) | AttrName::Dataset(ref name) => PropName::Str(Str {
+                    span: DUMMY_SP,
+                    value: name.as_str().into(),
+                    raw: None,
+                  }),
+                  AttrName::Event(ref name, _) => PropName::Str(Str {
+                    span: DUMMY_SP,
+                    value: name.as_str().into(),
+                    raw: None,
+                  }),
+                  AttrName::Ref => PropName::Ident(IdentName::new("ref".into(), DUMMY_SP)),
+                  AttrName::Class => PropName::Ident(IdentName::new("class".into(), DUMMY_SP)),
+                  AttrName::Style => PropName::Ident(IdentName::new("style".into(), DUMMY_SP)),
+                  AttrName::ID => PropName::Ident(IdentName::new("id".into(), DUMMY_SP)),
+                  _ => PropName::Str(Str {
+                    span: DUMMY_SP,
+                    // generic fallback, though other types might need specific handling
+                    value: "".into(),
+                    raw: None,
+                  }),
+                };
+
+                let prop_value = if let AttrName::Event(_, _) = attr_name {
                   if target == TransformTarget::LEPUS {
                     quote!("1" as Expr)
                   } else {
@@ -1753,44 +1794,74 @@ where
                   }
                 } else {
                   value
-                }),
-              }));
-              snapshot_values_has_attr = true;
-              // snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
-              //   span: DUMMY_SP,
-              //   name,
-              //   value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-              //     span: DUMMY_SP,
-              //     expr: JSXExpr::Expr(Box::new(if let AttrName::Event(_, _) = attr_name {
-              //       if target == TransformTarget::LEPUS {
-              //         Expr::Lit(Lit::Null(Null { span: DUMMY_SP }))
-              //       } else {
-              //         value
-              //       }
-              //     } else {
-              //       value
-              //     })),
-              //   })),
-              // }));
+                };
+
+                // Ensure we handle keys correctly for AttrName variants that map to string keys
+                let prop_key = match prop_key {
+                  PropName::Ident(ident) => PropName::Ident(ident),
+                  PropName::Str(str_val) => PropName::Str(str_val),
+                  _ => PropName::Ident(IdentName::new("unknown".into(), DUMMY_SP)),
+                };
+
+                attrs_accumulator
+                  .entry(element_index)
+                  .or_insert_with(Vec::new)
+                  .push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                    key: prop_key,
+                    value: Box::new(prop_value),
+                  }))));
+                snapshot_values_has_attr = true;
+              }
+              DynamicPart::Spread(value, element_index) => {
+                attrs_accumulator
+                  .entry(element_index)
+                  .or_insert_with(Vec::new)
+                  .push(PropOrSpread::Spread(SpreadElement {
+                    dot3_token: DUMMY_SP,
+                    expr: Box::new(value),
+                  }));
+                snapshot_values_has_attr = true;
+              }
+              _ => {}
             }
-            DynamicPart::Spread(value, _) => {
-              snapshot_values.push(Some(ExprOrSpread {
-                spread: None,
-                expr: Box::new(value),
-              }));
-              snapshot_values_has_attr = true;
-              // snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
-              //   span: DUMMY_SP,
-              //   name,
-              //   value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-              //     span: DUMMY_SP,
-              //     expr: JSXExpr::Expr(Box::new(value)),
-              //   })),
-              // }));
+          } else {
+            match dynamic_part {
+              DynamicPart::Attr(value, _, attr_name) => {
+                snapshot_values.push(Some(ExprOrSpread {
+                  spread: None,
+                  expr: Box::new(if let AttrName::Event(_, _) = attr_name {
+                    if target == TransformTarget::LEPUS {
+                      quote!("1" as Expr)
+                    } else {
+                      value
+                    }
+                  } else if let AttrName::Ref = attr_name {
+                    if target == TransformTarget::LEPUS {
+                      quote!("1" as Expr)
+                    } else {
+                      quote!(
+                        "$runtime_id.transformRef($value)" as Expr,
+                        runtime_id: Expr = runtime_id.clone(),
+                        value: Expr = value,
+                      )
+                    }
+                  } else {
+                    value
+                  }),
+                }));
+                snapshot_values_has_attr = true;
+              }
+              DynamicPart::Spread(value, _) => {
+                snapshot_values.push(Some(ExprOrSpread {
+                  spread: None,
+                  expr: Box::new(value),
+                }));
+                snapshot_values_has_attr = true;
+              }
+              DynamicPart::ListChildren(_, _) => {}
+              DynamicPart::Children(_, _) => {}
+              DynamicPart::Slot(_, _) => {}
             }
-            DynamicPart::ListChildren(_, _) => {}
-            DynamicPart::Children(_, _) => {}
-            DynamicPart::Slot(_, _) => {}
           }
         },
       );
@@ -1960,17 +2031,50 @@ where
         span: node.span,
         attrs: {
           if snapshot_values_has_attr {
-            snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
-              span: DUMMY_SP,
-              name: JSXAttrName::Ident(IdentName::new("values".into(), DUMMY_SP)),
-              value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-                span: DUMMY_SP,
-                expr: JSXExpr::Expr(Box::new(Expr::Array(ArrayLit {
+            if self.cfg.experimental_enable_element_template {
+              let mut props = vec![];
+              for (element_index, attrs) in attrs_accumulator {
+                // Determine whether the key requires quotes.
+                // Numbers can be used directly as keys in object literals, behaving like strings.
+                let key = PropName::Num(Number {
                   span: DUMMY_SP,
-                  elems: snapshot_values,
-                }))),
-              })),
-            }))
+                  value: element_index as f64,
+                  raw: None, // Let the printer handle formatting if needed, or provide string if strictly required
+                });
+
+                props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+                  key,
+                  value: Box::new(Expr::Object(ObjectLit {
+                    span: DUMMY_SP,
+                    props: attrs,
+                  })),
+                }))));
+              }
+
+              snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
+                span: DUMMY_SP,
+                name: JSXAttrName::Ident(IdentName::new("attrs".into(), DUMMY_SP)),
+                value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+                  span: DUMMY_SP,
+                  expr: JSXExpr::Expr(Box::new(Expr::Object(ObjectLit {
+                    span: DUMMY_SP,
+                    props,
+                  }))),
+                })),
+              }));
+            } else {
+              snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
+                span: DUMMY_SP,
+                name: JSXAttrName::Ident(IdentName::new("values".into(), DUMMY_SP)),
+                value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+                  span: DUMMY_SP,
+                  expr: JSXExpr::Expr(Box::new(Expr::Array(ArrayLit {
+                    span: DUMMY_SP,
+                    elems: snapshot_values,
+                  }))),
+                })),
+              }))
+            }
           };
           snapshot_attrs
         },

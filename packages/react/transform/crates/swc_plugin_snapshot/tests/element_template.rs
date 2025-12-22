@@ -665,6 +665,15 @@ fn should_verify_template_structure_complex() {
     "#,
     "complex_usage",
   );
+  verify_template_json(
+    r#"
+    <view>
+        <text text="Explicit Text Attribute" />
+        <text text={dynamicText} />
+    </view>
+    "#,
+    "text_attributes",
+  );
 }
 
 #[track_caller]

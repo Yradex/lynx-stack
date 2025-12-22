@@ -1,0 +1,21 @@
+---
+source: packages/react/transform/crates/swc_plugin_snapshot/tests/element_template.rs
+expression: actual_json
+---
+{
+  "tag": "view",
+  "children": [
+    {
+      "tag": "text",
+      "attributes": {
+        "text": "Explicit Text Attribute"
+      }
+    },
+    {
+      "tag": "text",
+      "attributes": {
+        "part-id": 0.0
+      }
+    }
+  ]
+}
