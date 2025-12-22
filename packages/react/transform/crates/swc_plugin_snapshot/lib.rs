@@ -141,6 +141,32 @@ fn bool_jsx_attr(value: bool) -> JSXAttrValue {
   })
 }
 
+fn wrap_in_slot(slot_ident: &Ident, id: i32, child: JSXElementChild) -> JSXElementChild {
+  let slot_name = JSXElementName::Ident(slot_ident.clone());
+  JSXElementChild::JSXElement(Box::new(JSXElement {
+    span: DUMMY_SP,
+    opening: JSXOpeningElement {
+      span: DUMMY_SP,
+      name: slot_name.clone(),
+      attrs: vec![JSXAttrOrSpread::JSXAttr(JSXAttr {
+        span: DUMMY_SP,
+        name: JSXAttrName::Ident(IdentName::new("id".into(), DUMMY_SP)),
+        value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+          span: DUMMY_SP,
+          expr: JSXExpr::Expr(Box::new(i32_to_expr(&id))),
+        })),
+      })],
+      self_closing: false,
+      type_args: None,
+    },
+    closing: Some(JSXClosingElement {
+      span: DUMMY_SP,
+      name: slot_name,
+    }),
+    children: vec![child],
+  }))
+}
+
 impl DynamicPart {
   fn to_updater(&self, runtime_id: Expr, target: TransformTarget, exp_index: i32) -> Expr {
     match target {
@@ -1131,6 +1157,8 @@ where
   current_snapshot_defs: Vec<ModuleItem>,
   current_snapshot_id: Option<Ident>,
   comments: Option<C>,
+  slot_ident: Ident,
+  used_slot: bool,
 }
 
 impl<C> JSXTransformer<C>
@@ -1169,6 +1197,8 @@ where
       current_snapshot_defs: vec![],
       current_snapshot_id: None,
       comments,
+      slot_ident: private_ident!("Slot"),
+      used_slot: false,
     }
   }
 
@@ -1654,14 +1684,33 @@ where
     let target = self.cfg.target;
     let runtime_id = self.runtime_id.clone();
     let experimental_enable_element_template = self.cfg.experimental_enable_element_template;
-    let mut dynamic_part_extractor = DynamicPartExtractor::new(
-      self.runtime_id.clone(),
-      wrap_dynamic_part.dynamic_part_count,
-      self,
-      experimental_enable_element_template,
-    );
+    let (key, snapshot_creator_func, (dynamic_part_attr, dynamic_part_children)): (
+      Option<JSXAttrValue>,
+      Option<Function>,
+      (Vec<_>, Vec<_>),
+    ) = {
+      let mut dynamic_part_extractor = DynamicPartExtractor::new(
+        self.runtime_id.clone(),
+        wrap_dynamic_part.dynamic_part_count,
+        self,
+        experimental_enable_element_template,
+      );
 
-    node.visit_mut_with(&mut dynamic_part_extractor);
+      node.visit_mut_with(&mut dynamic_part_extractor);
+
+      (
+        dynamic_part_extractor.key,
+        dynamic_part_extractor.snapshot_creator,
+        dynamic_part_extractor.dynamic_parts.into_iter().partition(
+          |dynamic_part| match dynamic_part {
+            DynamicPart::Attr(_, _, _) | DynamicPart::Spread(_, _) => true,
+            DynamicPart::Slot(_, _)
+            | DynamicPart::Children(_, _)
+            | DynamicPart::ListChildren(_, _) => false,
+          },
+        ),
+      )
+    };
 
     let mut snapshot_children: Vec<JSXElementChild> = vec![];
     let mut snapshot_dynamic_part_def: Vec<Option<ExprOrSpread>> = vec![];
@@ -1674,23 +1723,13 @@ where
     // Use a BTreeMap to group attributes by part-id (sorted by index)
     let mut attrs_accumulator: BTreeMap<i32, Vec<PropOrSpread>> = BTreeMap::new();
 
-    if let Some(key) = dynamic_part_extractor.key {
+    if let Some(key) = key {
       snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
         span: DUMMY_SP,
         name: JSXAttrName::Ident(IdentName::new("key".into(), DUMMY_SP)),
         value: Some(key),
       }));
     }
-
-    let (dynamic_part_attr, dynamic_part_children): (Vec<_>, Vec<_>) = dynamic_part_extractor
-      .dynamic_parts
-      .into_iter()
-      .partition(|dynamic_part| match dynamic_part {
-        DynamicPart::Attr(_, _, _) | DynamicPart::Spread(_, _) => true,
-        DynamicPart::Slot(_, _) | DynamicPart::Children(_, _) | DynamicPart::ListChildren(_, _) => {
-          false
-        }
-      });
 
     dynamic_part_attr
       .into_iter()
@@ -1870,12 +1909,18 @@ where
       (0, _) => Expr::Lit(Lit::Null(Null { span: DUMMY_SP })),
       (1, Some(DynamicPart::Children(expr, 0))) => {
         let expr = expr.clone();
-        snapshot_children.push(match expr {
+        let child = match expr {
           Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
           _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
             span: DUMMY_SP,
             expr: JSXExpr::Expr(Box::new(expr)),
           }),
+        };
+        snapshot_children.push(if use_element_template {
+          self.used_slot = true;
+          wrap_in_slot(&self.slot_ident, 0, child)
+        } else {
+          child
         });
 
         quote!(
@@ -1890,12 +1935,18 @@ where
             DynamicPart::Spread(_, _) => {}
             DynamicPart::ListChildren(expr, element_index) => {
               // snapshot_values.push(None);
-              snapshot_children.push(match expr {
+              let child = match expr {
                 Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
                 _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
                   span: DUMMY_SP,
                   expr: JSXExpr::Expr(Box::new(expr)),
                 }),
+              };
+              snapshot_children.push(if use_element_template {
+                self.used_slot = true;
+                wrap_in_slot(&self.slot_ident, element_index, child)
+              } else {
+                child
               });
               snapshot_slot_def.push(Some(ExprOrSpread {
                 spread: None,
@@ -1908,12 +1959,18 @@ where
             }
             DynamicPart::Children(expr, element_index) => {
               // snapshot_values.push(None);
-              snapshot_children.push(match expr {
+              let child = match expr {
                 Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
                 _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
                   span: DUMMY_SP,
                   expr: JSXExpr::Expr(Box::new(expr)),
                 }),
+              };
+              snapshot_children.push(if use_element_template {
+                self.used_slot = true;
+                wrap_in_slot(&self.slot_ident, element_index, child)
+              } else {
+                child
               });
               snapshot_slot_def.push(Some(ExprOrSpread {
                 spread: None,
@@ -1926,7 +1983,12 @@ where
             }
             DynamicPart::Slot(jsx, element_index) => {
               // snapshot_values.push(None);
-              snapshot_children.push(jsx);
+              snapshot_children.push(if use_element_template {
+                self.used_slot = true;
+                wrap_in_slot(&self.slot_ident, element_index, jsx)
+              } else {
+                jsx
+              });
               snapshot_slot_def.push(Some(ExprOrSpread {
                 spread: None,
                 expr: Box::new(quote!(
@@ -1951,7 +2013,7 @@ where
     } else {
       Expr::Fn(FnExpr {
         ident: None,
-        function: Box::new(dynamic_part_extractor.snapshot_creator.unwrap()),
+        function: Box::new(snapshot_creator_func.unwrap()),
       })
     };
 
@@ -2136,6 +2198,33 @@ where
           }),
           type_only: Default::default(),
           // asserts: Default::default(),
+          with: Default::default(),
+          phase: ImportPhase::Evaluation,
+        })),
+      );
+    }
+
+    if self.cfg.experimental_enable_element_template && self.used_slot {
+      prepend_stmt(
+        &mut n.body,
+        ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
+          span: DUMMY_SP,
+          specifiers: vec![ImportSpecifier::Named(ImportNamedSpecifier {
+            span: DUMMY_SP,
+            local: self.slot_ident.clone(),
+            imported: Some(ModuleExportName::Ident(Ident::new(
+              "Slot".into(),
+              DUMMY_SP,
+              SyntaxContext::default(),
+            ))),
+            is_type_only: false,
+          })],
+          src: Box::new(Str {
+            span: DUMMY_SP,
+            raw: None,
+            value: self.cfg.runtime_pkg.clone().into(),
+          }),
+          type_only: Default::default(),
           with: Default::default(),
           phase: ImportPhase::Evaluation,
         })),

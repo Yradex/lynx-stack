@@ -592,6 +592,33 @@ test!(
     "#
 );
 
+test!(
+  module,
+  Syntax::Es(EsSyntax {
+    jsx: true,
+    ..Default::default()
+  }),
+  |t| visit_mut_pass(JSXTransformer::new(
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+    Some(t.comments.clone()),
+    TransformMode::Test,
+    None,
+  )),
+  should_isolate_arrays_with_slot_wrapper,
+  // Input codes
+  r#"
+    <view>
+        {["a", "b"]}
+        <text>Static</text>
+        {["c", "d"]}
+    </view>
+    "#
+);
+
 #[track_caller]
 fn verify_template_json(input: &str, snapshot_name: &str) {
   use std::cell::RefCell;
@@ -673,6 +700,16 @@ fn should_verify_template_structure_complex() {
     </view>
     "#,
     "text_attributes",
+  );
+  verify_template_json(
+    r#"
+    <view>
+        {["a", "b"]}
+        <text>Static</text>
+        {["c", "d"]}
+    </view>
+    "#,
+    "array_isolation",
   );
 }
 
