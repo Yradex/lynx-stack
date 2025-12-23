@@ -4,6 +4,15 @@ expression: actual_jsons
 ---
 [
   {
+    "template_id": "_et_da39a_test_2",
+    "template": {
+      "tag": "text",
+      "attributes": {
+        "text": "hello"
+      }
+    }
+  },
+  {
     "template_id": "_et_da39a_test_1",
     "template": {
       "tag": "view",
@@ -12,18 +21,6 @@ expression: actual_jsons
           "tag": "slot",
           "attributes": {
             "part-id": 0.0
-          }
-        },
-        {
-          "tag": "text",
-          "attributes": {
-            "text": "Static"
-          }
-        },
-        {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 1.0
           }
         }
       ]

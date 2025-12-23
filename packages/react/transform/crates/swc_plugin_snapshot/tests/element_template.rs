@@ -619,6 +619,33 @@ test!(
     "#
 );
 
+test!(
+  module,
+  Syntax::Es(EsSyntax {
+    jsx: true,
+    ..Default::default()
+  }),
+  |t| visit_mut_pass(JSXTransformer::new(
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+    Some(t.comments.clone()),
+    TransformMode::Test,
+    None,
+  )),
+  should_handle_user_component,
+  // Input codes
+  r#"
+    <view>
+      <Component id={1}>
+        <text>hello</text>
+      </Component>
+    </view>
+    "#
+);
+
 #[track_caller]
 fn verify_template_json(input: &str, snapshot_name: &str) {
   use std::cell::RefCell;
@@ -669,14 +696,22 @@ fn verify_template_json(input: &str, snapshot_name: &str) {
     let templates = element_templates.borrow();
     assert!(!templates.is_empty(), "Should collect element templates");
 
-    // Assuming single root/template for the helper
-    let template = &templates[0];
-    let actual_json = &template.compiled_template;
+    // Collect all compiled templates for snapshot, including template_id
+    let actual_jsons: Vec<_> = templates
+      .iter()
+      .map(|t| {
+        serde_json::json!({
+            "template_id": t.template_id,
+            "template": t.compiled_template
+        })
+      })
+      .collect();
+
     insta::with_settings!({
         snapshot_path => "__json_snapshots__",
         prepend_module_to_snapshot => false,
     }, {
-        insta::assert_json_snapshot!(snapshot_name, actual_json);
+        insta::assert_json_snapshot!(snapshot_name, actual_jsons);
     });
   });
 }
@@ -701,6 +736,16 @@ fn should_verify_template_structure_complex() {
     </view>
     "#,
     "text_attributes",
+  );
+  verify_template_json(
+    r#"
+      <view>
+        <Component id={1}>
+          <text>hello</text>
+        </Component>
+      </view>
+    "#,
+    "user_component",
   );
   verify_template_json(
     r#"

@@ -1,32 +1,37 @@
 ---
 source: packages/react/transform/crates/swc_plugin_snapshot/tests/element_template.rs
-expression: actual_json
+expression: actual_jsons
 ---
-{
-  "tag": "view",
-  "children": [
-    {
-      "tag": "text",
-      "attributes": {
-        "text": "Explicit Text Attribute"
-      }
-    },
-    {
-      "tag": "text",
-      "attributes": {
-        "part-id": 0.0
-      }
-    },
-    {
-      "tag": "text",
+[
+  {
+    "template_id": "_et_da39a_test_1",
+    "template": {
+      "tag": "view",
       "children": [
         {
-          "tag": "slot",
+          "tag": "text",
           "attributes": {
-            "part-id": 1.0
+            "text": "Explicit Text Attribute"
           }
+        },
+        {
+          "tag": "text",
+          "attributes": {
+            "part-id": 0.0
+          }
+        },
+        {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 1.0
+              }
+            }
+          ]
         }
       ]
     }
-  ]
-}
+  }
+]

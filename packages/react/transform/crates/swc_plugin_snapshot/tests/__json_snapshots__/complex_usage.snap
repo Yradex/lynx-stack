@@ -1,25 +1,30 @@
 ---
 source: packages/react/transform/crates/swc_plugin_snapshot/tests/element_template.rs
-expression: actual_json
+expression: actual_jsons
 ---
-{
-  "tag": "view",
-  "attributes": {
-    "class": "container",
-    "part-id": 0.0
-  },
-  "children": [
-    {
-      "tag": "text",
+[
+  {
+    "template_id": "_et_da39a_test_1",
+    "template": {
+      "tag": "view",
       "attributes": {
-        "text": "Static"
-      }
-    },
-    {
-      "tag": "image",
-      "attributes": {
-        "part-id": 1.0
-      }
+        "class": "container",
+        "part-id": 0.0
+      },
+      "children": [
+        {
+          "tag": "text",
+          "attributes": {
+            "text": "Static"
+          }
+        },
+        {
+          "tag": "image",
+          "attributes": {
+            "part-id": 1.0
+          }
+        }
+      ]
     }
-  ]
-}
+  }
+]
