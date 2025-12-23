@@ -697,6 +697,7 @@ fn should_verify_template_structure_complex() {
     <view>
         <text text="Explicit Text Attribute" />
         <text text={dynamicText} />
+        <text>{dynamicText2}</text>
     </view>
     "#,
     "text_attributes",

@@ -16,6 +16,17 @@ expression: actual_json
       "attributes": {
         "part-id": 0.0
       }
+    },
+    {
+      "tag": "text",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 1.0
+          }
+        }
+      ]
     }
   ]
 }

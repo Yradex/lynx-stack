@@ -6,9 +6,11 @@ import { SnapshotInstance, snapshotCreatorMap } from '../../src/snapshot';
 
 describe('Element Template Switch', () => {
   let originalUseElementTemplate;
+  let originalEnableSSR;
 
   beforeEach(() => {
     originalUseElementTemplate = globalThis.__USE_ELEMENT_TEMPLATE__;
+    originalEnableSSR = globalThis.__ENABLE_SSR__;
     __root.__jsx = null;
     __root.__opcodes = undefined;
 
@@ -20,6 +22,7 @@ describe('Element Template Switch', () => {
 
   afterEach(() => {
     globalThis.__USE_ELEMENT_TEMPLATE__ = originalUseElementTemplate;
+    globalThis.__ENABLE_SSR__ = originalEnableSSR;
     delete snapshotCreatorMap['view'];
   });
 
@@ -68,5 +71,30 @@ describe('Element Template Switch', () => {
     renderMainThread();
 
     expect(insertSpy).toHaveBeenCalled();
+  });
+
+  it('should not store opcodes when SSR and Element Template are both OFF', () => {
+    globalThis.__USE_ELEMENT_TEMPLATE__ = false;
+    globalThis.__ENABLE_SSR__ = false;
+
+    const vnode = jsx('view', { id: 'root' });
+    __root.__jsx = vnode;
+
+    renderMainThread();
+
+    expect(__root.__opcodes).toBeUndefined();
+  });
+
+  it('should store opcodes when SSR is OFF but Element Template is ON', () => {
+    globalThis.__USE_ELEMENT_TEMPLATE__ = true;
+    globalThis.__ENABLE_SSR__ = false;
+
+    const vnode = jsx('view', { id: 'root' });
+    __root.__jsx = vnode;
+
+    renderMainThread();
+
+    expect(__root.__opcodes).toBeDefined();
+    expect(__root.__opcodes.length).toBeGreaterThan(0);
   });
 });

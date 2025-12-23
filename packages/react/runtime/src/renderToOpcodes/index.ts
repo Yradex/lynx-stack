@@ -12,6 +12,7 @@
 
 import { Fragment, h, options } from 'preact';
 
+import { Slot } from '../element-template/slot';
 import {
   CHILDREN,
   COMMIT,
@@ -94,6 +95,8 @@ export const __OpBegin = 0;
 export const __OpEnd = 1;
 export const __OpAttr = 2;
 export const __OpText = 3;
+export const __OpSlotBegin = 4;
+export const __OpSlotEnd = 5;
 
 /**
  * @param {VNode} vnode
@@ -196,6 +199,16 @@ function _renderToString(
 
   // Invoke rendering on Components
   if (typeof type === 'function') {
+    if (type === Slot && __USE_ELEMENT_TEMPLATE__) {
+      opcodes.push(__OpSlotBegin, props.id);
+      _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+      opcodes.push(__OpSlotEnd);
+      if (afterDiff) afterDiff(vnode);
+      vnode[PARENT] = undefined;
+      if (ummountHook) ummountHook(vnode);
+      return;
+    }
+
     if (type === Fragment) {
       rendered = props.children;
     } else {

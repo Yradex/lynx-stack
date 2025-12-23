@@ -35,6 +35,7 @@ function transformReactLynxPlugin(): Plugin {
           jsxImportSource: '@lynx-js/react',
           filename: 'test',
           target: 'MIXED',
+          experimentalEnableElementTemplate: relativePath.includes('.et.test.'),
         },
         dynamicImport: false,
         // snapshot: true,
