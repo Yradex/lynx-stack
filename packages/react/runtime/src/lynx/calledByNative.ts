@@ -96,7 +96,7 @@ function renderPage(data: Record<string, unknown> | undefined): void {
   __pendingListUpdates.flush();
   applyRefQueue();
 
-  if (__FIRST_SCREEN_SYNC_TIMING__ === 'immediately') {
+  if (__FIRST_SCREEN_SYNC_TIMING__ === 'immediately' && !__USE_ELEMENT_TEMPLATE__) {
     jsReady();
   }
 }
