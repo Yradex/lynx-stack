@@ -101,6 +101,7 @@ export default defineConfig({
         '__test__/page.test.jsx',
         '**/*.d.ts',
         '**/*.test-d.*',
+        '__test__/element-template/**',
       ],
       thresholds: {
         lines: 100,

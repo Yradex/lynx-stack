@@ -8,13 +8,19 @@ export interface ElementTemplateHandle {
   nativeRef: ElementRef;
 }
 
+let nextId = -1;
+
 export function createElementTemplateHandle(
-  id: number,
   nativeRef: ElementRef,
 ): ElementTemplateHandle {
+  const id = nextId--;
   const handle: ElementTemplateHandle = { id, nativeRef };
   ElementTemplateRegistry.set(id, handle);
   return handle;
+}
+
+export function resetTemplateId(): void {
+  nextId = -1;
 }
 
 export function patchElementTemplateHandle(

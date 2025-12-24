@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { jsx } from '../../lepus/jsx-runtime';
 import { renderMainThread } from '../../src/lifecycle/render';
 import { __root } from '../../src/root';
-import { SnapshotInstance, snapshotCreatorMap } from '../../src/snapshot';
+import { SnapshotInstance, snapshotCreatorMap, setupPage, snapshotManager } from '../../src/snapshot';
+import { installMockNativePapi } from './utils/mockNativePapi';
 
 describe('Element Template Switch', () => {
   let originalUseElementTemplate;
@@ -15,9 +16,22 @@ describe('Element Template Switch', () => {
     __root.__opcodes = undefined;
 
     // Register a dummy snapshot creator for 'view' to avoid "Snapshot not found" error
-    snapshotCreatorMap['view'] = () => {};
+    snapshotCreatorMap['view'] = (type) => {
+      snapshotManager.values.set(type, {
+        create: () => [__CreateElement('view', 0)],
+        update: [],
+        slot: [],
+        isListHolder: false,
+      });
+    };
+
+    // @ts-ignore
+    setupPage(__CreatePage('0', 0));
+    // @ts-ignore
+    __root.ensureElements();
 
     vi.clearAllMocks();
+    installMockNativePapi();
   });
 
   afterEach(() => {

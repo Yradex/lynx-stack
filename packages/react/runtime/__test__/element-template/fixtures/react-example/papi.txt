@@ -1,0 +1,55 @@
+[
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      4,
+      0,
+      {
+        "src": "./assets/lynx-logo.png"
+      }
+    ],
+    null
+  ],
+  [
+    "__CreateRawText",
+    " src/App.tsx "
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      4,
+      0,
+      {
+        "bindEvent": 1
+      },
+      4,
+      2,
+      {
+        "src": "./assets/arrow.png"
+      },
+      2,
+      1,
+      null,
+      {
+        "tag": "image",
+        "attributes": {
+          "class": "Logo--lynx",
+          "part-id": 0,
+          "src": "./assets/lynx-logo.png"
+        }
+      },
+      2,
+      3,
+      null,
+      {
+        "type": "rawText",
+        "text": " src/App.tsx "
+      }
+    ],
+    null
+  ]
+]

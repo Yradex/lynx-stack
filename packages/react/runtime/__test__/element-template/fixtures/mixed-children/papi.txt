@@ -1,0 +1,43 @@
+[
+  [
+    "__CreateRawText",
+    "A"
+  ],
+  [
+    "__CreateRawText",
+    "B"
+  ],
+  [
+    "__CreateRawText",
+    "C"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "A"
+      },
+      2,
+      1,
+      null,
+      {
+        "type": "rawText",
+        "text": "B"
+      },
+      2,
+      2,
+      null,
+      {
+        "type": "rawText",
+        "text": "C"
+      }
+    ],
+    null
+  ]
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "templateId": "_et_7a8c6_test_1",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_2",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  }
+]

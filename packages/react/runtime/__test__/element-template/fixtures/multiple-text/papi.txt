@@ -1,0 +1,310 @@
+[
+  [
+    "__CreateRawText",
+    "A"
+  ],
+  [
+    "__CreateRawText",
+    "B"
+  ],
+  [
+    "__CreateRawText",
+    "C"
+  ],
+  [
+    "__CreateRawText",
+    "A"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "A"
+      }
+    ],
+    null
+  ],
+  [
+    "__CreateRawText",
+    "B"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "B"
+      }
+    ],
+    null
+  ],
+  [
+    "__CreateRawText",
+    "C"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "C"
+      }
+    ],
+    null
+  ],
+  [
+    "__CreateRawText",
+    "A"
+  ],
+  [
+    "__CreateRawText",
+    "B"
+  ],
+  [
+    "__CreateRawText",
+    "C"
+  ],
+  [
+    "__CreateRawText",
+    "A"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "A"
+      }
+    ],
+    null
+  ],
+  [
+    "__CreateRawText",
+    "B"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "B"
+      }
+    ],
+    null
+  ],
+  [
+    "__CreateRawText",
+    "C"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "C"
+      }
+    ],
+    null
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "A"
+      },
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "B"
+      },
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "C"
+      },
+      2,
+      1,
+      null,
+      {
+        "tag": "text",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "A"
+              }
+            ]
+          }
+        ]
+      },
+      2,
+      1,
+      null,
+      {
+        "tag": "text",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "B"
+              }
+            ]
+          }
+        ]
+      },
+      2,
+      1,
+      null,
+      {
+        "tag": "text",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "C"
+              }
+            ]
+          }
+        ]
+      },
+      2,
+      2,
+      null,
+      {
+        "type": "rawText",
+        "text": "A"
+      },
+      2,
+      2,
+      null,
+      {
+        "type": "rawText",
+        "text": "B"
+      },
+      2,
+      2,
+      null,
+      {
+        "type": "rawText",
+        "text": "C"
+      },
+      2,
+      3,
+      null,
+      {
+        "tag": "text",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "A"
+              }
+            ]
+          }
+        ]
+      },
+      2,
+      3,
+      null,
+      {
+        "tag": "text",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "B"
+              }
+            ]
+          }
+        ]
+      },
+      2,
+      3,
+      null,
+      {
+        "tag": "text",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "C"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    null
+  ]
+]

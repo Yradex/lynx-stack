@@ -1,0 +1,41 @@
+[
+  {
+    "templateId": "_et_7a8c6_test_1",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        },
+        {
+          "tag": "text",
+          "attributes": {
+            "text": "Hello"
+          }
+        },
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 1
+          }
+        },
+        {
+          "tag": "text",
+          "attributes": {
+            "text": "World"
+          }
+        },
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 2
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  }
+]

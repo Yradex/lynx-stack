@@ -1,0 +1,45 @@
+import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
+import { Slot as Slot } from "@lynx-js/react/internal";
+import { Component } from '@lynx-js/react';
+const _et_7a8c6_test_2 = "_et_7a8c6_test_2";
+const _et_7a8c6_test_3 = "_et_7a8c6_test_3";
+const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
+export class App extends Component {
+    render() {
+        const items = [
+            'A',
+            'B',
+            'C'
+        ];
+        return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+            children: [
+                /*#__PURE__*/ _jsx(Slot, {
+                    id: 0,
+                    children: items
+                }),
+                /*#__PURE__*/ _jsx(Slot, {
+                    id: 1,
+                    children: items.map((item)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+                            children: /*#__PURE__*/ _jsx(Slot, {
+                                id: 0,
+                                children: item
+                            })
+                        }))
+                }),
+                /*#__PURE__*/ _jsx(Slot, {
+                    id: 2,
+                    children: items
+                }),
+                /*#__PURE__*/ _jsx(Slot, {
+                    id: 3,
+                    children: items.map((item)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
+                            children: /*#__PURE__*/ _jsx(Slot, {
+                                id: 0,
+                                children: item
+                            })
+                        }))
+                })
+            ]
+        });
+    }
+}

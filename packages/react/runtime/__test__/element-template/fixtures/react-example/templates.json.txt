@@ -1,0 +1,146 @@
+[
+  {
+    "templateId": "_et_7a8c6_test_2",
+    "compiledTemplate": {
+      "tag": "image",
+      "attributes": {
+        "class": "Logo--react",
+        "part-id": 0
+      }
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_3",
+    "compiledTemplate": {
+      "tag": "image",
+      "attributes": {
+        "class": "Logo--lynx",
+        "part-id": 0
+      }
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_1",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "Background"
+          }
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "App"
+          },
+          "children": [
+            {
+              "tag": "view",
+              "attributes": {
+                "class": "Banner"
+              },
+              "children": [
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "Logo",
+                    "part-id": 0
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "part-id": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "Title",
+                    "text": "React"
+                  }
+                },
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "Subtitle",
+                    "text": "on Lynx"
+                  }
+                }
+              ]
+            },
+            {
+              "tag": "view",
+              "attributes": {
+                "class": "Content"
+              },
+              "children": [
+                {
+                  "tag": "image",
+                  "attributes": {
+                    "class": "Arrow",
+                    "part-id": 2
+                  }
+                },
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "Description",
+                    "text": "Tap the logo and have fun!"
+                  }
+                },
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "Hint"
+                  },
+                  "children": [
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "text": "Edit"
+                      }
+                    },
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "style": "font-style:italic;color:rgba(255, 255, 255, 0.85)"
+                      },
+                      "children": [
+                        {
+                          "tag": "slot",
+                          "attributes": {
+                            "part-id": 3
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "text": "to see updates!"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "view",
+              "attributes": {
+                "style": "flex:1"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  }
+]

@@ -1,0 +1,49 @@
+[
+  [
+    "__CreateRawText",
+    "X"
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "type": "rawText",
+        "text": "X"
+      }
+    ],
+    null
+  ],
+  [
+    "__ElementFromBinary",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      2,
+      0,
+      null,
+      {
+        "tag": "view",
+        "children": [
+          {
+            "tag": "slot",
+            "attributes": {
+              "part-id": 0
+            },
+            "children": [
+              {
+                "type": "rawText",
+                "text": "X"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    null
+  ]
+]

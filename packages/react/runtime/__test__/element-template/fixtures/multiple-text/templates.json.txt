@@ -1,0 +1,107 @@
+[
+  {
+    "templateId": "_et_7a8c6_test_2",
+    "compiledTemplate": {
+      "tag": "text",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_3",
+    "compiledTemplate": {
+      "tag": "text",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_1",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "view",
+          "attributes": {
+            "id": "1"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              }
+            }
+          ]
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "id": "2"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 1
+              }
+            }
+          ]
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "id": "3"
+          },
+          "children": [
+            {
+              "tag": "text",
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "part-id": 2
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "id": "4"
+          },
+          "children": [
+            {
+              "tag": "text",
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "part-id": 3
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  }
+]

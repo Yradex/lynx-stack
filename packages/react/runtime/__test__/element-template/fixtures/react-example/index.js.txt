@@ -1,0 +1,51 @@
+import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
+import { Slot as Slot } from "@lynx-js/react/internal";
+import { useCallback, useEffect, useState } from '@lynx-js/react';
+const arrow = './assets/arrow.png';
+const lynxLogo = './assets/lynx-logo.png';
+const reactLynxLogo = './assets/react-logo.png';
+const _et_7a8c6_test_2 = "_et_7a8c6_test_2";
+const _et_7a8c6_test_3 = "_et_7a8c6_test_3";
+const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
+export function App() {
+    const [alterLogo, setAlterLogo] = useState(false);
+    useEffect(()=>{
+        console.info('Hello, ReactLynx');
+    }, []);
+    useCallback(()=>{
+        'background-only';
+        setAlterLogo((prevAlterLogo)=>!prevAlterLogo);
+    }, []);
+    return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+        attrs: {
+            0: {
+                "bindEvent": 1
+            },
+            2: {
+                "src": arrow
+            }
+        },
+        children: [
+            /*#__PURE__*/ _jsx(Slot, {
+                id: 1,
+                children: alterLogo ? /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+                    attrs: {
+                        0: {
+                            "src": reactLynxLogo
+                        }
+                    }
+                }) : /*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
+                    attrs: {
+                        0: {
+                            "src": lynxLogo
+                        }
+                    }
+                })
+            }),
+            /*#__PURE__*/ _jsx(Slot, {
+                id: 3,
+                children: ' src/App.tsx '
+            })
+        ]
+    });
+}

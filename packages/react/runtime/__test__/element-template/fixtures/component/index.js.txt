@@ -1,0 +1,24 @@
+import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
+import { Slot as Slot } from "@lynx-js/react/internal";
+const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
+export function App() {
+    const x = null;
+    const y = 2;
+    const z = 3;
+    return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+        children: [
+            /*#__PURE__*/ _jsx(Slot, {
+                id: 0,
+                children: x
+            }),
+            /*#__PURE__*/ _jsx(Slot, {
+                id: 1,
+                children: y
+            }),
+            /*#__PURE__*/ _jsx(Slot, {
+                id: 2,
+                children: z
+            })
+        ]
+    });
+}

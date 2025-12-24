@@ -226,4 +226,33 @@ describe('Element Template renderToOpcodes', () => {
       __OpEnd,
     ]);
   });
+
+  it('should render attrs and Slot opcodes properly', () => {
+    globalThis.__USE_ELEMENT_TEMPLATE__ = true;
+
+    const test = 'test';
+    const hello = 'Hello';
+
+    const vnode = (
+      <view id={test}>
+        {hello}
+      </view>
+    );
+
+    const opcodes = renderToString(vnode);
+
+    expect(opcodes).toEqual([
+      __OpBegin,
+      vnode,
+      __OpAttr,
+      'attrs',
+      { 0: { id: 'test' } },
+      __OpSlotBegin,
+      1,
+      __OpText,
+      'Hello',
+      __OpSlotEnd,
+      __OpEnd,
+    ]);
+  });
 });
