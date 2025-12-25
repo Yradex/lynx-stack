@@ -48,8 +48,15 @@ function transformReactLynxPlugin(): Plugin {
         cssScope: false,
       });
 
+      let code = result.code;
+      if (result.elementTemplates && result.elementTemplates.length > 0) {
+        code += `\nif (globalThis.__REGISTER_ELEMENT_TEMPLATES__) { globalThis.__REGISTER_ELEMENT_TEMPLATES__(${
+          JSON.stringify(result.elementTemplates)
+        }); }\n`;
+      }
+
       return {
-        code: result.code,
+        code,
         map: result.map,
       };
     },

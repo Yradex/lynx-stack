@@ -17,19 +17,19 @@ interface ElementOptions {
   onCreateElement?: ((element: Element) => void) | undefined;
 }
 
-export let uiSignNext = 0;
-export const parentMap = new WeakMap<Element, Element>();
+export let uiSignNext: number = 0;
+export const parentMap: WeakMap<Element, Element> = new WeakMap<Element, Element>();
 // export const elementPrototype = Object.create(null);
 export const options: ElementOptions = {};
 
-export const elementTree = new (class {
-  root?: Element = undefined;
+export const elementTree: any = new (class {
+  root: Element | undefined = undefined;
 
-  __CreatePage(tag: string, parentComponentUniqueId: number) {
+  __CreatePage(_tag: string, parentComponentUniqueId: number): Element {
     return (this.root ??= this.__CreateElement('page', parentComponentUniqueId));
   }
 
-  __CreateRawText(text: string) {
+  __CreateRawText(text: string): Element {
     const r = this.__CreateElement('raw-text', 0);
     // @ts-ignore
     r.props.text = text;
@@ -39,15 +39,15 @@ export const elementTree = new (class {
 
   __GetElementUniqueID(e: Element): number {
     // @ts-ignore
-    return e.$$uiSign;
+    return (e as any).$$uiSign;
   }
 
-  __SetClasses(e: Element, cls: string) {
+  __SetClasses(e: Element, cls: string): void {
     e.props.class = cls;
   }
 
-  __CreateElement(tag: string, parentComponentUniqueId: number) {
-    const json = {
+  __CreateElement(tag: string, parentComponentUniqueId: number): Element {
+    const json: any = {
       type: tag,
       children: [],
       props: {},
@@ -66,41 +66,41 @@ export const elementTree = new (class {
     return json;
   }
 
-  __CreateView(parentComponentUniqueId: number) {
+  __CreateView(parentComponentUniqueId: number): Element {
     return this.__CreateElement('view', parentComponentUniqueId);
   }
-  __FirstElement(e: Element) {
+  __FirstElement(e: Element): Element {
     return e.children[0];
   }
 
-  __CreateText(parentComponentUniqueId: number) {
+  __CreateText(parentComponentUniqueId: number): Element {
     const r = this.__CreateElement('text', parentComponentUniqueId);
     this.root ??= r;
     return r;
   }
 
-  __CreateImage(parentComponentUniqueId: number) {
+  __CreateImage(parentComponentUniqueId: number): Element {
     const r = this.__CreateElement('image', parentComponentUniqueId);
     this.root ??= r;
     return r;
   }
 
-  __CreateWrapperElement(parentComponentUniqueId: number) {
+  __CreateWrapperElement(parentComponentUniqueId: number): Element {
     return this.__CreateElement('wrapper', parentComponentUniqueId);
   }
 
-  __AddInlineStyle(e: Element, key: number, value: string) {
+  __AddInlineStyle(e: Element, key: number, value: string): void {
     const style = e.props.style || {};
     style[key] = value;
     e.props.style = style;
   }
 
-  __AppendElement(parent: Element, child: Element) {
+  __AppendElement(parent: Element, child: Element): void {
     parent.children.push(child);
     parentMap.set(child, parent);
   }
 
-  __SetCSSId(e: Element | Element[], id: string, entryName?: string) {
+  __SetCSSId(e: Element | Element[], id: string, entryName?: string): void {
     const cssId = `${entryName ?? 'default-entry-from-native'}:${id}`;
     if (Array.isArray(e)) {
       e.forEach(item => {
@@ -111,7 +111,7 @@ export const elementTree = new (class {
     }
   }
 
-  __SetAttribute(e: Element, key: string, value: any) {
+  __SetAttribute(e: Element, key: string, value: any): void {
     if (
       key === 'style'
       || key === 'class'
@@ -143,21 +143,25 @@ export const elementTree = new (class {
     return e.props;
   }
 
-  __AddEvent(e: Element, eventType: string, eventName: string, event: string | Record<string, any>) {
+  __AddEvent(e: Element, eventType: string, eventName: string, event: string | Record<string, any>): void {
     if (typeof event === 'undefined') {
       if (e.props.event) {
         delete e.props.event[`${eventType}:${eventName}`];
       }
       return;
     }
-    if (typeof event !== 'string' && event.type === undefined) {
+    if (typeof event !== 'string' && event['type'] === undefined) {
       throw new Error(`event must be string, but got ${typeof event}`);
       // console.error(`event must be string, but got ${typeof event}`);
     }
     (e.props.event ??= {})[`${eventType}:${eventName}`] = event;
   }
 
-  __GetEvent(e: Element, eventType: string, eventName: string) {
+  __GetEvent(
+    e: Element,
+    eventType: string,
+    eventName: string,
+  ): { type: string; name: string; jsFunction: any } | undefined {
     const jsFunction = e.props.event?.[`${eventType}:${eventName}`];
     if (typeof jsFunction !== 'undefined') {
       return {
@@ -166,25 +170,26 @@ export const elementTree = new (class {
         jsFunction,
       };
     }
+    return undefined;
   }
 
-  __SetID(e: Element, id: string) {
+  __SetID(e: Element, id: string): void {
     e.props.id = id;
   }
 
-  __SetInlineStyles(e: Element, styles: string | Record<string, string>) {
+  __SetInlineStyles(e: Element, styles: string | Record<string, string>): void {
     e.props.style = styles;
   }
 
-  __AddDataset(e: Element, key: string, value: string) {
+  __AddDataset(e: Element, key: string, value: string): void {
     (e.props.dataset ??= {})[key] = value;
   }
 
-  __SetDataset(e: Element, dataset: any) {
+  __SetDataset(e: Element, dataset: any): void {
     e.props.dataset = dataset;
   }
 
-  __SetGestureDetector(e: Element, id: number, type: number, config: any, relationMap: Record<string, number[]>) {
+  __SetGestureDetector(e: Element, id: number, type: number, config: any, relationMap: Record<string, number[]>): void {
     e.props.gesture = {
       id,
       type,
@@ -193,11 +198,11 @@ export const elementTree = new (class {
     };
   }
 
-  __GetDataset(e: Element) {
+  __GetDataset(e: Element): any {
     return e.props.dataset;
   }
 
-  __RemoveElement(parent: Element, child: Element) {
+  __RemoveElement(parent: Element, child: Element): void {
     parent.children.forEach((ch, index) => {
       if (ch === child) {
         parent.children.splice(index, 1);
@@ -211,7 +216,7 @@ export const elementTree = new (class {
     parent: Element,
     child: Element,
     ref?: Element | number,
-  ) {
+  ): void {
     if (typeof ref === 'undefined') {
       parent.children.push(child);
     } else {
@@ -221,7 +226,7 @@ export const elementTree = new (class {
     parentMap.set(child, parent);
   }
 
-  __ReplaceElement(newElement: Element, oldElement: Element) {
+  __ReplaceElement(newElement: Element, oldElement: Element): void {
     const parent = parentMap.get(oldElement);
     if (!parent) {
       /* c8 ignore next */
@@ -237,7 +242,7 @@ export const elementTree = new (class {
 
   __FlushElementTree(): void {}
 
-  __UpdateListComponents(list: Element, components: string[]) {}
+  __UpdateListComponents(_list: Element, _components: string[]): void {}
 
   __UpdateListCallbacks(
     list: Element,
@@ -282,7 +287,7 @@ export const elementTree = new (class {
     componentAtIndex: any,
     enqueueComponent: any,
     componentAtIndexes: any,
-  ) {
+  ): Element {
     const e = this.__CreateElement('list', parentComponentUniqueId);
 
     Object.defineProperties(e, {
@@ -306,24 +311,24 @@ export const elementTree = new (class {
     return e;
   }
 
-  __GetTag(ele: Element) {
+  __GetTag(ele: Element): string {
     return ele.type;
   }
 
-  __GetAttributeByName(ele: Element, name: string) {
+  __GetAttributeByName(ele: Element, name: string): any {
     return ele.props[name];
   }
 
-  clear() {
-    this.root = undefined;
+  clear(): void {
+    this.root = undefined as any;
     uiSignNext = 0;
   }
 
-  toTree() {
+  toTree(): Element | undefined {
     return this.root;
   }
 
-  sendEvent(e: Element, eventType: string, eventName: string, data: any) {
+  sendEvent(e: Element, eventType: string, eventName: string, data: any): void {
     const eventHandler = e.props?.event?.[`${eventType}:${eventName}`];
     if (eventHandler) {
       // @ts-ignore
@@ -362,19 +367,19 @@ export const elementTree = new (class {
     operationIDs: number[],
     enableReuseNotification: boolean,
     asyncFlush: boolean,
-  ) {
+  ): void {
     // @ts-ignore
     const { componentAtIndexes, $$uiSign } = e;
     return componentAtIndexes(e, $$uiSign, indexes, operationIDs, enableReuseNotification, asyncFlush);
   }
 
-  triggerEnqueueComponent(e: Element, uiSign: number) {
+  triggerEnqueueComponent(e: Element, uiSign: number): void {
     // @ts-ignore
-    const { enqueueComponent, $$uiSign } = e;
-    enqueueComponent(e, $$uiSign, uiSign);
+    const { enqueueComponent } = e;
+    enqueueComponent(e, (e as any).$$uiSign, uiSign);
   }
 
-  toJSON() {
+  toJSON(): string {
     return prettyFormat(this.toTree(), {
       plugins: [ReactTestComponent],
       printFunctionName: false,
@@ -393,7 +398,7 @@ Object.defineProperty(nativeMethodQueue, 'clear', {
 export function withQueue<T>(
   name: string,
   fn: (this: T, ...args: any[]) => any,
-) {
+): (this: T, ...args: any[]) => any {
   return function(this: T, ...args: any[]) {
     nativeMethodQueue.push([name, args]);
     return fn.apply(this, args);

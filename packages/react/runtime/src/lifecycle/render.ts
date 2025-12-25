@@ -9,17 +9,18 @@
 import { isValidElement } from 'preact';
 
 import { profileEnd, profileStart } from '../debug/utils.js';
+import { renderOpcodesIntoElementTemplate } from '../element-template/renderOpcodesIntoElementTemplate.js';
 import { renderOpcodesInto } from '../opcodes.js';
 import { render as renderToString } from '../renderToOpcodes/index.js';
 import { __root } from '../root.js';
-import { SnapshotInstance } from '../snapshot.js';
+import { SnapshotInstance, __page } from '../snapshot.js';
 
 function renderMainThread(): void {
   let opcodes;
+  if (__PROFILE__) {
+    profileStart('ReactLynx::renderMainThread');
+  }
   try {
-    if (__PROFILE__) {
-      profileStart('ReactLynx::renderMainThread');
-    }
     opcodes = renderToString(__root.__jsx, undefined);
   } catch (e) {
     lynx.reportError(e as Error);
@@ -43,15 +44,25 @@ function renderMainThread(): void {
   if (__PROFILE__) {
     profileStart('ReactLynx::renderOpcodes');
   }
-  if (!__USE_ELEMENT_TEMPLATE__) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    renderOpcodesInto(opcodes, __root as any);
-  }
-  if (__ENABLE_SSR__ || __USE_ELEMENT_TEMPLATE__) {
-    __root.__opcodes = opcodes;
-  }
-  if (__PROFILE__) {
-    profileEnd();
+  try {
+    if (__USE_ELEMENT_TEMPLATE__) {
+      /* v8 ignore start */
+      if (!__page) {
+        throw new Error('ElementTemplate render requires a page root; call setupPage first.');
+      }
+      /* v8 ignore stop */
+      renderOpcodesIntoElementTemplate(opcodes, __page);
+    } else {
+      renderOpcodesInto(opcodes, __root as SnapshotInstance);
+    }
+
+    if (__ENABLE_SSR__ || __USE_ELEMENT_TEMPLATE__) {
+      __root.__opcodes = opcodes;
+    }
+  } finally {
+    if (__PROFILE__) {
+      profileEnd();
+    }
   }
 }
 
