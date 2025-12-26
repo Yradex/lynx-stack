@@ -328,6 +328,7 @@ export function pluginReactLynx(
   return [
     pluginReactAlias({
       lazy: resolvedOptions.experimental_isLazyBundle,
+      elementTemplate: resolvedOptions.experimentalEnableElementTemplate,
       LAYERS,
     }),
     {

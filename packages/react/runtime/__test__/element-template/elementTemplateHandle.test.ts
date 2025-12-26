@@ -3,13 +3,13 @@
 // LICENSE file in the root directory of this source tree.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
 import {
-  ElementTemplateRegistry,
   createElementTemplateHandle,
   destroyElementTemplateHandle,
   patchElementTemplateHandle,
-} from '../../src/index.js';
-import { resetTemplateId } from '../../src/element-template/elementTemplateHandle.js';
+} from '../../src/element-template/runtime/template/handle.js';
+import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
 
 describe('ElementTemplateHandle', () => {
   const mockNativeRef = { __isNativeRef: true };

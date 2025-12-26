@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { describe, expect, it } from 'vitest';
-import { Slot } from '../../src/internal.js';
+import { Slot } from '../../src/element-template/internal.js';
 
 describe('Slot', () => {
   it('should return children', () => {

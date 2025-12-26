@@ -28,7 +28,6 @@ export const {
   snapshotManager,
   snapshotCreatorMap,
   SnapshotInstance,
-  Slot,
   transformRef,
   transformToWorklet,
   updateEvent,

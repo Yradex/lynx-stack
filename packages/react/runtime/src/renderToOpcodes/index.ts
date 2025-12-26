@@ -12,7 +12,14 @@
 
 import { Fragment, h, options } from 'preact';
 
-import { Slot } from '../element-template/slot';
+let Slot: any;
+
+/**
+ * @internal
+ */
+export function registerSlot(slot: any): void {
+  Slot = slot;
+}
 import {
   CHILDREN,
   COMMIT,
@@ -199,7 +206,7 @@ function _renderToString(
 
   // Invoke rendering on Components
   if (typeof type === 'function') {
-    if (type === Slot && __USE_ELEMENT_TEMPLATE__) {
+    if (type === Slot) {
       opcodes.push(__OpSlotBegin, props.id);
       _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
       opcodes.push(__OpSlotEnd);

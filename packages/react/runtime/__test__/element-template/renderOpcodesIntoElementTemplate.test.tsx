@@ -3,11 +3,11 @@
 // LICENSE file in the root directory of this source tree.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ElementTemplateRegistry } from '../../src/element-template/elementTemplateRegistry.js';
-import { renderOpcodesIntoElementTemplate } from '../../src/element-template/renderOpcodesIntoElementTemplate.js';
-import { resetTemplateId } from '../../src/element-template/elementTemplateHandle.js';
+import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
+import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/renderOpcodes.js';
+import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../../src/renderToOpcodes/index.js';
-import { installMockNativePapi } from './utils/mockNativePapi.js';
+import { installMockNativePapi, registerTemplates } from './utils/mockNativePapi.js';
 
 describe('renderOpcodesIntoElementTemplate', () => {
   let root: any;
@@ -25,7 +25,56 @@ describe('renderOpcodesIntoElementTemplate', () => {
     cleanup = installed.cleanup;
     mockReportError = installed.mockReportError;
 
-    root = { children: [] };
+    root = { type: 'root' };
+    registerTemplates([
+      {
+        templateId: '_et_foo',
+        compiledTemplate: {
+          tag: '_et_foo',
+          attributes: { 'part-id': 0 },
+          children: [
+            { tag: 'slot', attributes: { 'part-id': 0 } },
+            { tag: 'slot', attributes: { 'part-id': 1 } },
+          ],
+        },
+      },
+      {
+        templateId: '_et_parent',
+        compiledTemplate: {
+          tag: '_et_parent',
+          attributes: {},
+          children: [{ tag: 'slot', attributes: { 'part-id': 0 } }],
+        },
+      },
+      {
+        templateId: '_et_child',
+        compiledTemplate: { tag: '_et_child', attributes: {}, children: [] },
+      },
+      {
+        templateId: '_et_outer',
+        compiledTemplate: {
+          tag: '_et_outer',
+          attributes: {},
+          children: [{ tag: 'slot', attributes: { 'part-id': 0 } }],
+        },
+      },
+      {
+        templateId: '_et_inner',
+        compiledTemplate: {
+          tag: '_et_inner',
+          attributes: { 'part-id': 0 },
+          children: [{ tag: 'slot', attributes: { 'part-id': 1 } }],
+        },
+      },
+      {
+        templateId: '_et_child_a',
+        compiledTemplate: { tag: '_et_child_a', attributes: {}, children: [] },
+      },
+      {
+        templateId: '_et_child_b',
+        compiledTemplate: { tag: '_et_child_b', attributes: {}, children: [] },
+      },
+    ]);
   });
 
   afterEach(() => {
@@ -49,39 +98,69 @@ describe('renderOpcodesIntoElementTemplate', () => {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    expect(nativeLog).toEqual([
-      ['__CreateRawText', 'Hello'],
+    expect(nativeLog).toMatchInlineSnapshot(`
       [
-        '__ElementFromBinary',
-        '_et_foo',
-        null,
         [
-          4,
-          0,
-          {
-            id: 'test',
-          },
-          2,
-          1,
+          "__CreateRawText",
+          "Hello",
+        ],
+        [
+          "__ElementFromBinary",
+          "_et_foo",
           null,
+          [
+            4,
+            0,
+            {
+              "id": "test",
+            },
+            2,
+            1,
+            null,
+            {
+              "text": "Hello",
+              "type": "rawText",
+            },
+          ],
+          null,
+        ],
+        [
+          "__AppendElement",
+          "root",
+          "<_et_foo />",
+        ],
+      ]
+    `);
+    expect(ElementTemplateRegistry.get(-1)?.nativeRef).toMatchInlineSnapshot(`
+      {
+        "attributes": {
+          "part-id": 0,
+        },
+        "children": [
           {
-            type: 'rawText',
-            text: 'Hello',
+            "attributes": {
+              "id": "test",
+              "part-id": 0,
+            },
+            "tag": "slot",
+          },
+          {
+            "attributes": {
+              "part-id": 1,
+            },
+            "children": [
+              {
+                "text": "Hello",
+                "type": "rawText",
+              },
+            ],
+            "tag": "slot",
           },
         ],
-        null,
-      ],
-    ]);
-    expect(ElementTemplateRegistry.get(-1)?.nativeRef).toEqual({
-      type: 'element',
-      tag: '_et_foo',
-      parts: {
-        0: { id: 'test' },
-      },
-      slots: {
-        1: [{ type: 'rawText', text: 'Hello' }],
-      },
-    });
+        "tag": "_et_foo",
+        "templateId": "_et_foo",
+      }
+    `);
 
     expect(root.children[0]).toEqual(ElementTemplateRegistry.get(-1)?.nativeRef);
   });
@@ -105,34 +184,61 @@ describe('renderOpcodesIntoElementTemplate', () => {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    expect(nativeLog).toEqual([
-      ['__CreateRawText', 'A'],
-      ['__CreateRawText', 'B'],
+    expect(nativeLog).toMatchInlineSnapshot(`
       [
-        '__ElementFromBinary',
-        '_et_foo',
-        null,
         [
-          2,
-          0,
-          null,
-          { type: 'rawText', text: 'A' },
-          2,
-          1,
-          null,
-          { type: 'rawText', text: 'B' },
+          "__CreateRawText",
+          "A",
         ],
-        null,
-      ],
-    ]);
+        [
+          "__CreateRawText",
+          "B",
+        ],
+        [
+          "__ElementFromBinary",
+          "_et_foo",
+          null,
+          [
+            2,
+            0,
+            null,
+            {
+              "text": "A",
+              "type": "rawText",
+            },
+            2,
+            1,
+            null,
+            {
+              "text": "B",
+              "type": "rawText",
+            },
+          ],
+          null,
+        ],
+        [
+          "__AppendElement",
+          "root",
+          "<_et_foo />",
+        ],
+      ]
+    `);
     expect(root.children[0]).toEqual({
-      type: 'element',
       tag: '_et_foo',
-      parts: {},
-      slots: {
-        0: [{ type: 'rawText', text: 'A' }],
-        1: [{ type: 'rawText', text: 'B' }],
-      },
+      templateId: '_et_foo',
+      attributes: { 'part-id': 0 },
+      children: [
+        {
+          tag: 'slot',
+          attributes: { 'part-id': 0 },
+          children: [{ type: 'rawText', text: 'A' }],
+        },
+        {
+          tag: 'slot',
+          attributes: { 'part-id': 1 },
+          children: [{ type: 'rawText', text: 'B' }],
+        },
+      ],
     });
   });
 
@@ -159,70 +265,105 @@ describe('renderOpcodesIntoElementTemplate', () => {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    expect(nativeLog).toEqual([
-      ['__CreateRawText', 'X'],
+    expect(nativeLog).toMatchInlineSnapshot(`
       [
-        '__ElementFromBinary',
-        '_et_inner',
-        null,
         [
-          4,
-          0,
-          { id: 'inner' },
-          2,
-          0,
-          null,
-          { type: 'rawText', text: 'X' },
+          "__CreateRawText",
+          "X",
         ],
-        null,
-      ],
-      [
-        '__ElementFromBinary',
-        '_et_outer',
-        null,
         [
-          2,
-          0,
+          "__ElementFromBinary",
+          "_et_inner",
           null,
-          {
-            type: 'element',
-            tag: '_et_inner',
-            parts: {
-              0: { id: 'inner' },
+          [
+            4,
+            0,
+            {
+              "id": "inner",
             },
-            slots: {
-              0: [{ type: 'rawText', text: 'X' }],
+            2,
+            0,
+            null,
+            {
+              "text": "X",
+              "type": "rawText",
             },
-          },
+          ],
+          null,
         ],
-        null,
-      ],
-    ]);
+        [
+          "__ElementFromBinary",
+          "_et_outer",
+          null,
+          [
+            2,
+            0,
+            null,
+            {
+              "attributes": {
+                "id": "inner",
+                "part-id": 0,
+              },
+              "children": [
+                {
+                  "attributes": {
+                    "part-id": 1,
+                  },
+                  "tag": "slot",
+                },
+              ],
+              "tag": "_et_inner",
+              "templateId": "_et_inner",
+            },
+          ],
+          null,
+        ],
+        [
+          "__AppendElement",
+          "root",
+          "<_et_outer />",
+        ],
+      ]
+    `);
 
-    expect(root.children[0]).toEqual({
-      type: 'element',
-      tag: '_et_outer',
-      parts: {},
-      slots: {
-        0: [
+    expect(root.children[0]).toMatchInlineSnapshot(`
+      {
+        "attributes": {},
+        "children": [
           {
-            type: 'element',
-            tag: '_et_inner',
-            parts: {
-              0: { id: 'inner' },
+            "attributes": {
+              "part-id": 0,
             },
-            slots: {
-              0: [{ type: 'rawText', text: 'X' }],
-            },
+            "children": [
+              {
+                "attributes": {
+                  "id": "inner",
+                  "part-id": 0,
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "part-id": 1,
+                    },
+                    "tag": "slot",
+                  },
+                ],
+                "tag": "_et_inner",
+                "templateId": "_et_inner",
+              },
+            ],
+            "tag": "slot",
           },
         ],
-      },
-    });
+        "tag": "_et_outer",
+        "templateId": "_et_outer",
+      }
+    `);
     expect(ElementTemplateRegistry.has(-1)).toBe(true);
     expect(ElementTemplateRegistry.has(-2)).toBe(true);
   });
 
-  it('appends root text when no template frame is active', () => {
+  it('appends root text via __AppendElement', () => {
     const opcodes = [
       __OpText,
       'root',
@@ -230,46 +371,11 @@ describe('renderOpcodesIntoElementTemplate', () => {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    expect(root.children).toEqual([{ type: 'rawText', text: 'root' }]);
-  });
-
-  it('appends element via __AppendElement when root has no children array', () => {
-    const appendSpy = vi.fn();
-    vi.stubGlobal('__AppendElement', appendSpy);
-
-    root = {};
-
-    const opcodes = [
-      __OpBegin,
-      { type: '_et_foo', props: {} },
-      __OpEnd,
-    ];
-
-    renderOpcodesIntoElementTemplate(opcodes, root);
-
-    expect(appendSpy).toHaveBeenCalledWith(
-      root,
-      ElementTemplateRegistry.get(-1)?.nativeRef,
-    );
-  });
-
-  it('appends root text via __AppendElement when root has no children array', () => {
-    const appendSpy = vi.fn();
-    vi.stubGlobal('__AppendElement', appendSpy);
-
-    root = {};
-
-    const opcodes = [
-      __OpText,
+    expect(nativeLog).toContainEqual([
+      '__AppendElement',
       'root',
-    ];
-
-    renderOpcodesIntoElementTemplate(opcodes, root);
-
-    expect(appendSpy).toHaveBeenCalledWith(
-      root,
-      { type: 'rawText', text: 'root' },
-    );
+      '"root"',
+    ]);
   });
 
   it('logs when element is encountered outside of a slot', () => {
@@ -319,9 +425,9 @@ describe('renderOpcodesIntoElementTemplate', () => {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    expect(root.children[0].slots[0]).toHaveLength(2);
-    expect(root.children[0].slots[0][0].tag).toBe('_et_child_a');
-    expect(root.children[0].slots[0][1].tag).toBe('_et_child_b');
+    expect(root.children[0].children[0].children).toHaveLength(2);
+    expect(root.children[0].children[0].children[0].tag).toBe('_et_child_a');
+    expect(root.children[0].children[0].children[1].tag).toBe('_et_child_b');
   });
 
   it('handles multiple text nodes in the same slot', () => {
@@ -340,7 +446,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    expect(root.children[0].slots[0]).toEqual([
+    expect(root.children[0].children[0].children).toEqual([
       { type: 'rawText', text: 'A' },
       { type: 'rawText', text: 'B' },
     ]);
@@ -359,10 +465,13 @@ describe('renderOpcodesIntoElementTemplate', () => {
     renderOpcodesIntoElementTemplate(opcodes, root);
 
     expect(root.children[0]).toEqual({
-      type: 'element',
       tag: '_et_foo',
-      parts: {},
-      slots: {},
+      templateId: '_et_foo',
+      attributes: { 'part-id': 0 },
+      children: [
+        { tag: 'slot', attributes: { 'part-id': 0 } },
+        { tag: 'slot', attributes: { 'part-id': 1 } },
+      ],
     });
   });
 

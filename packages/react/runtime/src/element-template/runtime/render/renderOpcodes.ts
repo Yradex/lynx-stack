@@ -2,8 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { createElementTemplateHandle } from './elementTemplateHandle.js';
-import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../renderToOpcodes/index.js';
+import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../../../renderToOpcodes/index.js';
+import { createElementTemplateHandle } from '../template/handle.js';
 
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
@@ -19,9 +19,7 @@ interface Frame {
   activeSlotStack: number[];
 }
 
-interface RootNode {
-  children?: any[];
-}
+interface RootNode {}
 
 function createFrame(templateKey: string | null): Frame {
   return {
@@ -101,11 +99,7 @@ export function renderOpcodesIntoElementTemplate(
         if (parentFrame) {
           if (parentFrame.templateKey === null) {
             // Parent is root frame
-            if (Array.isArray(root.children)) {
-              root.children.push(elementRef);
-            } else if (typeof __AppendElement === 'function') {
-              __AppendElement(root, elementRef as FiberElement);
-            }
+            __AppendElement(root, elementRef as FiberElement);
           } else {
             // Parent is another template
             // Must append to parent's active slot
@@ -182,11 +176,7 @@ export function renderOpcodesIntoElementTemplate(
 
           if (frame.templateKey === null) {
             // Root text
-            if (Array.isArray(root.children)) {
-              root.children.push(textRef);
-            } else if (typeof __AppendElement === 'function') {
-              __AppendElement(root, textRef);
-            }
+            __AppendElement(root, textRef);
           } else {
             // Inside template
             if (frame.activeSlotStack.length === 0) {

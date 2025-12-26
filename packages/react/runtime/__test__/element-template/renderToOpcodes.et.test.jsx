@@ -62,29 +62,6 @@ describe('Element Template renderToOpcodes', () => {
     ]);
   });
 
-  it('should NOT render Slot opcodes when __USE_ELEMENT_TEMPLATE__ is false', () => {
-    globalThis.__USE_ELEMENT_TEMPLATE__ = false;
-
-    const child = <text>hello</text>;
-    const vnode = (
-      <view>
-        {child}
-      </view>
-    );
-
-    const opcodes = renderToString(vnode);
-
-    // Should behave like normal function component (unwrapped)
-    expect(opcodes).toEqual([
-      __OpBegin,
-      vnode,
-      __OpBegin,
-      child,
-      __OpEnd,
-      __OpEnd,
-    ]);
-  });
-
   it('should handle nested Slots', () => {
     globalThis.__USE_ELEMENT_TEMPLATE__ = true;
 

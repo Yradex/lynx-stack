@@ -6,6 +6,7 @@ import { defineConfig } from 'vitest/config';
 
 const require = createRequire(import.meta.url);
 const runtimePkg = require.resolve('./src/internal.ts');
+const elementTemplateRuntimePkg = require.resolve('./src/element-template/internal.ts');
 
 function transformReactLynxPlugin(): Plugin {
   return {
@@ -24,6 +25,8 @@ function transformReactLynxPlugin(): Plugin {
         };
       }
 
+      const isElementTemplate = relativePath.includes('.et.test.');
+
       const result = transformReactLynxSync(sourceText, {
         mode: 'test',
         pluginName: '',
@@ -31,11 +34,11 @@ function transformReactLynxPlugin(): Plugin {
         sourcemap: true,
         snapshot: {
           preserveJsx: false,
-          runtimePkg,
+          runtimePkg: isElementTemplate ? elementTemplateRuntimePkg : runtimePkg,
           jsxImportSource: '@lynx-js/react',
           filename: 'test',
           target: 'MIXED',
-          experimentalEnableElementTemplate: relativePath.includes('.et.test.'),
+          experimentalEnableElementTemplate: isElementTemplate,
         },
         dynamicImport: false,
         // snapshot: true,
@@ -77,6 +80,7 @@ export default defineConfig({
       '@lynx-js/react/jsx-runtime': path.resolve(__dirname, './jsx-runtime/index.js'),
       '@lynx-js/react/lepus': path.resolve(__dirname, './lepus/index.js'),
       '@lynx-js/react/legacy-react-runtime': path.resolve(__dirname, './src/legacy-react-runtime/index.ts'),
+      '@lynx-js/react/element-template/internal': path.resolve(__dirname, './src/element-template/internal.ts'),
       '@lynx-js/react': path.resolve(__dirname, './src/index.ts'),
     },
   },

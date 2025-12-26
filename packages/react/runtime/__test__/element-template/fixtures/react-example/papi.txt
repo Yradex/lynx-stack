@@ -40,7 +40,8 @@
           "class": "Logo--lynx",
           "part-id": 0,
           "src": "./assets/lynx-logo.png"
-        }
+        },
+        "templateId": "_et_7a8c6_test_3"
       },
       2,
       3,
@@ -51,5 +52,10 @@
       }
     ],
     null
+  ],
+  [
+    "__AppendElement",
+    "0",
+    "<_et_7a8c6_test_1 />"
   ]
 ]

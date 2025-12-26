@@ -88,23 +88,20 @@ export const root: Root = {
       __root.__jsx = jsx;
     } else {
       __root.__jsx = jsx;
-      console.log('__USE_ELEMENT_TEMPLATE__', __USE_ELEMENT_TEMPLATE__);
       if (__PROFILE__) {
         profileStart('ReactLynx::renderBackground');
       }
-      if (!__USE_ELEMENT_TEMPLATE__) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        render(jsx, __root as any);
-        if (__PROFILE__) {
-          profileEnd();
-        }
-        if (__FIRST_SCREEN_SYNC_TIMING__ === 'immediately') {
-          // This is for cases where `root.render()` is called asynchronously,
-          // `firstScreen` message might have been reached.
-          flushDelayedLifecycleEvents();
-        } else {
-          lynx.getNativeApp().callLepusMethod(LifecycleConstant.jsReady, {});
-        }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      render(jsx, __root as any);
+      if (__PROFILE__) {
+        profileEnd();
+      }
+      if (__FIRST_SCREEN_SYNC_TIMING__ === 'immediately') {
+        // This is for cases where `root.render()` is called asynchronously,
+        // `firstScreen` message might have been reached.
+        flushDelayedLifecycleEvents();
+      } else {
+        lynx.getNativeApp().callLepusMethod(LifecycleConstant.jsReady, {});
       }
     }
   },

@@ -87,9 +87,7 @@ function renderPage(data: Record<string, unknown> | undefined): void {
   lynx.__initData = data ?? {};
 
   setupPage(__CreatePage('0', 0));
-  if (!__USE_ELEMENT_TEMPLATE__) {
-    (__root as SnapshotInstance).ensureElements();
-  }
+  (__root as SnapshotInstance).ensureElements();
 
   renderMainThread();
 
@@ -98,7 +96,7 @@ function renderPage(data: Record<string, unknown> | undefined): void {
   __pendingListUpdates.flush();
   applyRefQueue();
 
-  if (__FIRST_SCREEN_SYNC_TIMING__ === 'immediately' && !__USE_ELEMENT_TEMPLATE__) {
+  if (__FIRST_SCREEN_SYNC_TIMING__ === 'immediately') {
     jsReady();
   }
 }

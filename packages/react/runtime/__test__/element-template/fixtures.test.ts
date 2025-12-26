@@ -2,16 +2,32 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ElementTemplateRegistry } from '../../src/element-template/elementTemplateRegistry.js';
-import { renderOpcodesIntoElementTemplate } from '../../src/element-template/renderOpcodesIntoElementTemplate.js';
-import { resetTemplateId } from '../../src/element-template/elementTemplateHandle.js';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { installMockNativePapi, registerTemplates, serializeToJSX } from './utils/mockNativePapi.js';
+import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/renderOpcodes.js';
+import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
+import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
 import { renderToString } from '../../src/renderToOpcodes/index.js';
-import { installMockNativePapi, serializeToJSX } from './utils/mockNativePapi.js';
-import { registerTemplates } from './utils/mockNativePapi.js';
+
+declare global {
+  var __USE_ELEMENT_TEMPLATE__: boolean | undefined;
+}
+
+interface RootNode {
+  type: 'page';
+  id: string;
+  children: unknown[];
+}
+
+interface TransformResult {
+  code?: string;
+  elementTemplates?: unknown[];
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,24 +36,25 @@ const FIXTURES_DIR = path.resolve(__dirname, './fixtures');
 const isUpdate = process.env['UPDATE'] === '1' || process.env['UPDATE'] === 'true';
 
 describe('Fixture Integration Tests', () => {
-  let root: { children: unknown[] };
-  let nativeLog: any[];
+  let root: RootNode;
+  let nativeLog: unknown[];
   let cleanup: () => void;
 
   beforeEach(() => {
     vi.resetAllMocks();
     ElementTemplateRegistry.clear();
     resetTemplateId();
-    (globalThis as any).__USE_ELEMENT_TEMPLATE__ = true;
+    globalThis.__USE_ELEMENT_TEMPLATE__ = true;
 
     const installed = installMockNativePapi();
-    nativeLog = installed.nativeLog;
+    nativeLog = installed.nativeLog as unknown[];
     cleanup = installed.cleanup;
-    root = { children: [] };
+    root = { type: 'page', id: '0', children: [] };
   });
 
   afterEach(() => {
     cleanup();
+    globalThis.__USE_ELEMENT_TEMPLATE__ = undefined;
   });
 
   const fixtures = fs.readdirSync(FIXTURES_DIR).filter(f => fs.statSync(path.join(FIXTURES_DIR, f)).isDirectory());
@@ -59,20 +76,15 @@ describe('Fixture Integration Tests', () => {
       // 1. Compile source code
       const code = fs.readFileSync(sourcePath, 'utf8');
       const { transformReactLynx } = await import('@lynx-js/react-transform');
-      const result = await transformReactLynx(code, {
+      const transformOptions = {
         mode: 'test',
         pluginName: 'test-plugin',
         filename: 'index.tsx',
         sourcemap: false,
         cssScope: false,
-        jsx: {
-          runtimePkg: '@lynx-js/react-runtime',
-          filename: 'index.tsx',
-          target: 'LEPUS',
-        },
         snapshot: {
           preserveJsx: false,
-          runtimePkg: '@lynx-js/react',
+          runtimePkg: '@lynx-js/react/element-template/internal',
           filename: 'index.tsx',
           target: 'LEPUS',
           experimentalEnableElementTemplate: true,
@@ -83,15 +95,11 @@ describe('Fixture Integration Tests', () => {
         defineDCE: false,
         worklet: false,
         refresh: false,
-      } as any);
+      } as Parameters<typeof transformReactLynx>[1];
+      const result = (await transformReactLynx(code, transformOptions)) as TransformResult;
 
-      let outputCode = result.code || '';
+      let outputCode = result.code ?? '';
       outputCode = outputCode.replace(/from ["']react\/jsx-runtime["']/g, 'from "@lynx-js/react/jsx-runtime"');
-      // Specifically target Slot import to avoid corrupting Component import
-      outputCode = outputCode.replace(
-        /\{ Slot as Slot \} from ["']@lynx-js\/react["']/g,
-        '{ Slot as Slot } from "@lynx-js/react/internal"',
-      );
 
       const outputTemplates = result.elementTemplates ? JSON.stringify(result.elementTemplates, null, 2) : '';
 
@@ -123,9 +131,9 @@ describe('Fixture Integration Tests', () => {
 
       // 3. Register templates
       if (isUpdate && outputTemplates) {
-        registerTemplates(JSON.parse(outputTemplates));
+        registerTemplates(JSON.parse(outputTemplates) as any[]);
       } else if (fs.existsSync(templatesPath)) {
-        const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8'));
+        const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8')) as any[];
         registerTemplates(templates);
       }
 
@@ -133,7 +141,7 @@ describe('Fixture Integration Tests', () => {
       // To import the compiled code, we must write it to a .js file temporarily.
       fs.writeFileSync(tempImportPath, outputCode);
       try {
-        const module = await import(`${tempImportPath}?t=${Date.now()}`);
+        const module = (await import(`${tempImportPath}?t=${Date.now()}`)) as { App: unknown };
         const App = module.App;
 
         // 5. Render

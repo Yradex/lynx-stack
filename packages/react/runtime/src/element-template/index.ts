@@ -2,8 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import './lynx.js';
-import './lynx/component.js';
+import './native/index.js';
+// import './lynx/component.js';
 import {
   Children,
   Component,
@@ -31,12 +31,12 @@ import {
   useReducer,
   useRef,
   useState,
-} from './hooks/react.js';
-import { Suspense } from './lynx/suspense.js';
+} from '../hooks/react.js';
+// import { Suspense } from './lynx/suspense.js';
 
 export { Component, createContext } from 'preact';
 export { PureComponent } from 'preact/compat';
-export * from './hooks/react.js';
+export * from '../hooks/react.js';
 
 /**
  * @internal
@@ -64,7 +64,7 @@ export default {
   PureComponent,
   memo,
   forwardRef,
-  Suspense,
+  // Suspense,
   lazy,
   createElement,
 };
@@ -76,11 +76,11 @@ export {
   isValidElement,
   memo,
   forwardRef,
-  Suspense,
+  // Suspense,
   lazy,
   createElement,
   cloneElement,
   useSyncExternalStore,
 };
 
-export * from './lynx-api.js';
+export * from './client/root.js';

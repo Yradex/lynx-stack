@@ -9,11 +9,10 @@
 import { isValidElement } from 'preact';
 
 import { profileEnd, profileStart } from '../debug/utils.js';
-import { renderOpcodesIntoElementTemplate } from '../element-template/renderOpcodesIntoElementTemplate.js';
 import { renderOpcodesInto } from '../opcodes.js';
 import { render as renderToString } from '../renderToOpcodes/index.js';
 import { __root } from '../root.js';
-import { SnapshotInstance, __page } from '../snapshot.js';
+import { SnapshotInstance } from '../snapshot.js';
 
 function renderMainThread(): void {
   let opcodes;
@@ -31,7 +30,7 @@ function renderMainThread(): void {
     }
   }
 
-  if (process.env['NODE_ENV'] === 'test' && !__USE_ELEMENT_TEMPLATE__) {
+  if (process.env['NODE_ENV'] === 'test') {
     opcodes = opcodes.map((opcode) => {
       if (isValidElement(opcode) && typeof opcode.type === 'string') {
         return Object.assign(new SnapshotInstance(opcode.type), opcode, { $$typeof: undefined });
@@ -45,18 +44,9 @@ function renderMainThread(): void {
     profileStart('ReactLynx::renderOpcodes');
   }
   try {
-    if (__USE_ELEMENT_TEMPLATE__) {
-      /* v8 ignore start */
-      if (!__page) {
-        throw new Error('ElementTemplate render requires a page root; call setupPage first.');
-      }
-      /* v8 ignore stop */
-      renderOpcodesIntoElementTemplate(opcodes, __page);
-    } else {
-      renderOpcodesInto(opcodes, __root as SnapshotInstance);
-    }
+    renderOpcodesInto(opcodes, __root as SnapshotInstance);
 
-    if (__ENABLE_SSR__ || __USE_ELEMENT_TEMPLATE__) {
+    if (__ENABLE_SSR__) {
       __root.__opcodes = opcodes;
     }
   } finally {
