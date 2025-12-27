@@ -255,7 +255,7 @@ const externalBundleRsbuildPlugin = (
 ): rsbuild.RsbuildPlugin => ({
   name: 'lynx:gen-external-bundle',
   async setup(api) {
-    const { getEncodeMode } = await import('@lynx-js/tasm')
+    const { getEncodeMode } = await import('@byted-lynx/tasm')
 
     api.modifyBundlerChain((chain, { environment: { name: libName } }) => {
       // dprint-ignore
