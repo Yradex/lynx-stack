@@ -357,7 +357,7 @@ class ReactWebpackPlugin {
               }
             }
 
-            args.encodeData.elementTemplateDebug = collectedTemplates;
+            args.encodeData.elementTemplate = collectedTemplates;
 
             return args;
           },

@@ -35,10 +35,10 @@ export default {
             compilation,
           );
           hooks.beforeEncode.tap('element-template-test', (args) => {
-            if (!args.encodeData.elementTemplateDebug) {
+            if (!args.encodeData.elementTemplate) {
               throw new Error('elementTemplate should exist');
             }
-            expect(args.encodeData.elementTemplateDebug)
+            expect(args.encodeData.elementTemplate)
               .toMatchInlineSnapshot(`
                 {
                   "_et_a99d6_54654_1": {
