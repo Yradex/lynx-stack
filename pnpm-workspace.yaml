@@ -48,6 +48,7 @@ catalogs:
 overrides:
   "@rspack/core": "$@rspack/core"
   "@rsbuild/core>@rspack/core": "$@rspack/core"
+  "@byted-lynx/tasm": "https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz"
 
 patchedDependencies:
   "@napi-rs/cli@2.18.4": "patches/@napi-rs__cli@2.18.4.patch"

@@ -36,8 +36,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@lynx-js/runtime-wrapper-webpack-plugin": "workspace:*",
-    "@lynx-js/tasm": "0.0.20"
+    "@byted-lynx/tasm": "npm:@byted-lynx/tasm@4.4.15",
+    "@lynx-js/runtime-wrapper-webpack-plugin": "workspace:*"
   },
   "devDependencies": {
     "@rslib/core": "^0.15.0",

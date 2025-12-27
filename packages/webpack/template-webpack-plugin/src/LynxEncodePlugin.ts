@@ -221,7 +221,7 @@ export class LynxEncodePluginImpl {
       }, async (args) => {
         const { encodeOptions } = args;
 
-        const { getEncodeMode } = await import('@lynx-js/tasm');
+        const { getEncodeMode } = await import('@byted-lynx/tasm');
 
         const encode = getEncodeMode();
 

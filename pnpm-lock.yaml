@@ -24,6 +24,7 @@ catalogs:
 overrides:
   '@rspack/core': 1.6.6
   '@rsbuild/core>@rspack/core': 1.6.6
+  '@byted-lynx/tasm': https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz
 
 patchedDependencies:
   '@napi-rs/cli@2.18.4':
@@ -587,12 +588,12 @@ importers:
 
   packages/rspeedy/lynx-bundle-rslib-config:
     dependencies:
+      '@byted-lynx/tasm':
+        specifier: https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz
+        version: https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz
       '@lynx-js/runtime-wrapper-webpack-plugin':
         specifier: workspace:*
         version: link:../../webpack/runtime-wrapper-webpack-plugin
-      '@lynx-js/tasm':
-        specifier: 0.0.20
-        version: 0.0.20
     devDependencies:
       '@rslib/core':
         specifier: ^0.15.0
@@ -1344,12 +1345,12 @@ importers:
 
   packages/webpack/template-webpack-plugin:
     dependencies:
+      '@byted-lynx/tasm':
+        specifier: https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz
+        version: https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz
       '@lynx-js/css-serializer':
         specifier: workspace:*
         version: link:../../tools/css-serializer
-      '@lynx-js/tasm':
-        specifier: 0.0.20
-        version: 0.0.20
       '@lynx-js/webpack-runtime-globals':
         specifier: workspace:^
         version: link:../webpack-runtime-globals
@@ -2099,6 +2100,133 @@ packages:
   '@bufbuild/protobuf@2.6.0':
     resolution: {integrity: sha512-6cuonJVNOIL7lTj5zgo/Rc2bKAo4/GvN+rKCrUj7GdEHRzCk8zKOfFwUsL9nAVk5rSIsRmlgcpLzTRysopEeeg==}
 
+  '@byted-lynx/js-check-14-darwin-64@1.0.3':
+    resolution: {integrity: sha512-xVAV8KiOYB0Y2gm+P1q5EagCCBFMDSiN79b7M6nhKTBD94gWX2iVkKLpOYzUjgBM2OaDUt7szle4eISQw9nk8Q==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-14-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-uYr0RYvThmavAY5Svj0YJbPsFEboNcbvaKJJ3BCUIJvq/znHhMJSYMVeQA6Zl2sjiP4rwKz9ob19+TZtQY22cw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-14-linux-64@1.0.3':
+    resolution: {integrity: sha512-UZwNk6meJuLEkhka6Nfc/vbqnQ72R/G1ishg5RIc/HPII++XROE4ib1Qhr0cvJ7Qivmg8uX5rI56eNSZyaAqdw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-16-darwin-64@1.0.3':
+    resolution: {integrity: sha512-bjDGbs/lBNrEq6QvlPSTuOVcQzK1htoNpxDLTnbH5yHOADKzv20fycB/FfW1dnky0v5EgP780Xj+G9lOXyO4kw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-16-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-aVBmrH/OGJGDS3ttb9PKaKUUMIFjBYHClq1hNVHwAwDhfCccb2L+S65vk4dsp4S8PLv2RTOtV7BayngO1QgvLw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-16-linux-64@1.0.3':
+    resolution: {integrity: sha512-9EtfE8KvdTFlUT8k9oESw5vo3XLAkYGjDlFRlTdZBbCqMVzF/XptmMkrE7GuxMOiGZlDYgk6qHY2UjvWcOJa8g==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-20-darwin-64@1.0.3':
+    resolution: {integrity: sha512-QHUwX4p3h+y3WXn9GX9sr6SmUsWetM1cZDWUW3Y2xR+vq1dU6yBRUxVQBjUDfcZRIu/vTIyjQq8eQ93pyLxtNQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-20-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-fclx/1op39TXwPz3qFc3/KtBWLyMi+su1RxdKeUlEVpz7FKhcIqSIjkLS97T7//Y0TYt1QAqk6KM/CJp5qLzkg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-20-linux-64@1.0.3':
+    resolution: {integrity: sha512-CZc9KwLQ2ONHln6fuFMC2+uFomVE1LLPD4O0m3MRikmFdtWmKsfptOTKdwS57q66VhY4KhBUWABUsCfWhC+8hQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-21-darwin-64@1.0.3':
+    resolution: {integrity: sha512-FHKmh6eazoMbYswaplV+n1b3IuuBJGmt0a9fcqscxLiuMH0BqfLNqvnX+mp5NxP03Izy7mmwkDs6HwcXQ5KcwQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-21-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-BtNwMotQQOuhi5glzC0mdIzwkn28UQBVArlwteu5Jezj5L9tV3zS/3I20ollW4VzqqhMPXCIuDXi2bl6NwS0Fg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-21-linux-64@1.0.3':
+    resolution: {integrity: sha512-dPjIN35UKYE8mhYfo1WXQrQd2BnL5Lwar36SYDY6xs+HnZl245nwjycPq9FU2nQBhtL4N9vqFpN6aL2tkqZevQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-22-darwin-64@1.0.3':
+    resolution: {integrity: sha512-42sEXGcn/dp8SEyGiHN6GP/td3iOwHB7cGC13VOvGEsgOWZy7Gk3HEU+dMUZfXiUI8yUrliRn+99C2/sYUiwuw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-22-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-RBN5f94/sFcD225DF4/vBzGDiJfdvM5TOpu8Y1EA7/UQ+95r0QY8rZcG++t5S9QNy+9WRcLN7sqfL8Gw5a+zog==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-22-linux-64@1.0.3':
+    resolution: {integrity: sha512-ZsDYOxyXhlp9176acIVsNumHr1aQmZU4OYRbj4VdFQk+JHEmFaiVEQuLTy8sX3m8CFjiQqsa81/J3W1RWIMvNg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-23-darwin-64@1.0.3':
+    resolution: {integrity: sha512-86HRm96/E37SBOrt3JTZ/27HT/q1+YsP4yWUW4wGvafF3RcglnM9oA4a5y6AFHFl5Ud3pkqUeqzaD3cbQDMUHw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-23-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-M4RHDqvPekEfdAO0gveIG8UZAceZKBPJFQfunGdvtNpylu++t7QIKbLM7jTY1UiHucrGw4ppZDFzy4VAQFc+Eg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-23-linux-64@1.0.3':
+    resolution: {integrity: sha512-xWNPEYhJ95NTwHLqxchm/wFv1VjU8dNw+DDyhGV64Ozr0A7g/e7rhwN30VBM4zZQaQ9WxM26jG9l01qMC+62PQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-24-darwin-64@1.0.3':
+    resolution: {integrity: sha512-P/L6AupQRYKT3XBnsHEYCbfZFgaIudIYPdDTxQQeDZ8EI8UWNad2F+dv7xvz6BmDkhAQuwQ7oUXNruDvSoMssg==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-24-darwin-arm64@1.0.3':
+    resolution: {integrity: sha512-zCfbN00tbgrftsKX+P3Jrgirl3QBecNf+G66MPO0rToZeS0sWy0rJtcMnw/zzE88Z3jlxuov0OZwtORuj0uHNg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-24-linux-64@1.0.3':
+    resolution: {integrity: sha512-EDwbq5o4mqMzbmUqQPOBCpeV1Pxn+GIBhSbSnVGXFxpSXJMBYuOP/5Ij5nWS8RHzSHf/17WptTFSKkv1dfhuPw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/js-check-25-darwin-64@1.0.3':
+    resolution: {integrity: sha512-+ZyKQXzMQYfzz3KJpD2Dl4Ay5PjxMkxGLJh2qu9Ym89+PKkjpaAqMLKI4h0RomSgZcRLbJYWCYnxf2AJqfabbQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-25-darwin-arm64@1.0.2':
+    resolution: {integrity: sha512-T12mRgvYgmzNiMrSUAz78sSRBEwtQclfSc3t+HeHblJ52FqzsbqtPHbhxsZNK+dQ2of9to9grSJz5dK/D64LzQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@byted-lynx/js-check-25-linux-64@1.0.3':
+    resolution: {integrity: sha512-V7P/vfbdSaJcAuUF27z9iGLJfXw8qMhe2ia1QEyQXWDaRuqIJLVrjYJO+xAXJ7uvI73rcYGYFRE+dtuntlEFSg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@byted-lynx/tasm@https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz':
+    resolution: {tarball: https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz}
+    version: 4.4.15
+
+  '@byted-lynx/vm-check@1.0.25':
+    resolution: {integrity: sha512-83yu8iQ61Mj2AqbC2b6Dp7i6DoE+5mdd4fBGNZHHfJACn0ZXHu/KZN4dw4/CudinzMUJuJTwe/Wifg++q1vOAQ==}
+
   '@changesets/apply-release-plan@7.0.13':
     resolution: {integrity: sha512-BIW7bofD2yAWoE8H4V40FikC+1nNFEKBisMECccS16W1rt6qqhNTBDmIw5HaqmMgtLNz9e7oiALiEUuKrQ4oHg==}
 
@@ -2757,9 +2885,6 @@ packages:
 
   '@lynx-js/preact-devtools@5.0.1':
     resolution: {integrity: sha512-ayUU8PJ0TVWABbd5/d/04KI18W9RY4kkaRekBXXbRE/eBkGMZ3lVJ0zOB+B+85B9RUpvEVK2FleqJkS+qBKG6Q==}
-
-  '@lynx-js/tasm@0.0.20':
-    resolution: {integrity: sha512-ezMq43s59jqFuQ1YygpsUuZmGXw4XH+00RsB5RVmkYZuHQxEaLt/ECTOixF+9RixvAyhmxzF2eSURvmNckO9xg==}
 
   '@lynx-js/type-element-api@0.0.2':
     resolution: {integrity: sha512-Unz3RHf2RM2vOWForwubjLYw9xbBP02ReuOL4KVLc3+0Vzryo8KbgqbhMUZCsJXHVmcaE2zXiE1AV/nqrBAoPA==}
@@ -4542,6 +4667,9 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  axios@0.21.4:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
 
   axios@1.11.0:
     resolution: {integrity: sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==}
@@ -8762,6 +8890,10 @@ packages:
     resolution: {integrity: sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==}
     engines: {node: '>=0.6.0'}
 
+  tmp@0.2.5:
+    resolution: {integrity: sha512-voyz6MApa1rQGUxT3E+BK7/ROe8itEx7vD8/HEvt4xwXucvQ5G5oeEiHkmHZJuBO21RpOf+YYm9MOivj709jow==}
+    engines: {node: '>=14.14'}
+
   tmpl@1.0.5:
     resolution: {integrity: sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==}
 
@@ -10384,6 +10516,116 @@ snapshots:
 
   '@bufbuild/protobuf@2.6.0': {}
 
+  '@byted-lynx/js-check-14-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-14-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-14-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-16-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-16-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-16-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-20-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-20-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-20-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-21-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-21-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-21-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-22-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-22-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-22-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-23-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-23-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-23-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-24-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-24-darwin-arm64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-24-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-25-darwin-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/js-check-25-darwin-arm64@1.0.2':
+    optional: true
+
+  '@byted-lynx/js-check-25-linux-64@1.0.3':
+    optional: true
+
+  '@byted-lynx/tasm@https://tosv.byted.org/obj/inspirecloud-cn-bytedance-internal/baas/ttywdh/eeae775bc2391be6_1766735837028.tgz':
+    dependencies:
+      '@byted-lynx/vm-check': 1.0.25
+      tmp: 0.2.5
+    transitivePeerDependencies:
+      - debug
+
+  '@byted-lynx/vm-check@1.0.25':
+    dependencies:
+      axios: 0.21.4
+    optionalDependencies:
+      '@byted-lynx/js-check-14-darwin-64': 1.0.3
+      '@byted-lynx/js-check-14-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-14-linux-64': 1.0.3
+      '@byted-lynx/js-check-16-darwin-64': 1.0.3
+      '@byted-lynx/js-check-16-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-16-linux-64': 1.0.3
+      '@byted-lynx/js-check-20-darwin-64': 1.0.3
+      '@byted-lynx/js-check-20-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-20-linux-64': 1.0.3
+      '@byted-lynx/js-check-21-darwin-64': 1.0.3
+      '@byted-lynx/js-check-21-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-21-linux-64': 1.0.3
+      '@byted-lynx/js-check-22-darwin-64': 1.0.3
+      '@byted-lynx/js-check-22-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-22-linux-64': 1.0.3
+      '@byted-lynx/js-check-23-darwin-64': 1.0.3
+      '@byted-lynx/js-check-23-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-23-linux-64': 1.0.3
+      '@byted-lynx/js-check-24-darwin-64': 1.0.3
+      '@byted-lynx/js-check-24-darwin-arm64': 1.0.3
+      '@byted-lynx/js-check-24-linux-64': 1.0.3
+      '@byted-lynx/js-check-25-darwin-64': 1.0.3
+      '@byted-lynx/js-check-25-darwin-arm64': 1.0.2
+      '@byted-lynx/js-check-25-linux-64': 1.0.3
+    transitivePeerDependencies:
+      - debug
+
   '@changesets/apply-release-plan@7.0.13':
     dependencies:
       '@changesets/config': 3.1.1
@@ -11045,8 +11287,6 @@ snapshots:
     dependencies:
       errorstacks: 2.4.1
       htm: 3.1.1
-
-  '@lynx-js/tasm@0.0.20': {}
 
   '@lynx-js/type-element-api@0.0.2': {}
 
@@ -13347,6 +13587,12 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.0.0
+
+  axios@0.21.4:
+    dependencies:
+      follow-redirects: 1.15.6(debug@4.3.4)
+    transitivePeerDependencies:
+      - debug
 
   axios@1.11.0(debug@4.3.4):
     dependencies:
@@ -18372,6 +18618,8 @@ snapshots:
   tmp@0.0.33:
     dependencies:
       os-tmpdir: 1.0.2
+
+  tmp@0.2.5: {}
 
   tmpl@1.0.5: {}
 
