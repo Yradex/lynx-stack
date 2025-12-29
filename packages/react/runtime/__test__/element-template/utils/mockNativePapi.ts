@@ -34,8 +34,36 @@ export function installMockNativePapi(): MockNativePapi {
   const nativeLog: any[] = [];
 
   const mockElementFromBinary = vi.fn().mockImplementation((...args: any[]) => {
-    const [tag, , opcodes] = args;
-    nativeLog.push(['__ElementFromBinary', ...args]);
+    const [tag, component, opcodes, config] = args;
+
+    const formatOpcodes = (ops: any[]) => {
+      if (!Array.isArray(ops)) return ops;
+      const res = [];
+      for (let i = 0; i < ops.length;) {
+        const opcode = ops[i];
+        if (opcode === 4) { // setAttributes
+          res.push({
+            type: 'setAttributes',
+            id: ops[i + 1],
+            attributes: ops[i + 2],
+          });
+          i += 3;
+        } else if (opcode === 2) { // insertBefore
+          res.push({
+            type: 'insertBefore',
+            id: ops[i + 1],
+            node: ops[i + 3],
+          });
+          i += 4;
+        } else {
+          res.push(opcode);
+          i++;
+        }
+      }
+      return res;
+    };
+
+    nativeLog.push(['__ElementFromBinary', tag, component, formatOpcodes(opcodes), config]);
 
     if (!templateRepo.has(tag)) {
       throw new Error(

@@ -20,12 +20,13 @@
     "_et_7a8c6_test_2",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "A"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "A"
+        }
       }
     ],
     null
@@ -39,12 +40,13 @@
     "_et_7a8c6_test_2",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "B"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "B"
+        }
       }
     ],
     null
@@ -58,12 +60,13 @@
     "_et_7a8c6_test_2",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "C"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "C"
+        }
       }
     ],
     null
@@ -89,12 +92,13 @@
     "_et_7a8c6_test_3",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "A"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "A"
+        }
       }
     ],
     null
@@ -108,12 +112,13 @@
     "_et_7a8c6_test_3",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "B"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "B"
+        }
       }
     ],
     null
@@ -127,12 +132,13 @@
     "_et_7a8c6_test_3",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "C"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "C"
+        }
       }
     ],
     null
@@ -142,173 +148,185 @@
     "_et_7a8c6_test_1",
     null,
     [
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "A"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "A"
+        }
       },
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "B"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "B"
+        }
       },
-      2,
-      0,
-      null,
       {
-        "type": "rawText",
-        "text": "C"
+        "type": "insertBefore",
+        "id": 0,
+        "node": {
+          "type": "rawText",
+          "text": "C"
+        }
       },
-      2,
-      1,
-      null,
       {
-        "tag": "text",
-        "children": [
-          {
-            "tag": "slot",
-            "attributes": {
-              "part-id": 0
-            },
-            "children": [
-              {
-                "type": "rawText",
-                "text": "A"
-              }
-            ]
-          }
-        ],
-        "templateId": "_et_7a8c6_test_2"
+        "type": "insertBefore",
+        "id": 1,
+        "node": {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              },
+              "children": [
+                {
+                  "type": "rawText",
+                  "text": "A"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_2"
+        }
       },
-      2,
-      1,
-      null,
       {
-        "tag": "text",
-        "children": [
-          {
-            "tag": "slot",
-            "attributes": {
-              "part-id": 0
-            },
-            "children": [
-              {
-                "type": "rawText",
-                "text": "B"
-              }
-            ]
-          }
-        ],
-        "templateId": "_et_7a8c6_test_2"
+        "type": "insertBefore",
+        "id": 1,
+        "node": {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              },
+              "children": [
+                {
+                  "type": "rawText",
+                  "text": "B"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_2"
+        }
       },
-      2,
-      1,
-      null,
       {
-        "tag": "text",
-        "children": [
-          {
-            "tag": "slot",
-            "attributes": {
-              "part-id": 0
-            },
-            "children": [
-              {
-                "type": "rawText",
-                "text": "C"
-              }
-            ]
-          }
-        ],
-        "templateId": "_et_7a8c6_test_2"
+        "type": "insertBefore",
+        "id": 1,
+        "node": {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              },
+              "children": [
+                {
+                  "type": "rawText",
+                  "text": "C"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_2"
+        }
       },
-      2,
-      2,
-      null,
       {
-        "type": "rawText",
-        "text": "A"
+        "type": "insertBefore",
+        "id": 2,
+        "node": {
+          "type": "rawText",
+          "text": "A"
+        }
       },
-      2,
-      2,
-      null,
       {
-        "type": "rawText",
-        "text": "B"
+        "type": "insertBefore",
+        "id": 2,
+        "node": {
+          "type": "rawText",
+          "text": "B"
+        }
       },
-      2,
-      2,
-      null,
       {
-        "type": "rawText",
-        "text": "C"
+        "type": "insertBefore",
+        "id": 2,
+        "node": {
+          "type": "rawText",
+          "text": "C"
+        }
       },
-      2,
-      3,
-      null,
       {
-        "tag": "text",
-        "children": [
-          {
-            "tag": "slot",
-            "attributes": {
-              "part-id": 0
-            },
-            "children": [
-              {
-                "type": "rawText",
-                "text": "A"
-              }
-            ]
-          }
-        ],
-        "templateId": "_et_7a8c6_test_3"
+        "type": "insertBefore",
+        "id": 3,
+        "node": {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              },
+              "children": [
+                {
+                  "type": "rawText",
+                  "text": "A"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_3"
+        }
       },
-      2,
-      3,
-      null,
       {
-        "tag": "text",
-        "children": [
-          {
-            "tag": "slot",
-            "attributes": {
-              "part-id": 0
-            },
-            "children": [
-              {
-                "type": "rawText",
-                "text": "B"
-              }
-            ]
-          }
-        ],
-        "templateId": "_et_7a8c6_test_3"
+        "type": "insertBefore",
+        "id": 3,
+        "node": {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              },
+              "children": [
+                {
+                  "type": "rawText",
+                  "text": "B"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_3"
+        }
       },
-      2,
-      3,
-      null,
       {
-        "tag": "text",
-        "children": [
-          {
-            "tag": "slot",
-            "attributes": {
-              "part-id": 0
-            },
-            "children": [
-              {
-                "type": "rawText",
-                "text": "C"
-              }
-            ]
-          }
-        ],
-        "templateId": "_et_7a8c6_test_3"
+        "type": "insertBefore",
+        "id": 3,
+        "node": {
+          "tag": "text",
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "part-id": 0
+              },
+              "children": [
+                {
+                  "type": "rawText",
+                  "text": "C"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_3"
+        }
       }
     ],
     null

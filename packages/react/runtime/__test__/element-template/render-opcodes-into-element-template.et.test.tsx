@@ -109,17 +109,20 @@ describe('renderOpcodesIntoElementTemplate', () => {
           "_et_foo",
           null,
           [
-            4,
-            0,
             {
-              "id": "test",
+              "attributes": {
+                "id": "test",
+              },
+              "id": 0,
+              "type": "setAttributes",
             },
-            2,
-            1,
-            null,
             {
-              "text": "Hello",
-              "type": "rawText",
+              "id": 1,
+              "node": {
+                "text": "Hello",
+                "type": "rawText",
+              },
+              "type": "insertBefore",
             },
           ],
           null,
@@ -199,19 +202,21 @@ describe('renderOpcodesIntoElementTemplate', () => {
           "_et_foo",
           null,
           [
-            2,
-            0,
-            null,
             {
-              "text": "A",
-              "type": "rawText",
+              "id": 0,
+              "node": {
+                "text": "A",
+                "type": "rawText",
+              },
+              "type": "insertBefore",
             },
-            2,
-            1,
-            null,
             {
-              "text": "B",
-              "type": "rawText",
+              "id": 1,
+              "node": {
+                "text": "B",
+                "type": "rawText",
+              },
+              "type": "insertBefore",
             },
           ],
           null,
@@ -276,17 +281,20 @@ describe('renderOpcodesIntoElementTemplate', () => {
           "_et_inner",
           null,
           [
-            4,
-            0,
             {
-              "id": "inner",
+              "attributes": {
+                "id": "inner",
+              },
+              "id": 0,
+              "type": "setAttributes",
             },
-            2,
-            0,
-            null,
             {
-              "text": "X",
-              "type": "rawText",
+              "id": 0,
+              "node": {
+                "text": "X",
+                "type": "rawText",
+              },
+              "type": "insertBefore",
             },
           ],
           null,
@@ -296,24 +304,25 @@ describe('renderOpcodesIntoElementTemplate', () => {
           "_et_outer",
           null,
           [
-            2,
-            0,
-            null,
             {
-              "attributes": {
-                "id": "inner",
-                "part-id": 0,
-              },
-              "children": [
-                {
-                  "attributes": {
-                    "part-id": 1,
-                  },
-                  "tag": "slot",
+              "id": 0,
+              "node": {
+                "attributes": {
+                  "id": "inner",
+                  "part-id": 0,
                 },
-              ],
-              "tag": "_et_inner",
-              "templateId": "_et_inner",
+                "children": [
+                  {
+                    "attributes": {
+                      "part-id": 1,
+                    },
+                    "tag": "slot",
+                  },
+                ],
+                "tag": "_et_inner",
+                "templateId": "_et_inner",
+              },
+              "type": "insertBefore",
             },
           ],
           null,

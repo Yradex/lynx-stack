@@ -12,19 +12,21 @@
     "_et_7a8c6_test_1",
     null,
     [
-      2,
-      1,
-      null,
       {
-        "type": "rawText",
-        "text": "2"
+        "type": "insertBefore",
+        "id": 1,
+        "node": {
+          "type": "rawText",
+          "text": "2"
+        }
       },
-      2,
-      2,
-      null,
       {
-        "type": "rawText",
-        "text": "3"
+        "type": "insertBefore",
+        "id": 2,
+        "node": {
+          "type": "rawText",
+          "text": "3"
+        }
       }
     ],
     null

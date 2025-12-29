@@ -4,10 +4,12 @@
     "_et_7a8c6_test_3",
     null,
     [
-      4,
-      0,
       {
-        "src": "./assets/lynx-logo.png"
+        "type": "setAttributes",
+        "id": 0,
+        "attributes": {
+          "src": "./assets/lynx-logo.png"
+        }
       }
     ],
     null
@@ -21,34 +23,40 @@
     "_et_7a8c6_test_1",
     null,
     [
-      4,
-      0,
       {
-        "bindEvent": 1
-      },
-      4,
-      2,
-      {
-        "src": "./assets/arrow.png"
-      },
-      2,
-      1,
-      null,
-      {
-        "tag": "image",
+        "type": "setAttributes",
+        "id": 0,
         "attributes": {
-          "class": "Logo--lynx",
-          "part-id": 0,
-          "src": "./assets/lynx-logo.png"
-        },
-        "templateId": "_et_7a8c6_test_3"
+          "bindEvent": 1
+        }
       },
-      2,
-      3,
-      null,
       {
-        "type": "rawText",
-        "text": " src/App.tsx "
+        "type": "setAttributes",
+        "id": 2,
+        "attributes": {
+          "src": "./assets/arrow.png"
+        }
+      },
+      {
+        "type": "insertBefore",
+        "id": 1,
+        "node": {
+          "tag": "image",
+          "attributes": {
+            "class": "Logo--lynx",
+            "part-id": 0,
+            "src": "./assets/lynx-logo.png"
+          },
+          "templateId": "_et_7a8c6_test_3"
+        }
+      },
+      {
+        "type": "insertBefore",
+        "id": 3,
+        "node": {
+          "type": "rawText",
+          "text": " src/App.tsx "
+        }
       }
     ],
     null
