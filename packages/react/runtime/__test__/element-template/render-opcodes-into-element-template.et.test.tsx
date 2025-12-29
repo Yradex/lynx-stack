@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
-import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/renderOpcodes.js';
+import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../../src/renderToOpcodes/index.js';
 import { installMockNativePapi, registerTemplates } from './utils/mockNativePapi.js';

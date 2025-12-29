@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { setupPage } from '../runtime/page/page.js';
-import { renderMainThread } from '../runtime/render/renderMainThread.js';
+import { renderMainThread } from '../runtime/render/render-main-thread.js';
 
 function injectCalledByNative(): void {
   const calledByNative: LynxCallByNative = {

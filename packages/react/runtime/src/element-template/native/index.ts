@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 import '../../hooks/react.js';
 
-import { injectCalledByNative } from './mainThreadApi.js';
+import { injectCalledByNative } from './main-thread-api.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
 import { Slot } from '../runtime/components/slot.js';
 

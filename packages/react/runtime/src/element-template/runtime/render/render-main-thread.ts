@@ -7,7 +7,7 @@
  */
 
 // import { profileEnd, profileStart } from '../../../debug/utils.js';
-import { renderOpcodesIntoElementTemplate } from './renderOpcodes.js';
+import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
 import { render as renderToString } from '../../../renderToOpcodes/index.js';
 import { __page } from '../page/page.js';
 import { __root } from '../page/root-instance.js';

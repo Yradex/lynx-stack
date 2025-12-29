@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { installMockNativePapi, registerTemplates, serializeToJSX } from './utils/mockNativePapi.js';
-import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/renderOpcodes.js';
+import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
 import { renderToString } from '../../src/renderToOpcodes/index.js';
