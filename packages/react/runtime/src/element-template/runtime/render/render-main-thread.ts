@@ -9,6 +9,7 @@
 import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
 import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { render as renderToString } from '../../../renderToOpcodes/index.js';
+import { postHydrationData } from '../hydration.js';
 import { __page } from '../page/page.js';
 import { __root } from '../page/root-instance.js';
 
@@ -32,7 +33,8 @@ function renderMainThread(): void {
     profileStart('ReactLynx::renderOpcodes');
   }
   try {
-    renderOpcodesIntoElementTemplate(opcodes, __page);
+    const instances = renderOpcodesIntoElementTemplate(opcodes, __page);
+    postHydrationData(instances);
   } finally {
     if (__PROFILE__) {
       profileEnd();

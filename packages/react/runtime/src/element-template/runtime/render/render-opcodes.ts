@@ -3,6 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../../../renderToOpcodes/index.js';
+import type { SerializedETInstance } from '../hydration.js';
 import { createElementTemplateHandle } from '../template/handle.js';
 
 interface Frame {
@@ -33,10 +34,13 @@ function createFrame(templateKey: string | null): Frame {
 export function renderOpcodesIntoElementTemplate(
   opcodes: unknown[],
   root: RootNode,
-): void {
+): SerializedETInstance[] {
+  const rootInstances: SerializedETInstance[] = [];
   const stack: Frame[] = [];
   // Initialize Root Frame
   stack.push(createFrame(null));
+
+  const hydrationMap = new Map<any, SerializedETInstance | string>();
 
   for (let i = 0; i < opcodes.length;) {
     const opcode = opcodes[i];
@@ -92,7 +96,25 @@ export function renderOpcodesIntoElementTemplate(
         );
 
         // Register Handle
-        createElementTemplateHandle(elementRef);
+        const handle = createElementTemplateHandle(elementRef);
+
+        // Collect Hydration Info
+        const serializedInstance: SerializedETInstance = [
+          handle.id,
+          templateKey,
+          {},
+          // Only include attrs if not empty for optimization?
+          // For now, keep it simple.
+          { ...frame.attrs },
+        ];
+
+        for (const [slotId, children] of frame.slotChildren) {
+          serializedInstance[2][slotId] = children.map((child) => {
+            return hydrationMap.get(child)!;
+          });
+        }
+
+        hydrationMap.set(elementRef, serializedInstance);
 
         // Append to parent
         const parentFrame = stack[stack.length - 1];
@@ -100,6 +122,7 @@ export function renderOpcodesIntoElementTemplate(
           if (parentFrame.templateKey === null) {
             // Parent is root frame
             __AppendElement(root, elementRef as FiberElement);
+            rootInstances.push(serializedInstance);
           } else {
             // Parent is another template
             // Must append to parent's active slot
@@ -173,6 +196,7 @@ export function renderOpcodesIntoElementTemplate(
         const frame = stack[stack.length - 1];
         if (frame) {
           const textRef = __CreateRawText(text);
+          hydrationMap.set(textRef, text);
 
           if (frame.templateKey === null) {
             // Root text
@@ -206,4 +230,5 @@ export function renderOpcodesIntoElementTemplate(
         throw new Error(`Unknown opcode: ${opcode as string | number}`);
     }
   }
+  return rootInstances;
 }
