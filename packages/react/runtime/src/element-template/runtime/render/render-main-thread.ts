@@ -6,8 +6,8 @@
  * Implements the IFR (Instant First-Frame Rendering) on main thread.
  */
 
-// import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
+import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { render as renderToString } from '../../../renderToOpcodes/index.js';
 import { __page } from '../page/page.js';
 import { __root } from '../page/root-instance.js';
@@ -15,7 +15,7 @@ import { __root } from '../page/root-instance.js';
 function renderMainThread(): void {
   let opcodes;
   if (__PROFILE__) {
-    // profileStart('ReactLynx::renderMainThread');
+    profileStart('ReactLynx::renderMainThread');
   }
   try {
     opcodes = renderToString(__root.__jsx, undefined);
@@ -24,18 +24,18 @@ function renderMainThread(): void {
     opcodes = [];
   } finally {
     if (__PROFILE__) {
-      // profileEnd();
+      profileEnd();
     }
   }
 
   if (__PROFILE__) {
-    // profileStart('ReactLynx::renderOpcodes');
+    profileStart('ReactLynx::renderOpcodes');
   }
   try {
     renderOpcodesIntoElementTemplate(opcodes, __page);
   } finally {
     if (__PROFILE__) {
-      // profileEnd();
+      profileEnd();
     }
   }
 }

@@ -4,10 +4,12 @@
 import '../../hooks/react.js';
 
 import { injectCalledByNative } from './main-thread-api.js';
+import { setupLynxEnv } from '../../lynx/env.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
 import { Slot } from '../runtime/components/slot.js';
 
 registerSlot(Slot);
+setupLynxEnv();
 
 if (__MAIN_THREAD__) {
   injectCalledByNative();

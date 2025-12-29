@@ -174,6 +174,123 @@ function collectImportSpecifiers(code: string): string[] {
     let j = i + keyword.length;
     j = skipSpaces(code, j);
 
+    if (keyword === 'import' && isWordAt(code, j, 'type')) {
+      j = skipSpaces(code, j + 4);
+
+      const direct = readStringLiteral(code, j);
+      if (direct) {
+        i = direct.next;
+        continue;
+      }
+
+      while (j < code.length) {
+        const cc = code[j]!;
+        const nn = j + 1 < code.length ? code[j + 1]! : '';
+        if (cc === '/' && nn === '/') {
+          j += 2;
+          while (j < code.length && code[j] !== '\n') j++;
+          continue;
+        }
+        if (cc === '/' && nn === '*') {
+          j += 2;
+          while (j + 1 < code.length && !(code[j] === '*' && code[j + 1] === '/')) j++;
+          j += 2;
+          continue;
+        }
+        if (cc === '\'' || cc === '"') {
+          const res = readStringLiteral(code, j);
+          j = res ? res.next : j + 1;
+          continue;
+        }
+        if (cc === '`') {
+          j++;
+          while (j < code.length) {
+            const tc = code[j]!;
+            if (tc === '\\') {
+              j += 2;
+              continue;
+            }
+            if (tc === '`') {
+              j++;
+              break;
+            }
+            j++;
+          }
+          continue;
+        }
+
+        if (isWordAt(code, j, 'from')) {
+          const k = skipSpaces(code, j + 4);
+          const lit = readStringLiteral(code, k);
+          i = lit ? lit.next : k + 1;
+          break;
+        }
+
+        if (cc === ';') {
+          i = j + 1;
+          break;
+        }
+        j++;
+      }
+
+      continue;
+    }
+
+    if (keyword === 'export' && isWordAt(code, j, 'type')) {
+      j = skipSpaces(code, j + 4);
+      while (j < code.length) {
+        const cc = code[j]!;
+        const nn = j + 1 < code.length ? code[j + 1]! : '';
+        if (cc === '/' && nn === '/') {
+          j += 2;
+          while (j < code.length && code[j] !== '\n') j++;
+          continue;
+        }
+        if (cc === '/' && nn === '*') {
+          j += 2;
+          while (j + 1 < code.length && !(code[j] === '*' && code[j + 1] === '/')) j++;
+          j += 2;
+          continue;
+        }
+        if (cc === '\'' || cc === '"') {
+          const res = readStringLiteral(code, j);
+          j = res ? res.next : j + 1;
+          continue;
+        }
+        if (cc === '`') {
+          j++;
+          while (j < code.length) {
+            const tc = code[j]!;
+            if (tc === '\\') {
+              j += 2;
+              continue;
+            }
+            if (tc === '`') {
+              j++;
+              break;
+            }
+            j++;
+          }
+          continue;
+        }
+
+        if (isWordAt(code, j, 'from')) {
+          const k = skipSpaces(code, j + 4);
+          const lit = readStringLiteral(code, k);
+          i = lit ? lit.next : k + 1;
+          break;
+        }
+
+        if (cc === ';') {
+          i = j + 1;
+          break;
+        }
+        j++;
+      }
+
+      continue;
+    }
+
     if (keyword === 'import' && code[j] === '(') {
       j++;
       j = skipSpaces(code, j);
