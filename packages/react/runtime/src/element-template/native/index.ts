@@ -6,6 +6,7 @@ import '../../hooks/react.js';
 import { injectCalledByNative } from './main-thread-api.js';
 import { setupLynxEnv } from '../../lynx/env.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
+import { setupBackgroundElementTemplateDocument } from '../background/document.js';
 import { Slot } from '../runtime/components/slot.js';
 
 registerSlot(Slot);
@@ -13,6 +14,10 @@ setupLynxEnv();
 
 if (__MAIN_THREAD__) {
   injectCalledByNative();
+}
+
+if (__BACKGROUND__) {
+  setupBackgroundElementTemplateDocument();
 }
 
 // setupLynxEnv();

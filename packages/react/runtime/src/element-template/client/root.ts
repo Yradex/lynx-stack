@@ -4,6 +4,8 @@
 // import { createContext, createElement } from 'preact/compat';
 // import { useState } from 'preact/hooks';
 // import type { Consumer, FC, ReactNode } from 'react';
+import type { ComponentChild, ContainerNode } from 'preact';
+import { render } from 'preact';
 import type { ReactNode } from 'react';
 
 // import { factory, withInitDataInState } from '../../compat/initData.js';
@@ -55,6 +57,9 @@ export interface Root {
 export const root: Root = {
   render: (jsx: ReactNode): void => {
     __root.__jsx = jsx;
+    if (__BACKGROUND__) {
+      render(jsx as ComponentChild, __root as unknown as ContainerNode);
+    }
   },
   /* v8 ignore next 3 */
   // registerDataProcessors: (dataProcessorDefinition: DataProcessorDefinition): void => {
