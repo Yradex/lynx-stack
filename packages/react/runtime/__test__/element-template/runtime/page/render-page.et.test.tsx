@@ -3,11 +3,12 @@
 // LICENSE file in the root directory of this source tree.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { root } from '../../src/element-template/index.js';
-import { __page } from '../../src/element-template/runtime/page/page.js';
-import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
-import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
-import { installMockNativePapi, serializeToJSX } from './utils/mockNativePapi.js';
+import { root } from '../../../../src/element-template/index.js';
+import { __page } from '../../../../src/element-template/runtime/page/page.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
+import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { serializeToJSX } from '../../test-utils/serializer.js';
 
 describe('renderPage with Element Template', () => {
   let mockContext: any;

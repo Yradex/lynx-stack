@@ -12,7 +12,7 @@ import {
   __OpSlotEnd,
   __OpText,
   renderToString,
-} from '../../src/renderToOpcodes/index';
+} from '../../../../src/renderToOpcodes/index';
 
 describe('Element Template renderToOpcodes', () => {
   let originalUseElementTemplate;

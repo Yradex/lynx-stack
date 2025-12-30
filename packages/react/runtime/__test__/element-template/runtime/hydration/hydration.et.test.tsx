@@ -4,11 +4,11 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { installMockNativePapi } from './utils/mockNativePapi.js';
-import { root } from '../../src/element-template/index.js';
-import { ElementTemplateLifecycleConstant } from '../../src/element-template/runtime/lifecycle-constant.js';
-import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
-import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
+import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { root } from '../../../../src/element-template/index.js';
+import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/runtime/lifecycle-constant.js';
+import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 
 describe('Hydration Data Generation', () => {
   let hydrationData: any[] = [];

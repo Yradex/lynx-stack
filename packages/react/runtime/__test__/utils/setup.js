@@ -7,18 +7,11 @@ import { document } from '../../src/document.ts';
 
 import { afterEach, expect } from 'vitest';
 
-import { registerTemplates } from '../element-template/utils/mockNativePapi.ts';
-import { Slot } from '../../src/element-template/runtime/components/slot.ts';
-import { registerSlot } from '../../src/renderToOpcodes/index.ts';
-
-registerSlot(Slot);
-
 function inject() {
   __injectElementApi();
   // __injectGlobals();
 
   globalThis.document = document;
-  globalThis.__REGISTER_ELEMENT_TEMPLATES__ = registerTemplates;
 }
 
 inject();

@@ -8,11 +8,13 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { installMockNativePapi, registerTemplates, serializeToJSX } from './utils/mockNativePapi.js';
-import { renderOpcodesIntoElementTemplate } from '../../src/element-template/runtime/render/render-opcodes.js';
-import { resetTemplateId } from '../../src/element-template/runtime/template/handle.js';
-import { ElementTemplateRegistry } from '../../src/element-template/runtime/template/registry.js';
-import { renderToString } from '../../src/renderToOpcodes/index.js';
+import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { registerTemplates } from '../../test-utils/registry.js';
+import { serializeToJSX } from '../../test-utils/serializer.js';
+import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
+import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { renderToString } from '../../../../src/renderToOpcodes/index.js';
 
 declare global {
   var __USE_ELEMENT_TEMPLATE__: boolean | undefined;
@@ -31,7 +33,7 @@ interface TransformResult {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.resolve(__dirname, './fixtures');
+const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures');
 
 const isUpdate = process.env['UPDATE'] === '1' || process.env['UPDATE'] === 'true';
 

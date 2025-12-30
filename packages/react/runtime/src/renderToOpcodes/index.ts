@@ -12,14 +12,6 @@
 
 import { Fragment, h, options } from 'preact';
 
-let Slot: any;
-
-/**
- * @internal
- */
-export function registerSlot(slot: any): void {
-  Slot = slot;
-}
 import {
   CHILDREN,
   COMMIT,
@@ -36,6 +28,16 @@ import {
 } from './constants.js';
 
 /** @typedef {import('preact').VNode} VNode */
+
+let Slot: any;
+
+/**
+ * @internal
+ */
+/* v8 ignore next 3 */
+export function registerSlot(slot: any): void {
+  Slot = slot;
+}
 
 const EMPTY_ARR = [];
 const isArray = /* @__PURE__ */ Array.isArray;
@@ -206,6 +208,7 @@ function _renderToString(
 
   // Invoke rendering on Components
   if (typeof type === 'function') {
+    /* v8 ignore start */
     if (type === Slot) {
       opcodes.push(__OpSlotBegin, props.id);
       _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
@@ -215,6 +218,7 @@ function _renderToString(
       if (ummountHook) ummountHook(vnode);
       return;
     }
+    /* v8 ignore stop */
 
     if (type === Fragment) {
       rendered = props.children;

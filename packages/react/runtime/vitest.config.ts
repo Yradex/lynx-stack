@@ -6,7 +6,6 @@ import { defineConfig } from 'vitest/config';
 
 const require = createRequire(import.meta.url);
 const runtimePkg = require.resolve('./src/internal.ts');
-const elementTemplateRuntimePkg = require.resolve('./src/element-template/internal.ts');
 
 function transformReactLynxPlugin(): Plugin {
   return {
@@ -25,8 +24,6 @@ function transformReactLynxPlugin(): Plugin {
         };
       }
 
-      const isElementTemplate = relativePath.includes('.et.test.');
-
       const result = transformReactLynxSync(sourceText, {
         mode: 'test',
         pluginName: '',
@@ -34,11 +31,11 @@ function transformReactLynxPlugin(): Plugin {
         sourcemap: true,
         snapshot: {
           preserveJsx: false,
-          runtimePkg: isElementTemplate ? elementTemplateRuntimePkg : runtimePkg,
+          runtimePkg,
           jsxImportSource: '@lynx-js/react',
           filename: 'test',
           target: 'MIXED',
-          experimentalEnableElementTemplate: isElementTemplate,
+          experimentalEnableElementTemplate: false,
         },
         dynamicImport: false,
         // snapshot: true,
@@ -52,11 +49,6 @@ function transformReactLynxPlugin(): Plugin {
       });
 
       let code = result.code;
-      if (result.elementTemplates && result.elementTemplates.length > 0) {
-        code += `\nif (globalThis.__REGISTER_ELEMENT_TEMPLATES__) { globalThis.__REGISTER_ELEMENT_TEMPLATES__(${
-          JSON.stringify(result.elementTemplates)
-        }); }\n`;
-      }
 
       return {
         code,
@@ -86,6 +78,7 @@ export default defineConfig({
   },
   test: {
     name: 'react/runtime',
+    exclude: ['**/node_modules/**', '**/dist/**', '**/__test__/element-template/**'],
     coverage: {
       exclude: [
         'debug',
@@ -113,6 +106,8 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.test-d.*',
         '__test__/element-template/**',
+        'src/element-template/**',
+        '__test__/element-template/vitest.config.ts',
       ],
       thresholds: {
         lines: 100,
