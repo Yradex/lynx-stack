@@ -1,0 +1,52 @@
+[
+  {
+    "templateId": "_et_7a8c6_test_2",
+    "compiledTemplate": {
+      "tag": "text",
+      "attributes": {
+        "text": "Slot Content 1"
+      }
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_3",
+    "compiledTemplate": {
+      "tag": "text",
+      "attributes": {
+        "text": "Slot Content 2"
+      }
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_1",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  },
+  {
+    "templateId": "_et_7a8c6_test_4",
+    "compiledTemplate": {
+      "tag": "view",
+      "children": [
+        {
+          "tag": "slot",
+          "attributes": {
+            "part-id": 0
+          }
+        }
+      ]
+    },
+    "sourceFile": "index.tsx"
+  }
+]

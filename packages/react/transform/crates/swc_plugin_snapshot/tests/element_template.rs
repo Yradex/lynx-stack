@@ -646,6 +646,65 @@ test!(
     "#
 );
 
+test!(
+  Syntax::Es(EsSyntax {
+    jsx: true,
+    ..Default::default()
+  }),
+  |t| visit_mut_pass(JSXTransformer::new(
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+    Some(t.comments.clone()),
+    TransformMode::Test,
+    None,
+  )),
+  should_handle_interpolated_text_with_siblings,
+  // Input codes mimicking multiple-text fixture
+  r#"
+    <view>
+      <view id='1'>
+        {items}
+      </view>
+       <view id='2'>
+          {items.map((item) => <text>{item}</text>)}
+       </view>
+    </view>
+    "#
+);
+
+test!(
+  module,
+  Syntax::Es(EsSyntax {
+    jsx: true,
+    ..Default::default()
+  }),
+  |t| visit_mut_pass(JSXTransformer::new(
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+    Some(t.comments.clone()),
+    TransformMode::Test,
+    None,
+  )),
+  should_handle_sibling_user_components,
+  // Input codes
+  r#"
+    <view>
+      <Component>
+        <text>Slot Content 1</text>
+      </Component>
+      <Component>
+        <text>Slot Content 2</text>
+      </Component>
+    </view>
+    "#
+);
+
 #[track_caller]
 fn verify_template_json(input: &str, snapshot_name: &str) {
   use std::cell::RefCell;

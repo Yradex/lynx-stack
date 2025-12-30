@@ -118,7 +118,7 @@ static NO_FLATTEN_ATTRIBUTES: Lazy<HashSet<String>> = Lazy::new(|| {
 pub enum DynamicPart {
   Attr(Expr, i32, AttrName),
   Spread(Expr, i32),
-  Slot(JSXElementChild, i32),
+  Slot(Vec<JSXElementChild>, i32),
   Children(Expr, i32),
   ListChildren(Expr, i32),
 }
@@ -141,7 +141,7 @@ fn bool_jsx_attr(value: bool) -> JSXAttrValue {
   })
 }
 
-fn wrap_in_slot(slot_ident: &Ident, id: i32, child: JSXElementChild) -> JSXElementChild {
+fn wrap_in_slot(slot_ident: &Ident, id: i32, children: Vec<JSXElementChild>) -> JSXElementChild {
   let slot_name = JSXElementName::Ident(slot_ident.clone());
   JSXElementChild::JSXElement(Box::new(JSXElement {
     span: DUMMY_SP,
@@ -163,7 +163,7 @@ fn wrap_in_slot(slot_ident: &Ident, id: i32, child: JSXElementChild) -> JSXEleme
       span: DUMMY_SP,
       name: slot_name,
     }),
-    children: vec![child],
+    children,
   }))
 }
 
@@ -427,12 +427,15 @@ where
 
         if self.enable_element_template {
           let wrapper = jsx_unwrap_internal_slot(n.take());
-          if let Some(child) = wrapper.children.into_iter().next() {
-            self.dynamic_parts.push(DynamicPart::Slot(child, id));
+          let children = wrapper.children;
+          if !children.is_empty() {
+            self.dynamic_parts.push(DynamicPart::Slot(children, id));
           }
         } else {
           self.dynamic_parts.push(DynamicPart::Slot(
-            JSXElementChild::JSXElement(Box::new(jsx_unwrap_internal_slot(n.take()))),
+            vec![JSXElementChild::JSXElement(Box::new(
+              jsx_unwrap_internal_slot(n.take()),
+            ))],
             id,
           ));
         }
@@ -1918,7 +1921,7 @@ where
         };
         snapshot_children.push(if use_element_template {
           self.used_slot = true;
-          wrap_in_slot(&self.slot_ident, 0, child)
+          wrap_in_slot(&self.slot_ident, 0, vec![child])
         } else {
           child
         });
@@ -1944,7 +1947,7 @@ where
               };
               snapshot_children.push(if use_element_template {
                 self.used_slot = true;
-                wrap_in_slot(&self.slot_ident, element_index, child)
+                wrap_in_slot(&self.slot_ident, element_index, vec![child])
               } else {
                 child
               });
@@ -1968,7 +1971,7 @@ where
               };
               snapshot_children.push(if use_element_template {
                 self.used_slot = true;
-                wrap_in_slot(&self.slot_ident, element_index, child)
+                wrap_in_slot(&self.slot_ident, element_index, vec![child])
               } else {
                 child
               });
@@ -1981,14 +1984,14 @@ where
                 )),
               }));
             }
-            DynamicPart::Slot(jsx, element_index) => {
+            DynamicPart::Slot(children, element_index) => {
               // snapshot_values.push(None);
-              snapshot_children.push(if use_element_template {
+              if use_element_template {
                 self.used_slot = true;
-                wrap_in_slot(&self.slot_ident, element_index, jsx)
+                snapshot_children.push(wrap_in_slot(&self.slot_ident, element_index, children));
               } else {
-                jsx
-              });
+                snapshot_children.extend(children);
+              }
               snapshot_slot_def.push(Some(ExprOrSpread {
                 spread: None,
                 expr: Box::new(quote!(
