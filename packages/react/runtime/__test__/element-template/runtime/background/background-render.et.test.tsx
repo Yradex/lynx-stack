@@ -3,11 +3,13 @@ import { root } from '../../../../src/element-template/index.js';
 import { __root, setRoot } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
 import { serializeBackgroundTree } from '../../test-utils/serializer.js';
+import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
 
 describe('Background Rendering', () => {
   beforeEach(() => {
     vi.stubGlobal('__BACKGROUND__', true);
-    BackgroundElementTemplateInstance.nextId = 1;
+    backgroundElementTemplateInstanceManager.clear();
+    backgroundElementTemplateInstanceManager.nextId = 0;
     // Re-initialize root for background
     setRoot(new BackgroundElementTemplateInstance('root'));
   });

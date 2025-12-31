@@ -8,8 +8,8 @@ export function serializeToJSX(element: any, indent: string = ''): string {
     return `${indent}<raw-text text="${element.text}" />`;
   }
 
-  let tag = element.tag || element.type || 'unknown';
-  let attributes = { ...(element.attributes || element.parts || element.props || {}) };
+  const tag = element.tag || element.type || 'unknown';
+  const attributes = { ...(element.attributes || element.parts || element.props || {}) };
   const children = element.children || [];
   const slots = element.slots || {};
 
@@ -46,14 +46,15 @@ export function serializeToJSX(element: any, indent: string = ''): string {
 }
 
 export function serializeBackgroundTree(node: any, indent = ''): string {
-  let type = node.type;
+  const type = node.type;
   // Normalize template keys for stability if needed, but here they seem deterministic
   // if (type.startsWith('_et_')) type = '_et_ANY';
 
   let attrStr = '';
-  for (const [key, value] of Object.entries(node.attributes)) {
-    if (key === 'children') continue;
-    attrStr += ` ${key}=${JSON.stringify(value)}`;
+
+  // Include partId as id for slots (restoring snapshot behavior)
+  if (typeof node.partId === 'number' && node.partId !== -1) {
+    attrStr += ` id=${node.partId}`;
   }
 
   let res = `${indent}<${type}${attrStr}`;

@@ -14,8 +14,42 @@ export class BackgroundElementTemplateInstance {
   public nextSibling: BackgroundElementTemplateInstance | null = null;
   public previousSibling: BackgroundElementTemplateInstance | null = null;
 
-  // For storing attributes set by Preact
-  public attributes: Record<string, unknown> = {};
+  // Shadow State for Hydration
+  // 1. Attrs State: mapped by partId
+  public attrs: Map<number, Record<string, unknown>> = new Map();
+
+  // 2. Slot State: aggregate children by slotId
+  get slotChildren(): Map<number, (BackgroundElementTemplateInstance | string)[]> {
+    const map = new Map<number, (BackgroundElementTemplateInstance | string)[]>();
+    let child = this.firstChild;
+    while (child) {
+      // In strict Element Template model, direct children MUST be Slots.
+      // We cast directly for performance as per design.
+      const slot = child as BackgroundElementTemplateSlot;
+      const slotId = slot.partId;
+
+      if (slotId !== undefined && slotId !== -1) {
+        // Collect children of the slot
+        // Note: slot.childNodes is not implemented, we iterate its children manually or implement a helper
+        // Since we don't have childNodes getter on Instance yet, let's implement the iteration here or add childNodes.
+        // The design doc says `child.childNodes`. Let's assume we use a helper or valid iteration.
+        // Actually, we can just iterate slot.firstChild...
+        const children: (BackgroundElementTemplateInstance | string)[] = [];
+        let slotChild = slot.firstChild;
+        while (slotChild) {
+          if (slotChild.type === 'raw-text') {
+            children.push((slotChild as BackgroundElementTemplateText).data);
+          } else {
+            children.push(slotChild);
+          }
+          slotChild = slotChild.nextSibling;
+        }
+        map.set(slotId, children);
+      }
+      child = child.nextSibling;
+    }
+    return map;
+  }
 
   public nodeType: number = 1;
 
@@ -95,7 +129,8 @@ export class BackgroundElementTemplateInstance {
     this.lastChild = null;
     this.previousSibling = null;
     this.nextSibling = null;
-    this.attributes = {};
+
+    this.attrs.clear();
 
     // Remove from manager
     if (this.instanceId) {
@@ -104,11 +139,24 @@ export class BackgroundElementTemplateInstance {
   }
 
   setAttribute(key: string, value: unknown): void {
-    this.attributes[key] = value;
+    if (key === 'attrs') {
+      this.updateAttrsState(value as Record<string, any>);
+    } else if (key === 'id' && this instanceof BackgroundElementTemplateSlot) {
+      this.partId = Number(value);
+    }
+  }
+
+  private updateAttrsState(rawAttrs: Record<string, any>) {
+    this.attrs.clear();
+    for (const [partId, props] of Object.entries(rawAttrs)) {
+      this.attrs.set(Number(partId), props as Record<string, unknown>);
+    }
   }
 }
 
 export class BackgroundElementTemplateSlot extends BackgroundElementTemplateInstance {
+  public partId: number = -1;
+
   constructor() {
     super('slot');
   }

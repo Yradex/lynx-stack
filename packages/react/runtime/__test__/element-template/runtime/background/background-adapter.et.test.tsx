@@ -35,10 +35,10 @@ describe('Background Element Template Adapter', () => {
   });
 
   describe('BackgroundElementTemplateInstance', () => {
-    it('supports setAttribute', () => {
+    it('supports setAttribute (attrs)', () => {
       const el = new BackgroundElementTemplateInstance('view');
-      el.setAttribute('id', 'test');
-      expect(el.attributes['id']).toBe('test');
+      el.setAttribute('attrs', { 0: { id: 'test' } });
+      expect(el.attrs.get(0)).toEqual({ id: 'test' });
     });
 
     it('supports hierarchy operations', () => {

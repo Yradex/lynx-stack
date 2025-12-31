@@ -20,7 +20,6 @@ describe('BackgroundElementTemplateInstance', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     expect(instance.type).toBe('view');
     expect(instance.instanceId).toBe(1);
-    expect(instance.attributes).toEqual({});
   });
 
   it('should increment id for new instances', () => {
@@ -220,15 +219,6 @@ describe('BackgroundElementTemplateInstance', () => {
     });
   });
 
-  describe('setAttribute', () => {
-    it('should set attribute and update instance property', () => {
-      const instance = new BackgroundElementTemplateInstance('view');
-      instance.setAttribute('id', 'test-id');
-
-      expect(instance.attributes['id']).toBe('test-id');
-    });
-  });
-
   it('should be registered with manager upon creation', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     expect(backgroundElementTemplateInstanceManager.get(instance.instanceId)).toBe(instance);
@@ -280,16 +270,73 @@ describe('BackgroundElementTemplateText', () => {
     expect(textNode.text).toBe('demo');
   });
 
-  it('should delegate other attributes to super', () => {
-    const textNode = new BackgroundElementTemplateText('');
-    textNode.setAttribute('extra', 'val');
-    expect(textNode.attributes['extra']).toBe('val');
-  });
-
   it('should update text via data property', () => {
     const textNode = new BackgroundElementTemplateText('');
     textNode.data = 'world';
     expect(textNode.text).toBe('world');
     expect(textNode.data).toBe('world');
+  });
+
+  it('should delegate unknown attributes to super (e.g. attrs)', () => {
+    const textNode = new BackgroundElementTemplateText('');
+    const attrs = { 0: { color: 'red' } };
+    textNode.setAttribute('attrs', attrs);
+    expect(textNode.attrs.get(0)).toEqual({ color: 'red' });
+  });
+});
+
+describe('BackgroundElementTemplateInstance Shadow State', () => {
+  it('should update attrs map when setAttribute("attrs", ...) is called', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    const attrs = {
+      0: { id: 'a' },
+      1: { class: 'foo' },
+    };
+    instance.setAttribute('attrs', attrs);
+
+    expect(instance.attrs.size).toBe(2);
+    expect(instance.attrs.get(0)).toEqual({ id: 'a' });
+    expect(instance.attrs.get(1)).toEqual({ class: 'foo' });
+  });
+
+  it('should update partId for slot when setAttribute is called', () => {
+    const slot = new BackgroundElementTemplateSlot();
+    slot.setAttribute('id', 10);
+    expect(slot.partId).toBe(10);
+  });
+
+  it('should aggregate slotChildren correctly', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+
+    const slot1 = new BackgroundElementTemplateSlot();
+    slot1.setAttribute('id', 0);
+    const text1 = new BackgroundElementTemplateText('Hello');
+    slot1.appendChild(text1);
+
+    const slot2 = new BackgroundElementTemplateSlot();
+    slot2.setAttribute('id', 1);
+    const text2 = new BackgroundElementTemplateText('World');
+    const view2 = new BackgroundElementTemplateInstance('view');
+    slot2.appendChild(text2);
+    slot2.appendChild(view2);
+
+    root.appendChild(slot1);
+    root.appendChild(slot2);
+
+    const slotChildren = root.slotChildren;
+    expect(slotChildren.size).toBe(2);
+
+    expect(slotChildren.get(0)).toEqual(['Hello']);
+    expect(slotChildren.get(1)).toEqual(['World', view2]);
+  });
+
+  it('should ignore non-slot direct children (though technically invalid)', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const view = new BackgroundElementTemplateInstance('view');
+    root.appendChild(view);
+
+    // Should assume it is a slot but fail to get partId or valid id
+    const slotChildren = root.slotChildren;
+    expect(slotChildren.size).toBe(0);
   });
 });
