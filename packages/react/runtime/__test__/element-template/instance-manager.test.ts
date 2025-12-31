@@ -16,31 +16,31 @@ describe('BackgroundElementTemplateInstanceManager', () => {
     const instance1 = new BackgroundElementTemplateInstance('view');
     const instance2 = new BackgroundElementTemplateInstance('text');
 
-    expect(instance1.__instanceId).toBeGreaterThan(0);
-    expect(instance2.__instanceId).toBeGreaterThan(instance1.__instanceId);
+    expect(instance1.instanceId).toBeGreaterThan(0);
+    expect(instance2.instanceId).toBeGreaterThan(instance1.instanceId);
 
-    expect(backgroundElementTemplateInstanceManager.get(instance1.__instanceId)).toBe(instance1);
-    expect(backgroundElementTemplateInstanceManager.get(instance2.__instanceId)).toBe(instance2);
+    expect(backgroundElementTemplateInstanceManager.get(instance1.instanceId)).toBe(instance1);
+    expect(backgroundElementTemplateInstanceManager.get(instance2.instanceId)).toBe(instance2);
   });
 
   it('should update ID correctly', () => {
     const instance = new BackgroundElementTemplateInstance('view');
-    const oldId = instance.__instanceId;
+    const oldId = instance.instanceId;
     const newId = 10001;
 
     backgroundElementTemplateInstanceManager.updateId(oldId, newId);
 
-    expect(instance.__instanceId).toBe(newId);
+    expect(instance.instanceId).toBe(newId);
     expect(backgroundElementTemplateInstanceManager.get(oldId)).toBeUndefined();
     expect(backgroundElementTemplateInstanceManager.get(newId)).toBe(instance);
   });
 
   it('should clear all instances', () => {
     const instance = new BackgroundElementTemplateInstance('view');
-    expect(backgroundElementTemplateInstanceManager.get(instance.__instanceId)).toBe(instance);
+    expect(backgroundElementTemplateInstanceManager.get(instance.instanceId)).toBe(instance);
 
     backgroundElementTemplateInstanceManager.clear();
-    expect(backgroundElementTemplateInstanceManager.get(instance.__instanceId)).toBeUndefined();
+    expect(backgroundElementTemplateInstanceManager.get(instance.instanceId)).toBeUndefined();
     expect(backgroundElementTemplateInstanceManager.values.size).toBe(0);
   });
 });

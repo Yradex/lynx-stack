@@ -16,15 +16,15 @@ export const backgroundElementTemplateInstanceManager: {
   values: new Map<number, BackgroundElementTemplateInstance>(),
 
   register(instance: BackgroundElementTemplateInstance): void {
-    instance.__instanceId = this.nextId += 1;
-    this.values.set(instance.__instanceId, instance);
+    instance.instanceId = this.nextId += 1;
+    this.values.set(instance.instanceId, instance);
   },
 
   updateId(oldId: number, newId: number): void {
     const instance = this.values.get(oldId);
     if (instance) {
       this.values.delete(oldId);
-      instance.__instanceId = newId;
+      instance.instanceId = newId;
       this.values.set(newId, instance);
 
       // DevTools event emission can be added here later

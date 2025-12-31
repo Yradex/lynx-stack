@@ -5,7 +5,7 @@
 import { backgroundElementTemplateInstanceManager } from './manager.js';
 
 export class BackgroundElementTemplateInstance {
-  public __instanceId: number = 0; // Assigned by manager
+  public instanceId: number = 0; // Assigned by manager
   public type: string;
 
   public parent: BackgroundElementTemplateInstance | null = null;
@@ -98,15 +98,13 @@ export class BackgroundElementTemplateInstance {
     this.attributes = {};
 
     // Remove from manager
-    if (this.__instanceId) {
-      backgroundElementTemplateInstanceManager.values.delete(this.__instanceId);
+    if (this.instanceId) {
+      backgroundElementTemplateInstanceManager.values.delete(this.instanceId);
     }
   }
 
   setAttribute(key: string, value: unknown): void {
     this.attributes[key] = value;
-    // For convenience in tests and Preact compatibility
-    (this as unknown as Record<string, unknown>)[key] = value;
   }
 }
 

@@ -19,15 +19,15 @@ describe('BackgroundElementTemplateInstance', () => {
   it('should create an instance with correct type and id', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     expect(instance.type).toBe('view');
-    expect(instance.__instanceId).toBe(1);
+    expect(instance.instanceId).toBe(1);
     expect(instance.attributes).toEqual({});
   });
 
   it('should increment id for new instances', () => {
     const instance1 = new BackgroundElementTemplateInstance('view');
     const instance2 = new BackgroundElementTemplateInstance('text');
-    expect(instance1.__instanceId).toBe(1);
-    expect(instance2.__instanceId).toBe(2);
+    expect(instance1.instanceId).toBe(1);
+    expect(instance2.instanceId).toBe(2);
   });
 
   describe('appendChild', () => {
@@ -226,13 +226,12 @@ describe('BackgroundElementTemplateInstance', () => {
       instance.setAttribute('id', 'test-id');
 
       expect(instance.attributes['id']).toBe('test-id');
-      expect((instance as any)['id']).toBe('test-id');
     });
   });
 
   it('should be registered with manager upon creation', () => {
     const instance = new BackgroundElementTemplateInstance('view');
-    expect(backgroundElementTemplateInstanceManager.get(instance.__instanceId)).toBe(instance);
+    expect(backgroundElementTemplateInstanceManager.get(instance.instanceId)).toBe(instance);
   });
 
   it('should tear down correctly', () => {
@@ -240,8 +239,8 @@ describe('BackgroundElementTemplateInstance', () => {
     const child = new BackgroundElementTemplateInstance('text');
     parent.appendChild(child);
 
-    const parentId = parent.__instanceId;
-    const childId = child.__instanceId;
+    const parentId = parent.instanceId;
+    const childId = child.instanceId;
 
     expect(backgroundElementTemplateInstanceManager.get(parentId)).toBe(parent);
     expect(backgroundElementTemplateInstanceManager.get(childId)).toBe(child);
