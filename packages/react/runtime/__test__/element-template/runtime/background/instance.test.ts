@@ -8,10 +8,12 @@ import {
   BackgroundElementTemplateSlot,
   BackgroundElementTemplateText,
 } from '../../../../src/element-template/background/instance.js';
+import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
 
 describe('BackgroundElementTemplateInstance', () => {
   beforeEach(() => {
-    BackgroundElementTemplateInstance.nextId = 1;
+    backgroundElementTemplateInstanceManager.clear();
+    backgroundElementTemplateInstanceManager.nextId = 0;
   });
 
   it('should create an instance with correct type and id', () => {
@@ -226,6 +228,33 @@ describe('BackgroundElementTemplateInstance', () => {
       expect(instance.attributes['id']).toBe('test-id');
       expect((instance as any)['id']).toBe('test-id');
     });
+  });
+
+  it('should be registered with manager upon creation', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    expect(backgroundElementTemplateInstanceManager.get(instance.__instanceId)).toBe(instance);
+  });
+
+  it('should tear down correctly', () => {
+    const parent = new BackgroundElementTemplateInstance('view');
+    const child = new BackgroundElementTemplateInstance('text');
+    parent.appendChild(child);
+
+    const parentId = parent.__instanceId;
+    const childId = child.__instanceId;
+
+    expect(backgroundElementTemplateInstanceManager.get(parentId)).toBe(parent);
+    expect(backgroundElementTemplateInstanceManager.get(childId)).toBe(child);
+
+    parent.tearDown();
+
+    // Check manager clean up
+    expect(backgroundElementTemplateInstanceManager.get(parentId)).toBeUndefined();
+    expect(backgroundElementTemplateInstanceManager.get(childId)).toBeUndefined();
+
+    // Check reference clean up
+    expect(parent.firstChild).toBeNull();
+    expect(child.parent).toBeNull();
   });
 });
 

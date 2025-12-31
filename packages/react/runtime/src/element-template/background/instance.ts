@@ -2,10 +2,10 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-export class BackgroundElementTemplateInstance {
-  static nextId = 1;
+import { backgroundElementTemplateInstanceManager } from './manager.js';
 
-  public __instanceId: number;
+export class BackgroundElementTemplateInstance {
+  public __instanceId: number = 0; // Assigned by manager
   public type: string;
 
   public parent: BackgroundElementTemplateInstance | null = null;
@@ -21,7 +21,7 @@ export class BackgroundElementTemplateInstance {
 
   constructor(type: string) {
     this.type = type;
-    this.__instanceId = BackgroundElementTemplateInstance.nextId++;
+    backgroundElementTemplateInstanceManager.register(this);
   }
 
   // DOM API for Preact
@@ -78,6 +78,29 @@ export class BackgroundElementTemplateInstance {
     child.parent = null;
     child.nextSibling = null;
     child.previousSibling = null;
+  }
+
+  tearDown(): void {
+    // Recursively tear down children first
+    let child = this.firstChild;
+    while (child) {
+      const next = child.nextSibling;
+      child.tearDown();
+      child = next;
+    }
+
+    // Clear references
+    this.parent = null;
+    this.firstChild = null;
+    this.lastChild = null;
+    this.previousSibling = null;
+    this.nextSibling = null;
+    this.attributes = {};
+
+    // Remove from manager
+    if (this.__instanceId) {
+      backgroundElementTemplateInstanceManager.values.delete(this.__instanceId);
+    }
   }
 
   setAttribute(key: string, value: unknown): void {
