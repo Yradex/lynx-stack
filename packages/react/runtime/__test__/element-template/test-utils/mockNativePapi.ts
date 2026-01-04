@@ -3,6 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { vi } from 'vitest';
+
 import { clearTemplates, templateRepo } from './registry.js';
 
 // Basic deep clone
@@ -112,6 +113,11 @@ export function installMockNativePapi(): MockNativePapi {
   });
 
   const mockReportError = vi.fn().mockImplementation((error: Error) => {
+    const g: any = globalThis as any;
+    if (!g.__LYNX_REPORT_ERROR_CALLS) {
+      g.__LYNX_REPORT_ERROR_CALLS = [];
+    }
+    g.__LYNX_REPORT_ERROR_CALLS.push(error);
     nativeLog.push(['lynx.reportError', error]);
   });
 
@@ -156,8 +162,26 @@ export function installMockNativePapi(): MockNativePapi {
     mockCreateRawText: mockCreateRawText,
     mockReportError: mockReportError,
     cleanup: (): void => {
+      const errorCalls = mockReportError.mock.calls;
       vi.unstubAllGlobals();
       clearTemplates();
+
+      if (errorCalls.length > 0) {
+        throw new Error(
+          `lynx.reportError was called ${errorCalls.length} times:\n`
+            + errorCalls
+              .map((call: any[]) =>
+                call
+                  .map((arg) =>
+                    arg instanceof Error
+                      ? (arg.stack || arg.message)
+                      : JSON.stringify(arg)
+                  )
+                  .join(' ')
+              )
+              .join('\n'),
+        );
+      }
     },
   };
 }

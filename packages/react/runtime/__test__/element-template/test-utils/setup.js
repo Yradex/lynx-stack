@@ -11,6 +11,8 @@ import { registerTemplates } from './registry.ts';
 globalThis.__REGISTER_ELEMENT_TEMPLATES__ = registerTemplates;
 
 beforeEach(() => {
+  // Reset global error collection for current test
+  globalThis.__LYNX_REPORT_ERROR_CALLS = [];
   // Access performance via globalThis.lynx which is set in globals.js
   const performance = globalThis.lynx.performance;
   if (performance && performance.profileStart && performance.profileEnd) {
@@ -39,6 +41,28 @@ afterEach((context) => {
   if (performance && performance.profileStart && performance.profileEnd) {
     expect(performance.profileStart.mock.calls.length).toBe(
       performance.profileEnd.mock.calls.length,
+    );
+  }
+
+  const reportError = globalThis.lynx?.reportError;
+  const globalErrors = globalThis.__LYNX_REPORT_ERROR_CALLS || [];
+  const mockCalls = reportError?.mock?.calls || [];
+  const totalCalls = mockCalls.length + globalErrors.length;
+  if (totalCalls > 0) {
+    const fromMock = mockCalls
+      .map((args) =>
+        args
+          .map((arg) => arg instanceof Error ? (arg.stack || arg.message) : JSON.stringify(arg))
+          .join(' ')
+      )
+      .join('\n');
+    const fromGlobal = globalErrors
+      .map((err) => (err && err.stack) ? err.stack : String(err))
+      .join('\n');
+    const details = [fromMock, fromGlobal].filter(Boolean).join('\n');
+
+    throw new Error(
+      `lynx.reportError was called ${totalCalls} times during test "${context.task.name}".\nDetails:\n${details}`,
     );
   }
 });

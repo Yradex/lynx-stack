@@ -3,9 +3,10 @@
 // LICENSE file in the root directory of this source tree.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import {
   __OpAttr,
   __OpBegin,
@@ -408,6 +409,8 @@ describe('renderOpcodesIntoElementTemplate', () => {
     renderOpcodesIntoElementTemplate(opcodes, root);
 
     expect(mockReportError).toHaveBeenCalled();
+    mockReportError.mockClear();
+    (globalThis as any).__LYNX_REPORT_ERROR_CALLS = [];
   });
 
   it('logs when text is encountered outside of a slot', () => {
@@ -422,6 +425,8 @@ describe('renderOpcodesIntoElementTemplate', () => {
     renderOpcodesIntoElementTemplate(opcodes, root);
 
     expect(mockReportError).toHaveBeenCalled();
+    mockReportError.mockClear();
+    (globalThis as any).__LYNX_REPORT_ERROR_CALLS = [];
   });
 
   it('handles multiple template children in the same slot', () => {
