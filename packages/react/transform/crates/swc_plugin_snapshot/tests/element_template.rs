@@ -705,6 +705,42 @@ test!(
     "#
 );
 
+test!(
+  module,
+  Syntax::Es(EsSyntax {
+    jsx: true,
+    ..Default::default()
+  }),
+  |t| visit_mut_pass(JSXTransformer::new(
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+    Some(t.comments.clone()),
+    TransformMode::Test,
+    None,
+  )),
+  should_handle_background_conditional_attributes,
+  // Input codes
+  r#"
+      function App() {
+        const attrs = __BACKGROUND__
+          ? {
+            0: { id: 'b' },
+            2: { data: 'extra' },
+          }
+          : {
+            0: { id: 'a' },
+            1: { title: 'main' },
+          };
+        return (
+          <view data-a={attrs} b={attrs} />
+        );
+      }
+    "#
+);
+
 #[track_caller]
 fn verify_template_json(input: &str, snapshot_name: &str) {
   use std::cell::RefCell;

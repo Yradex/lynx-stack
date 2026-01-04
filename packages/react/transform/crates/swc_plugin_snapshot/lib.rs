@@ -1796,9 +1796,14 @@ where
             match dynamic_part {
               DynamicPart::Attr(value, element_index, attr_name) => {
                 let prop_key = match attr_name {
-                  AttrName::Attr(ref name) | AttrName::Dataset(ref name) => PropName::Str(Str {
+                  AttrName::Attr(ref name) => PropName::Str(Str {
                     span: DUMMY_SP,
                     value: name.as_str().into(),
+                    raw: None,
+                  }),
+                  AttrName::Dataset(ref name) => PropName::Str(Str {
+                    span: DUMMY_SP,
+                    value: format!("data-{}", name).into(),
                     raw: None,
                   }),
                   AttrName::Event(ref name, _) => PropName::Str(Str {
