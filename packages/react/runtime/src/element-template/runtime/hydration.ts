@@ -8,7 +8,7 @@ import { ElementTemplateLifecycleConstant } from './lifecycle-constant.js';
 export type SerializedETInstance = [
   number,
   string,
-  Record<number, (SerializedETInstance | string)[]>,
+  Record<number, SerializedETInstance[]>,
   Record<number, Record<string, unknown>>?,
 ];
 

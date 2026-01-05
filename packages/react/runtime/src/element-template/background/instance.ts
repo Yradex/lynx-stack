@@ -16,11 +16,23 @@ export class BackgroundElementTemplateInstance {
 
   // Shadow State for Hydration
   // 1. Attrs State: mapped by partId
-  public attrs: Map<number, Record<string, unknown>> = new Map();
+  private _attrs = new Map<number, Record<string, unknown>>();
+
+  get attrs(): Map<number, Record<string, unknown>> {
+    return this._attrs;
+  }
+
+  set attrs(value: Map<number, Record<string, unknown>> | Record<string, any>) {
+    if (value instanceof Map) {
+      this._attrs = value;
+    } else {
+      this.updateAttrsState(value);
+    }
+  }
 
   // 2. Slot State: aggregate children by slotId
-  get slotChildren(): Map<number, (BackgroundElementTemplateInstance | string)[]> {
-    const map = new Map<number, (BackgroundElementTemplateInstance | string)[]>();
+  get slotChildren(): Map<number, BackgroundElementTemplateInstance[]> {
+    const map = new Map<number, BackgroundElementTemplateInstance[]>();
     let child = this.firstChild;
     while (child) {
       // In strict Element Template model, direct children MUST be Slots.
@@ -29,19 +41,10 @@ export class BackgroundElementTemplateInstance {
       const slotId = slot.partId;
 
       if (slotId !== undefined && slotId !== -1) {
-        // Collect children of the slot
-        // Note: slot.childNodes is not implemented, we iterate its children manually or implement a helper
-        // Since we don't have childNodes getter on Instance yet, let's implement the iteration here or add childNodes.
-        // The design doc says `child.childNodes`. Let's assume we use a helper or valid iteration.
-        // Actually, we can just iterate slot.firstChild...
-        const children: (BackgroundElementTemplateInstance | string)[] = [];
+        const children: BackgroundElementTemplateInstance[] = [];
         let slotChild = slot.firstChild;
         while (slotChild) {
-          if (slotChild.type === 'raw-text') {
-            children.push((slotChild as BackgroundElementTemplateText).data);
-          } else {
-            children.push(slotChild);
-          }
+          children.push(slotChild);
           slotChild = slotChild.nextSibling;
         }
         map.set(slotId, children);
@@ -147,9 +150,9 @@ export class BackgroundElementTemplateInstance {
   }
 
   private updateAttrsState(rawAttrs: Record<string, any>) {
-    this.attrs.clear();
+    this._attrs.clear();
     for (const [partId, props] of Object.entries(rawAttrs)) {
-      this.attrs.set(Number(partId), props as Record<string, unknown>);
+      this._attrs.set(Number(partId), props as Record<string, unknown>);
     }
   }
 }

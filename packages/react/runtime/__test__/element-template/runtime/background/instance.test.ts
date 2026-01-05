@@ -3,6 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { beforeEach, describe, expect, it } from 'vitest';
+
 import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
@@ -286,6 +287,27 @@ describe('BackgroundElementTemplateText', () => {
 });
 
 describe('BackgroundElementTemplateInstance Shadow State', () => {
+  it('should accept attrs assignment as Map directly', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    const attrsMap = new Map<number, Record<string, unknown>>([
+      [0, { id: 'a' }],
+    ]);
+    instance.attrs = attrsMap;
+
+    expect(instance.attrs).toBe(attrsMap);
+    expect(instance.attrs.get(0)).toEqual({ id: 'a' });
+  });
+
+  it('should accept attrs assignment as object and normalize into Map', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.attrs = { 0: { id: 'a' } };
+
+    expect(instance.attrs.get(0)).toEqual({ id: 'a' });
+
+    instance.attrs = { 0: { id: 'b' } };
+    expect(instance.attrs.get(0)).toEqual({ id: 'b' });
+  });
+
   it('should update attrs map when setAttribute("attrs", ...) is called', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     const attrs = {
@@ -326,8 +348,8 @@ describe('BackgroundElementTemplateInstance Shadow State', () => {
     const slotChildren = root.slotChildren;
     expect(slotChildren.size).toBe(2);
 
-    expect(slotChildren.get(0)).toEqual(['Hello']);
-    expect(slotChildren.get(1)).toEqual(['World', view2]);
+    expect(slotChildren.get(0)).toEqual([text1]);
+    expect(slotChildren.get(1)).toEqual([text2, view2]);
   });
 
   it('should ignore non-slot direct children (though technically invalid)', () => {
@@ -336,6 +358,16 @@ describe('BackgroundElementTemplateInstance Shadow State', () => {
     root.appendChild(view);
 
     // Should assume it is a slot but fail to get partId or valid id
+    const slotChildren = root.slotChildren;
+    expect(slotChildren.size).toBe(0);
+  });
+
+  it('should ignore slot with default partId (-1)', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const slot = new BackgroundElementTemplateSlot();
+    slot.appendChild(new BackgroundElementTemplateText('Hello'));
+    root.appendChild(slot);
+
     const slotChildren = root.slotChildren;
     expect(slotChildren.size).toBe(0);
   });

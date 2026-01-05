@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import * as path from 'node:path';
 
-import type { Plugin } from 'vitest/config';
+import type { Plugin, UserConfigExport } from 'vitest/config';
 import { defineConfig } from 'vitest/config';
 
 const require = createRequire(import.meta.url);
@@ -11,7 +11,7 @@ function transformReactLynxPlugin(): Plugin {
   return {
     name: 'transformReactLynxPlugin',
     enforce: 'pre',
-    transform(sourceText, sourcePath) {
+    transform(sourceText, sourcePath, _options) {
       const { transformReactLynxSync } = require(
         '@lynx-js/react-transform',
       ) as typeof import('@lynx-js/react-transform');
@@ -57,13 +57,13 @@ function transformReactLynxPlugin(): Plugin {
 
       return {
         code,
-        map: result.map,
+        map: null,
       };
     },
   };
 }
 
-export default defineConfig({
+const config: UserConfigExport = defineConfig({
   plugins: [
     transformReactLynxPlugin(),
   ],
@@ -101,3 +101,5 @@ export default defineConfig({
     ],
   },
 });
+
+export default config;

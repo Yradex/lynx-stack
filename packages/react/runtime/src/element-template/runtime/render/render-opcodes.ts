@@ -14,7 +14,7 @@ interface Frame {
   attrs: Record<number, Record<string, any>>;
 
   // Collected Slot children: Map<slotId, ChildNode[]>
-  slotChildren: Map<number, any[]>;
+  slotChildren: Map<number, ElementRef[]>;
 
   // Current active slot stack
   activeSlotStack: number[];
@@ -40,7 +40,7 @@ export function renderOpcodesIntoElementTemplate(
   // Initialize Root Frame
   stack.push(createFrame(null));
 
-  const hydrationMap = new Map<any, SerializedETInstance | string>();
+  const hydrationMap = new Map<ElementRef, SerializedETInstance>();
 
   for (let i = 0; i < opcodes.length;) {
     const opcode = opcodes[i];
@@ -196,7 +196,14 @@ export function renderOpcodesIntoElementTemplate(
         const frame = stack[stack.length - 1];
         if (frame) {
           const textRef = __CreateRawText(text);
-          hydrationMap.set(textRef, text);
+          const textHandle = createElementTemplateHandle(textRef);
+          const serializedText: SerializedETInstance = [
+            textHandle.id,
+            'raw-text',
+            {},
+            { 0: { text } },
+          ];
+          hydrationMap.set(textRef, serializedText);
 
           if (frame.templateKey === null) {
             // Root text

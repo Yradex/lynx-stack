@@ -143,7 +143,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
         ],
       ]
     `);
-    expect(ElementTemplateRegistry.get(-1)?.nativeRef).toMatchInlineSnapshot(`
+    expect(ElementTemplateRegistry.get(-2)?.nativeRef).toMatchInlineSnapshot(`
       {
         "attributes": {
           "part-id": 0,
@@ -174,7 +174,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
       }
     `);
 
-    expect(root.children[0]).toEqual(ElementTemplateRegistry.get(-1)?.nativeRef);
+    expect(root.children[0]).toEqual(ElementTemplateRegistry.get(-2)?.nativeRef);
   });
 
   it('keeps slot children separated and ordered', () => {

@@ -4,11 +4,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
 import { root } from '../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/runtime/lifecycle-constant.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+
+declare const renderPage: () => void;
 
 describe('Hydration Data Generation', () => {
   let hydrationData: any[] = [];
@@ -19,14 +21,16 @@ describe('Hydration Data Generation', () => {
     mockContext = installMockNativePapi();
     ElementTemplateRegistry.clear();
     resetTemplateId();
-    (globalThis as any).__USE_ELEMENT_TEMPLATE__ = true;
+    (globalThis as unknown as { __USE_ELEMENT_TEMPLATE__: boolean }).__USE_ELEMENT_TEMPLATE__ = true;
     hydrationData = [];
 
     // Mock __OnLifecycleEvent to capture hydration data
-    const mockOnLifecycleEvent = vi.fn().mockImplementation((args) => {
-      const [event, data] = args;
-      if (event === ElementTemplateLifecycleConstant.hydrate) {
-        hydrationData.push(...data);
+    const mockOnLifecycleEvent = vi.fn().mockImplementation((args: unknown[]) => {
+      const [event, data] = args as [unknown, unknown];
+      if (event === ElementTemplateLifecycleConstant.hydrate && Array.isArray(data)) {
+        for (const item of data) {
+          hydrationData.push(item);
+        }
       }
     });
     vi.stubGlobal('__OnLifecycleEvent', mockOnLifecycleEvent);
@@ -36,13 +40,12 @@ describe('Hydration Data Generation', () => {
     const logo = 'logo.png';
     function App() {
       return (
-        <view src={logo}>
+        <view id={logo}>
           Hello
         </view>
       );
     }
     root.render(<App />);
-    // @ts-ignore
     renderPage();
 
     expect(hydrationData).toMatchInlineSnapshot(`
@@ -53,7 +56,7 @@ describe('Hydration Data Generation', () => {
           {},
           {
             "0": {
-              "src": "logo.png",
+              "id": "logo.png",
             },
           },
         ],
@@ -64,13 +67,12 @@ describe('Hydration Data Generation', () => {
   it('generates correct hydration tree for nested instances', () => {
     function App() {
       return (
-        <parent>
-          <child />
-        </parent>
+        <view>
+          <view />
+        </view>
       );
     }
     root.render(<App />);
-    // @ts-ignore
     renderPage();
 
     expect(hydrationData).toMatchInlineSnapshot(`
@@ -89,23 +91,31 @@ describe('Hydration Data Generation', () => {
     const text = 'Hello';
     function App() {
       return (
-        <parent>
+        <view>
           {text}
-        </parent>
+        </view>
       );
     }
     root.render(<App />);
-    // @ts-ignore
     renderPage();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
         [
-          -1,
+          -2,
           "_et_a94a8_test_3",
           {
             "0": [
-              "Hello",
+              [
+                -1,
+                "raw-text",
+                {},
+                {
+                  "0": {
+                    "text": "Hello",
+                  },
+                },
+              ],
             ],
           },
           {},
@@ -118,13 +128,12 @@ describe('Hydration Data Generation', () => {
     function App() {
       return (
         <>
-          <item1 />
-          <item2 />
+          <view />
+          <view />
         </>
       );
     }
     root.render(<App />);
-    // @ts-ignore
     renderPage();
 
     expect(hydrationData).toMatchInlineSnapshot(`
@@ -163,22 +172,30 @@ describe('Hydration Data Generation', () => {
     }
 
     root.render(<App />);
-    // @ts-ignore
     renderPage();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
         [
-          -2,
+          -3,
           "_et_a94a8_test_7",
           {
             "0": [
               [
-                -1,
+                -2,
                 "_et_a94a8_test_6",
                 {
                   "0": [
-                    "inner",
+                    [
+                      -1,
+                      "raw-text",
+                      {},
+                      {
+                        "0": {
+                          "text": "inner",
+                        },
+                      },
+                    ],
                   ],
                 },
                 {},
@@ -196,7 +213,7 @@ describe('Hydration Data Generation', () => {
       const items = ['a', 'b', 'c'];
       return (
         <view>
-          {items.map((item, index) => (
+          {items.map((item) => (
             <text key={item}>
               {item}
             </text>
@@ -206,42 +223,68 @@ describe('Hydration Data Generation', () => {
     }
 
     root.render(<App />);
-    // @ts-ignore
     renderPage();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
         [
-          -4,
+          -7,
           "_et_a94a8_test_8",
           {
             "0": [
-              [
-                -1,
-                "_et_a94a8_test_9",
-                {
-                  "0": [
-                    "a",
-                  ],
-                },
-                {},
-              ],
               [
                 -2,
                 "_et_a94a8_test_9",
                 {
                   "0": [
-                    "b",
+                    [
+                      -1,
+                      "raw-text",
+                      {},
+                      {
+                        "0": {
+                          "text": "a",
+                        },
+                      },
+                    ],
                   ],
                 },
                 {},
               ],
               [
-                -3,
+                -4,
                 "_et_a94a8_test_9",
                 {
                   "0": [
-                    "c",
+                    [
+                      -3,
+                      "raw-text",
+                      {},
+                      {
+                        "0": {
+                          "text": "b",
+                        },
+                      },
+                    ],
+                  ],
+                },
+                {},
+              ],
+              [
+                -6,
+                "_et_a94a8_test_9",
+                {
+                  "0": [
+                    [
+                      -5,
+                      "raw-text",
+                      {},
+                      {
+                        "0": {
+                          "text": "c",
+                        },
+                      },
+                    ],
                   ],
                 },
                 {},
