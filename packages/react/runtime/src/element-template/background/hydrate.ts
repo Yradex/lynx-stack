@@ -4,7 +4,6 @@
 
 import { BackgroundElementTemplateInstance, BackgroundElementTemplateText } from './instance.js';
 import { backgroundElementTemplateInstanceManager } from './manager.js';
-import { diffArrayAction } from '../../hydrate.js';
 import { isDirectOrDeepEqual } from '../../utils.js';
 import type { SerializedETInstance } from '../runtime/hydration.js';
 import type { ElementTemplatePatchStream } from '../runtime/patch.js';
@@ -22,6 +21,55 @@ interface DiffResult<K> {
   i: Record<number, K>;
   r: number[];
   m: Record<number, number>;
+}
+
+function diffArrayAction<T, K>(
+  before: T[],
+  diffResult: DiffResult<K>,
+  onInsert: (node: K, target: T | undefined) => T,
+  onRemove: (node: T) => void,
+  onMove: (node: T, target: T | undefined) => void,
+): T[] {
+  const deleteSet = new Set(diffResult.r);
+  const { i: insertMap, m: placementMap } = diffResult;
+  const moveTempMap = new Map<number, T>();
+  let old: T | undefined;
+  let k = 0;
+  old = before[k];
+  const result: T[] = [];
+  let i = 0;
+  let j = 0;
+  let remain = Object.keys(insertMap).length;
+  while (old || remain > 0) {
+    let keep = false;
+    if (old && deleteSet.has(j)) {
+      onRemove(old);
+    } else if (old && placementMap[j] !== undefined) {
+      moveTempMap.set(placementMap[j]!, old);
+      remain += 1;
+    } else {
+      let newNode = old;
+      if (moveTempMap.has(i)) {
+        newNode = moveTempMap.get(i)!;
+        keep = true;
+        onMove(newNode, old);
+        remain -= 1;
+      } else if (insertMap[i] !== undefined) {
+        newNode = onInsert(insertMap[i]!, old);
+        keep = true;
+        remain -= 1;
+      }
+
+      result.push(newNode!);
+      i += 1;
+    }
+    if (old && !keep) {
+      old = before[++k];
+      j += 1;
+    }
+  }
+
+  return result;
 }
 
 export function hydrate(
