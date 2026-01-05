@@ -8,6 +8,7 @@ import { root } from '../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/runtime/lifecycle-constant.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { flushCoreContextEvents } from '../../test-utils/mockNativePapi/context.js';
 import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
 
 declare const renderPage: () => void;
@@ -24,16 +25,15 @@ describe('Hydration Data Generation', () => {
     (globalThis as unknown as { __USE_ELEMENT_TEMPLATE__: boolean }).__USE_ELEMENT_TEMPLATE__ = true;
     hydrationData = [];
 
-    // Mock __OnLifecycleEvent to capture hydration data
-    const mockOnLifecycleEvent = vi.fn().mockImplementation((args: unknown[]) => {
-      const [event, data] = args as [unknown, unknown];
-      if (event === ElementTemplateLifecycleConstant.hydrate && Array.isArray(data)) {
+    const onHydrate = vi.fn().mockImplementation((event: { data: unknown }) => {
+      const data = event.data;
+      if (Array.isArray(data)) {
         for (const item of data) {
           hydrationData.push(item);
         }
       }
     });
-    vi.stubGlobal('__OnLifecycleEvent', mockOnLifecycleEvent);
+    lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
   });
 
   it('generates correct hydration tree for simple element', () => {
@@ -47,6 +47,7 @@ describe('Hydration Data Generation', () => {
     }
     root.render(<App />);
     renderPage();
+    flushCoreContextEvents();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
@@ -74,6 +75,7 @@ describe('Hydration Data Generation', () => {
     }
     root.render(<App />);
     renderPage();
+    flushCoreContextEvents();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
@@ -98,6 +100,7 @@ describe('Hydration Data Generation', () => {
     }
     root.render(<App />);
     renderPage();
+    flushCoreContextEvents();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
@@ -135,6 +138,7 @@ describe('Hydration Data Generation', () => {
     }
     root.render(<App />);
     renderPage();
+    flushCoreContextEvents();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
@@ -173,6 +177,7 @@ describe('Hydration Data Generation', () => {
 
     root.render(<App />);
     renderPage();
+    flushCoreContextEvents();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [
@@ -224,6 +229,7 @@ describe('Hydration Data Generation', () => {
 
     root.render(<App />);
     renderPage();
+    flushCoreContextEvents();
 
     expect(hydrationData).toMatchInlineSnapshot(`
       [

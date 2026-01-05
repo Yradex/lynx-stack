@@ -4,242 +4,20 @@
 
 import { vi } from 'vitest';
 
+import { createCrossThreadContextPair } from './mockNativePapi/context.js';
+import {
+  applyOpcodesToTemplateInstance,
+  clone,
+  formatNode,
+  formatOpcodes,
+  isRecordForMock,
+  isUnknownArrayForMock,
+} from './mockNativePapi/templateTree.js';
+import type { CompiledTemplateNode } from './mockNativePapi/templateTree.js';
 import { clearTemplates, templateRepo } from './registry.js';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isUnknownArray(value: unknown): value is unknown[] {
-  return Array.isArray(value);
-}
-
-interface CompiledTemplateNode {
-  tag?: string;
-  templateId?: string;
-  attributes?: Record<string, unknown>;
-  parts?: Record<string, unknown>;
-  children?: unknown[];
-  type?: string;
-  text?: string;
-}
-
-function getPartId(node: Record<string, unknown>): number | undefined {
-  const attrs = node['attributes'];
-  if (isRecord(attrs)) {
-    const partId = attrs['part-id'];
-    if (typeof partId === 'string' || typeof partId === 'number') {
-      return Number(partId);
-    }
-  }
-
-  const parts = node['parts'];
-  if (isRecord(parts)) {
-    const partId = parts['part-id'];
-    if (typeof partId === 'string' || typeof partId === 'number') {
-      return Number(partId);
-    }
-  }
-
-  return undefined;
-}
-
-function getNodeAttrsForWrite(node: CompiledTemplateNode): Record<string, unknown> {
-  if (isRecord(node.attributes)) {
-    return node.attributes;
-  }
-  node.attributes = {};
-  return node.attributes;
-}
-
-function collectNodesByPartId(root: unknown): Map<number, CompiledTemplateNode> {
-  const nodesByPartId = new Map<number, CompiledTemplateNode>();
-
-  const collect = (node: unknown) => {
-    if (!isRecord(node)) {
-      return;
-    }
-
-    const partId = getPartId(node);
-    if (typeof partId === 'number') {
-      nodesByPartId.set(partId, node as CompiledTemplateNode);
-    }
-
-    if (node !== root && typeof node['templateId'] === 'string') {
-      return;
-    }
-
-    const children = node['children'];
-    if (isUnknownArray(children)) {
-      for (const child of children) {
-        collect(child);
-      }
-    }
-  };
-
-  collect(root);
-  return nodesByPartId;
-}
-
-function applyOpcodesToTemplateInstance(root: CompiledTemplateNode, opcodes: unknown): void {
-  if (!isUnknownArray(opcodes)) {
-    return;
-  }
-
-  const nodesByPartId = collectNodesByPartId(root);
-
-  for (let i = 0; i < opcodes.length;) {
-    const opcode = opcodes[i];
-
-    if (opcode === 4) {
-      const partId = opcodes[i + 1];
-      const patch = opcodes[i + 2];
-      const target = (typeof partId === 'string' || typeof partId === 'number')
-        ? nodesByPartId.get(Number(partId))
-        : undefined;
-      if (target && isRecord(patch)) {
-        const attrs = getNodeAttrsForWrite(target);
-        for (const [key, value] of Object.entries(patch)) {
-          if (value === undefined) {
-            delete attrs[key];
-          } else {
-            attrs[key] = value;
-          }
-        }
-      }
-      i += 3;
-      continue;
-    }
-
-    if (opcode === 2) {
-      const slotId = opcodes[i + 1];
-      const beforeRef = opcodes[i + 2];
-      const childRef = opcodes[i + 3];
-
-      const slot = (typeof slotId === 'string' || typeof slotId === 'number')
-        ? nodesByPartId.get(Number(slotId))
-        : undefined;
-
-      if (!slot || slot.tag !== 'slot' || childRef == null) {
-        i += 4;
-        continue;
-      }
-
-      slot.children ??= [];
-      const list = slot.children;
-
-      const existingIndex = list.indexOf(childRef);
-      if (existingIndex >= 0) {
-        list.splice(existingIndex, 1);
-      }
-
-      if (beforeRef == null) {
-        list.push(childRef);
-      } else {
-        const beforeIndex = list.indexOf(beforeRef);
-        if (beforeIndex >= 0) {
-          list.splice(beforeIndex, 0, childRef);
-        } else {
-          list.push(childRef);
-        }
-      }
-
-      i += 4;
-      continue;
-    }
-
-    if (opcode === 3) {
-      const slotId = opcodes[i + 1];
-      const childRef = opcodes[i + 2];
-      const slot = (typeof slotId === 'string' || typeof slotId === 'number')
-        ? nodesByPartId.get(Number(slotId))
-        : undefined;
-
-      if (slot?.tag === 'slot' && slot.children && childRef != null) {
-        const index = slot.children.indexOf(childRef);
-        if (index >= 0) {
-          slot.children.splice(index, 1);
-        }
-      }
-
-      i += 3;
-      continue;
-    }
-
-    i += 1;
-  }
-}
-
-function formatOpcodes(ops: unknown): unknown {
-  if (!isUnknownArray(ops)) return ops;
-  const res: unknown[] = [];
-  for (let i = 0; i < ops.length;) {
-    const opcode = ops[i];
-    if (opcode === 4) { // setAttributes
-      res.push({
-        type: 'setAttributes',
-        id: ops[i + 1],
-        attributes: ops[i + 2],
-      });
-      i += 3;
-    } else if (opcode === 2) { // insertBefore
-      res.push({
-        type: 'insertBefore',
-        id: ops[i + 1],
-        node: ops[i + 3],
-      });
-      i += 4;
-    } else if (opcode === 3) { // removeChild
-      res.push({
-        type: 'removeChild',
-        id: ops[i + 1],
-        node: ops[i + 2],
-      });
-      i += 3;
-    } else {
-      res.push(opcode);
-      i += 1;
-    }
-  }
-  return res;
-}
-
-function formatNode(node: unknown): string {
-  if (typeof node === 'string') {
-    return node;
-  }
-  if (isRecord(node)) {
-    const templateId = node['templateId'];
-    const tag = node['tag'];
-    const displayTag = typeof templateId === 'string'
-      ? templateId
-      : (typeof tag === 'string' ? tag : undefined);
-    if (displayTag) {
-      return `<${displayTag} />`;
-    }
-
-    const text = node['text'];
-    if (typeof text === 'string') {
-      return `"${text}"`;
-    }
-
-    const id = node['id'];
-    if (typeof id === 'string' || typeof id === 'number') {
-      return String(id);
-    }
-
-    const type = node['type'];
-    if (typeof type === 'string') {
-      return type;
-    }
-  }
-  return String(node);
-}
-
-// Basic deep clone
-function clone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj)) as T;
-}
+const isRecord = isRecordForMock;
+const isUnknownArray = isUnknownArrayForMock;
 
 export interface MockNativePapi {
   nativeLog: any[];
@@ -259,6 +37,7 @@ export function installMockNativePapi(
 ): MockNativePapi {
   const { clearTemplatesOnCleanup = true } = options;
   const nativeLog: any[] = [];
+  const { jsContext, coreContext } = createCrossThreadContextPair();
 
   const mockElementFromBinary = vi.fn().mockImplementation((...args: unknown[]) => {
     const tag = args[0];
@@ -333,8 +112,13 @@ export function installMockNativePapi(
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);
   vi.stubGlobal('__PatchElementTemplate', mockPatchElementTemplate);
+  const previousLynx = (globalThis as unknown as { lynx?: unknown }).lynx;
+  const baseLynx = isRecord(previousLynx) ? previousLynx : {};
   vi.stubGlobal('lynx', {
+    ...baseLynx,
     reportError: mockReportError,
+    getJSContext: () => jsContext,
+    getCoreContext: () => coreContext,
   });
 
   return {

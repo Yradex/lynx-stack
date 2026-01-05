@@ -13,8 +13,8 @@ export type SerializedETInstance = [
 ];
 
 export function postHydrationData(instances: SerializedETInstance[]): void {
-  __OnLifecycleEvent([
-    ElementTemplateLifecycleConstant.hydrate,
-    instances,
-  ]);
+  lynx.getJSContext().dispatchEvent({
+    type: ElementTemplateLifecycleConstant.hydrate,
+    data: instances,
+  });
 }

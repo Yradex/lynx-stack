@@ -46,13 +46,15 @@ describe('ElementTemplate background hydrate', () => {
     envManager.resetEnv('background');
     envManager.setUseElementTemplate(true);
 
-    const mockOnLifecycleEvent = vi.fn().mockImplementation((args: unknown[]) => {
-      const [event, data] = args as [unknown, unknown];
-      if (event === ElementTemplateLifecycleConstant.hydrate && Array.isArray(data)) {
-        hydrationData.push(...(data as SerializedETInstance[]));
+    const onHydrate = vi.fn().mockImplementation((event: { data: unknown }) => {
+      const data = event.data;
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          hydrationData.push(item as SerializedETInstance);
+        }
       }
     });
-    vi.stubGlobal('__OnLifecycleEvent', mockOnLifecycleEvent);
+    lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
   });
 
   function renderAndCollect(App: () => JSX.Element) {
