@@ -3,10 +3,9 @@
 // LICENSE file in the root directory of this source tree.
 import { hydrate } from './hydrate.js';
 import { BackgroundElementTemplateInstance } from './instance.js';
-import type { SerializedETInstance } from '../runtime/hydration.js';
-import { ElementTemplateLifecycleConstant } from '../runtime/lifecycle-constant.js';
+import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
+import type { ElementTemplatePatchStream, SerializedETInstance } from '../protocol/types.js';
 import { __root } from '../runtime/page/root-instance.js';
-import type { ElementTemplatePatchStream } from '../runtime/patch.js';
 
 let listener:
   | ((event: { data: unknown }) => void)

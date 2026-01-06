@@ -2,9 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-// [id, templateKey, slots, attrs]
-import { ElementTemplateLifecycleConstant } from './lifecycle-constant.js';
-
 export type SerializedETInstance = [
   number,
   string,
@@ -12,9 +9,4 @@ export type SerializedETInstance = [
   Record<number, Record<string, unknown>>?,
 ];
 
-export function postHydrationData(instances: SerializedETInstance[]): void {
-  lynx.getJSContext().dispatchEvent({
-    type: ElementTemplateLifecycleConstant.hydrate,
-    data: instances,
-  });
-}
+export type ElementTemplatePatchStream = (number | string | null | unknown[])[];

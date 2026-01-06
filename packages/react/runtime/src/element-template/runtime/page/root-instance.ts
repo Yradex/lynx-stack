@@ -2,24 +2,14 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { BackgroundElementTemplateInstance } from '../../background/instance.js';
-
 /**
  * Element Template-only root for renderPage.
  */
-let __root:
-  & (
-    | {
-      __jsx?: React.ReactNode;
-      __opcodes?: any[];
-      nodeType?: Element['nodeType'];
-    }
-    | BackgroundElementTemplateInstance
-  )
-  & {
-    __jsx?: React.ReactNode;
-    __opcodes?: any[];
-  };
+let __root: {
+  __jsx?: React.ReactNode;
+  __opcodes?: any[];
+  nodeType?: Element['nodeType'];
+};
 
 function setRoot(root: typeof __root): void {
   __root = root;
@@ -30,10 +20,6 @@ function setRoot(root: typeof __root): void {
   }
 }
 
-if (__BACKGROUND__) {
-  setRoot(new BackgroundElementTemplateInstance('root'));
-} else {
-  setRoot({});
-}
+setRoot({});
 
 export { __root, setRoot };

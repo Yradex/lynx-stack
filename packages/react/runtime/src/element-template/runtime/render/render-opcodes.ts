@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../../../renderToOpcodes/index.js';
-import type { SerializedETInstance } from '../hydration.js';
+import type { SerializedETInstance } from '../../protocol/types.js';
 import { createElementTemplateHandle } from '../template/handle.js';
 
 interface Frame {

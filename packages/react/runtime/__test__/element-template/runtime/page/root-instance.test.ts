@@ -9,14 +9,11 @@ describe('root-instance', () => {
     vi.unstubAllGlobals();
   });
 
-  it('should initialize root with BackgroundElementTemplateInstance when __BACKGROUND__ is true', async () => {
+  it('should initialize root with empty object when __BACKGROUND__ is true', async () => {
     vi.stubGlobal('__BACKGROUND__', true);
     const { __root } = await import('../../../../src/element-template/runtime/page/root-instance.js');
-    const { BackgroundElementTemplateInstance } = await import(
-      '../../../../src/element-template/background/instance.js'
-    );
 
-    expect(__root).toBeInstanceOf(BackgroundElementTemplateInstance);
+    expect(__root).toEqual({ nodeType: 1 });
   });
 
   it('should initialize root with empty object when __BACKGROUND__ is false', async () => {

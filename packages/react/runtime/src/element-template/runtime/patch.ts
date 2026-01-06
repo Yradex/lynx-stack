@@ -3,8 +3,9 @@
 // LICENSE file in the root directory of this source tree.
 
 import { ElementTemplateRegistry } from './template/registry.js';
+import type { ElementTemplatePatchStream } from '../protocol/types.js';
 
-export type ElementTemplatePatchStream = (number | string | null | unknown[])[];
+export type { ElementTemplatePatchStream } from '../protocol/types.js';
 
 const RAW_TEXT_TEMPLATE_KEY = 'raw-text';
 

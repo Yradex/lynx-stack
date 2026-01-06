@@ -2,9 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { ElementTemplateLifecycleConstant } from '../runtime/lifecycle-constant.js';
+import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
+import type { ElementTemplatePatchStream } from '../protocol/types.js';
 import { applyElementTemplatePatches } from '../runtime/patch.js';
-import type { ElementTemplatePatchStream } from '../runtime/patch.js';
 
 let listener:
   | ((event: { data: unknown }) => void)

@@ -6,8 +6,8 @@ import {
 } from '../../../../src/element-template/background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
 import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
-import type { SerializedETInstance } from '../../../../src/element-template/runtime/hydration.js';
-import { postHydrationData } from '../../../../src/element-template/runtime/hydration.js';
+import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
+import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from '../../test-utils/envManager.js';
 import { flushCoreContextEvents } from '../../test-utils/mockNativePapi/context.js';
@@ -54,7 +54,10 @@ describe('ElementTemplate hydration listener', () => {
       [-1, '_et_test', {}, {}],
       [-2, '_et_test', {}, {}],
     ];
-    postHydrationData(instances);
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: instances,
+    });
 
     const lynxObj = (globalThis as unknown as { lynx: LynxMock }).lynx;
     lynxObj.getJSContext().dispatchEvent({
@@ -80,7 +83,10 @@ describe('ElementTemplate hydration listener', () => {
 
     envManager.switchToMainThread();
     const instances: SerializedETInstance[] = [[-1, '_et_test', {}, {}]];
-    postHydrationData(instances);
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: instances,
+    });
 
     flushCoreContextEvents();
 
@@ -103,7 +109,10 @@ describe('ElementTemplate hydration listener', () => {
 
     envManager.switchToMainThread();
     const instances: SerializedETInstance[] = [[-1, '_et_test', {}, {}]];
-    postHydrationData(instances);
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: instances,
+    });
 
     envManager.switchToBackground();
     expect(backgroundElementTemplateInstanceManager.get(oldId)).toBe(after);

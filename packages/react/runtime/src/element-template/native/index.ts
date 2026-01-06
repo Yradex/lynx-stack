@@ -9,7 +9,9 @@ import { installElementTemplatePatchListener } from './patch-listener.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
 import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
+import { BackgroundElementTemplateInstance } from '../background/instance.js';
 import { Slot } from '../runtime/components/slot.js';
+import { setRoot } from '../runtime/page/root-instance.js';
 
 registerSlot(Slot);
 
@@ -19,6 +21,7 @@ if (__MAIN_THREAD__) {
 }
 
 if (__BACKGROUND__) {
+  setRoot(new BackgroundElementTemplateInstance('root'));
   setupBackgroundElementTemplateDocument();
   installElementTemplateHydrationListener();
   lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;

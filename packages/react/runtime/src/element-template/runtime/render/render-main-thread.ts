@@ -9,7 +9,7 @@
 import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
 import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { render as renderToString } from '../../../renderToOpcodes/index.js';
-import { postHydrationData } from '../hydration.js';
+import { ElementTemplateLifecycleConstant } from '../../protocol/lifecycle-constant.js';
 import { __page } from '../page/page.js';
 import { __root } from '../page/root-instance.js';
 
@@ -34,7 +34,10 @@ function renderMainThread(): void {
   }
   try {
     const instances = renderOpcodesIntoElementTemplate(opcodes, __page);
-    postHydrationData(instances);
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: instances,
+    });
   } finally {
     if (__PROFILE__) {
       profileEnd();

@@ -5,8 +5,7 @@
 import { BackgroundElementTemplateInstance, BackgroundElementTemplateText } from './instance.js';
 import { backgroundElementTemplateInstanceManager } from './manager.js';
 import { isDirectOrDeepEqual } from '../../utils.js';
-import type { SerializedETInstance } from '../runtime/hydration.js';
-import type { ElementTemplatePatchStream } from '../runtime/patch.js';
+import type { ElementTemplatePatchStream, SerializedETInstance } from '../protocol/types.js';
 
 const enum ElementTemplatePatchOpcode {
   InsertBefore = 2,
