@@ -24,6 +24,7 @@ const forbiddenExact = new Set([
 ]);
 
 const forbiddenDirs = [
+  path.resolve(runtimeSrc, 'lynx') + path.sep,
   path.resolve(runtimeSrc, 'snapshot') + path.sep,
   path.resolve(runtimeSrc, 'lifecycle', 'patch') + path.sep,
 ];

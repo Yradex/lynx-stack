@@ -56,11 +56,14 @@ export function flushCoreContextEvents(): void {
 export function createCrossThreadContextPair(): {
   jsContext: ContextEventTarget;
   coreContext: ContextEventTarget;
+  checkListenerLeaks: () => void;
 } {
   const jsListeners = new Map<string, Set<(event: ContextEvent) => void>>();
   const coreListeners = new Map<string, Set<(event: ContextEvent) => void>>();
   const jsQueue: ContextEvent[] = [];
   const coreQueue: ContextEvent[] = [];
+  let addEventListenerCount = 0;
+  let removeEventListenerCount = 0;
 
   currentQueues = {
     jsQueue,
@@ -73,7 +76,11 @@ export function createCrossThreadContextPair(): {
     store: Map<string, Set<(event: ContextEvent) => void>>,
     type: string,
     listener: (event: ContextEvent) => void,
+    isJSContext: boolean,
   ) => {
+    if (!isJSContext) {
+      addEventListenerCount++;
+    }
     const set = store.get(type);
     if (set) {
       set.add(listener);
@@ -86,20 +93,32 @@ export function createCrossThreadContextPair(): {
     store: Map<string, Set<(event: ContextEvent) => void>>,
     type: string,
     listener: (event: ContextEvent) => void,
+    isJSContext: boolean,
   ) => {
     const set = store.get(type);
     if (!set) {
       return;
     }
-    set.delete(listener);
+    const existed = set.delete(listener);
+    if (existed && !isJSContext) {
+      removeEventListenerCount++;
+    }
     if (set.size === 0) {
       store.delete(type);
     }
   };
 
+  const checkListenerLeaks = () => {
+    if (addEventListenerCount !== removeEventListenerCount) {
+      throw new Error(
+        `Event listener leak detected in JS Context: addEventListener called ${addEventListenerCount} times, but removeEventListener called ${removeEventListenerCount} times.`,
+      );
+    }
+  };
+
   const jsContext: ContextEventTarget = {
-    addEventListener: (type, listener) => add(jsListeners, type, listener),
-    removeEventListener: (type, listener) => remove(jsListeners, type, listener),
+    addEventListener: (type, listener) => add(jsListeners, type, listener, true),
+    removeEventListener: (type, listener) => remove(jsListeners, type, listener, true),
     dispatchEvent: (event) => {
       coreQueue.push(event);
       return 0;
@@ -110,8 +129,8 @@ export function createCrossThreadContextPair(): {
   };
 
   const coreContext: ContextEventTarget = {
-    addEventListener: (type, listener) => add(coreListeners, type, listener),
-    removeEventListener: (type, listener) => remove(coreListeners, type, listener),
+    addEventListener: (type, listener) => add(coreListeners, type, listener, false),
+    removeEventListener: (type, listener) => remove(coreListeners, type, listener, false),
     dispatchEvent: (event) => {
       jsQueue.push(event);
       return 0;
@@ -121,5 +140,5 @@ export function createCrossThreadContextPair(): {
     },
   };
 
-  return { jsContext, coreContext };
+  return { jsContext, coreContext, checkListenerLeaks };
 }

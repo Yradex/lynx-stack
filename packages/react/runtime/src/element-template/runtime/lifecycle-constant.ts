@@ -4,4 +4,5 @@
 
 export const enum ElementTemplateLifecycleConstant {
   hydrate = 'rLynxElementTemplateHydrate',
+  update = 'rLynxElementTemplateUpdate',
 }

@@ -3,21 +3,23 @@
 // LICENSE file in the root directory of this source tree.
 import '../../hooks/react.js';
 
+import { callDestroyLifetimeFun } from './callDestroyLifetimeFun.js';
 import { injectCalledByNative } from './main-thread-api.js';
-import { setupLynxEnv } from '../../lynx/env.js';
+import { installElementTemplatePatchListener } from './patch-listener.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
+import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
 import { Slot } from '../runtime/components/slot.js';
 
 registerSlot(Slot);
-setupLynxEnv();
 
 if (__MAIN_THREAD__) {
   injectCalledByNative();
+  installElementTemplatePatchListener();
 }
 
 if (__BACKGROUND__) {
   setupBackgroundElementTemplateDocument();
+  installElementTemplateHydrationListener();
+  lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;
 }
-
-// setupLynxEnv();

@@ -42,6 +42,7 @@ describe('ElementTemplate patch stream (apply)', () => {
   const envManager = new ElementTemplateEnvManager();
   let hydrationData: SerializedETInstance[] = [];
   let cleanupNative: () => void;
+  let onHydrate: (event: { data: unknown }) => void;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,7 +53,7 @@ describe('ElementTemplate patch stream (apply)', () => {
     envManager.resetEnv('background');
     envManager.setUseElementTemplate(true);
 
-    const onHydrate = vi.fn().mockImplementation((event: { data: unknown }) => {
+    onHydrate = vi.fn().mockImplementation((event: { data: unknown }) => {
       const data = event.data;
       if (Array.isArray(data)) {
         for (const item of data) {
@@ -64,6 +65,7 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   afterEach(() => {
+    lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
     cleanupNative();
     envManager.setUseElementTemplate(false);
   });

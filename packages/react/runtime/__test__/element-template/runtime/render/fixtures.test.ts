@@ -8,13 +8,15 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
-import { registerTemplates } from '../../test-utils/registry.js';
-import { serializeToJSX } from '../../test-utils/serializer.js';
+import { resetElementTemplateHydrationListener } from '../../../../src/element-template/background/hydration-listener.js';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { removeCtxNotFoundEventListener } from '../../../../src/lifecycle/patch/error.js';
 import { renderToString } from '../../../../src/renderToOpcodes/index.js';
+import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { registerTemplates } from '../../test-utils/registry.js';
+import { serializeToJSX } from '../../test-utils/serializer.js';
 
 declare global {
   var __USE_ELEMENT_TEMPLATE__: boolean | undefined;
@@ -55,6 +57,9 @@ describe('Fixture Integration Tests', () => {
   });
 
   afterEach(() => {
+    resetElementTemplateHydrationListener();
+    // TODO: ???
+    removeCtxNotFoundEventListener();
     cleanup();
     globalThis.__USE_ELEMENT_TEMPLATE__ = undefined;
   });

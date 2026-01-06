@@ -59,18 +59,21 @@ describe('lynx.getJSContext mock', () => {
 
     envManager.switchToBackground();
     const receivedOnCore: unknown[] = [];
-    coreContext.addEventListener('pong', (e: ContextEvent) => {
+    const onPong = (e: ContextEvent) => {
       const g = globalThis as unknown as ThreadFlags;
       expect(g.__MAIN_THREAD__).toBe(false);
       expect(g.__BACKGROUND__).toBe(true);
       receivedOnCore.push(e.data);
-    });
+    };
+    coreContext.addEventListener('pong', onPong);
 
     envManager.switchToMainThread();
     expect(jsContext.dispatchEvent({ type: 'pong', data: 3 })).toBe(0);
     expect(receivedOnCore).toEqual([]);
     envManager.switchToBackground();
     expect(receivedOnCore).toEqual([3]);
+
+    coreContext.removeEventListener('pong', onPong);
   });
 
   it('supports postMessage in both directions', () => {
@@ -100,18 +103,21 @@ describe('lynx.getJSContext mock', () => {
     expect(receivedOnJs).toEqual(['fromCore']);
 
     const receivedOnCore: unknown[] = [];
-    coreContext.addEventListener('message', (e: ContextEvent) => {
+    const onMessageOnCore = (e: ContextEvent) => {
       const g = globalThis as unknown as ThreadFlags;
       expect(g.__MAIN_THREAD__).toBe(false);
       expect(g.__BACKGROUND__).toBe(true);
       receivedOnCore.push(e.data);
-    });
+    };
+    coreContext.addEventListener('message', onMessageOnCore);
 
     envManager.switchToMainThread();
     jsContext.postMessage('fromJs');
     expect(receivedOnCore).toEqual([]);
     envManager.switchToBackground();
     expect(receivedOnCore).toEqual(['fromJs']);
+
+    coreContext.removeEventListener('message', onMessageOnCore);
 
     envManager.switchToMainThread();
     jsContext.removeEventListener('message', onMessageOnJs);

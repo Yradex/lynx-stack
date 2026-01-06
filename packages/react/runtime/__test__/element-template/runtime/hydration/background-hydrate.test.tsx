@@ -5,6 +5,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { hydrate as hydrateBackground } from '../../../../src/element-template/background/hydrate.js';
+import { installElementTemplateHydrationListener } from '../../../../src/element-template/background/hydration-listener.js';
 import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
@@ -12,12 +13,19 @@ import {
 } from '../../../../src/element-template/background/instance.js';
 import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
 import { root } from '../../../../src/element-template/index.js';
+import {
+  installElementTemplatePatchListener,
+  resetElementTemplatePatchListener,
+} from '../../../../src/element-template/native/patch-listener.js';
+import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import type { SerializedETInstance } from '../../../../src/element-template/runtime/hydration.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/runtime/lifecycle-constant.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from '../../test-utils/envManager.js';
 import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { flushCoreContextEvents, flushJSContextEvents } from '../../test-utils/mockNativePapi/context.js';
 import { clearTemplates } from '../../test-utils/registry.js';
+import { serializeToJSX } from '../../test-utils/serializer.js';
 
 declare const renderPage: () => void;
 
@@ -970,6 +978,33 @@ describe('ElementTemplate background hydrate', () => {
           ],
         ]
       `);
+    });
+  });
+
+  describe('Full flow from JSX to Patch', () => {
+    it('dispatches update event and applies patches on main thread', () => {
+      // 1. Setup Listeners
+      installElementTemplateHydrationListener();
+      installElementTemplatePatchListener();
+
+      // 2. Render App (Produces mismatch)
+      function App() {
+        const id = __BACKGROUND__ ? 'bg' : 'main';
+        return <view id={id} />;
+      }
+
+      // 3. Render and Generate state
+      renderAndCollect(App);
+
+      // 4. Verify Main Thread State
+      envManager.switchToMainThread();
+      expect(serializeToJSX(__page)).toMatchInlineSnapshot(`
+        "<page>
+          <view part-id="0" id="bg" />
+        </page>"
+      `);
+
+      resetElementTemplatePatchListener();
     });
   });
 });

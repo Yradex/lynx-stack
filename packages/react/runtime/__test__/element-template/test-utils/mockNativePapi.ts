@@ -25,6 +25,7 @@ export interface MockNativePapi {
   mockCreateRawText: any;
   mockPatchElementTemplate: any;
   mockReportError: any;
+  mockFlushElementTree: any;
   cleanup: () => void;
 }
 
@@ -37,7 +38,7 @@ export function installMockNativePapi(
 ): MockNativePapi {
   const { clearTemplatesOnCleanup = true } = options;
   const nativeLog: any[] = [];
-  const { jsContext, coreContext } = createCrossThreadContextPair();
+  const { jsContext, coreContext, checkListenerLeaks } = createCrossThreadContextPair();
 
   const mockElementFromBinary = vi.fn().mockImplementation((...args: unknown[]) => {
     const tag = args[0];
@@ -107,11 +108,16 @@ export function installMockNativePapi(
     },
   );
 
+  const mockFlushElementTree = vi.fn().mockImplementation((element: unknown, options: unknown) => {
+    nativeLog.push(['__FlushElementTree', formatNode(element), options]);
+  });
+
   vi.stubGlobal('__ElementFromBinary', mockElementFromBinary);
   vi.stubGlobal('__CreateRawText', mockCreateRawText);
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);
   vi.stubGlobal('__PatchElementTemplate', mockPatchElementTemplate);
+  vi.stubGlobal('__FlushElementTree', mockFlushElementTree);
   const previousLynx = (globalThis as unknown as { lynx?: unknown }).lynx;
   const baseLynx = isRecord(previousLynx) ? previousLynx : {};
   vi.stubGlobal('lynx', {
@@ -127,7 +133,9 @@ export function installMockNativePapi(
     mockCreateRawText: mockCreateRawText,
     mockPatchElementTemplate: mockPatchElementTemplate,
     mockReportError: mockReportError,
+    mockFlushElementTree: mockFlushElementTree,
     cleanup: (): void => {
+      checkListenerLeaks();
       const errorCalls = mockReportError.mock.calls;
       vi.unstubAllGlobals();
       if (clearTemplatesOnCleanup) {
