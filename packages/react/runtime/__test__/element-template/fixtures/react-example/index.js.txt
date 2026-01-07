@@ -19,7 +19,7 @@ export function App() {
     return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
         attrs: {
             0: {
-                "bindEvent": 1
+                "bindtap": 1
             },
             2: {
                 "src": arrow

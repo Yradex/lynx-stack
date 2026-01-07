@@ -1806,11 +1806,14 @@ where
                     value: format!("data-{}", name).into(),
                     raw: None,
                   }),
-                  AttrName::Event(ref name, _) => PropName::Str(Str {
-                    span: DUMMY_SP,
-                    value: name.as_str().into(),
-                    raw: None,
-                  }),
+                  AttrName::Event(ref name, ref event_name) => {
+                    let prefix = name.strip_suffix("Event").unwrap_or(name);
+                    PropName::Str(Str {
+                      span: DUMMY_SP,
+                      value: format!("{}{}", prefix, event_name).into(),
+                      raw: None,
+                    })
+                  }
                   AttrName::Ref => PropName::Ident(IdentName::new("ref".into(), DUMMY_SP)),
                   AttrName::Class => PropName::Ident(IdentName::new("class".into(), DUMMY_SP)),
                   AttrName::Style => PropName::Ident(IdentName::new("style".into(), DUMMY_SP)),

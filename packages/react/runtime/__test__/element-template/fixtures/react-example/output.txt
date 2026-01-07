@@ -2,7 +2,7 @@
   <view class="Background" />
   <view class="App">
     <view class="Banner">
-      <view class="Logo" part-id="0" bindEvent="1">
+      <view class="Logo" part-id="0" bindtap="1">
         <image class="Logo--lynx" part-id="0" src="./assets/lynx-logo.png" />
       </view>
       <text class="Title" text="React" />

@@ -27,7 +27,7 @@
         "type": "setAttributes",
         "id": 0,
         "attributes": {
-          "bindEvent": 1
+          "bindtap": 1
         }
       },
       {
