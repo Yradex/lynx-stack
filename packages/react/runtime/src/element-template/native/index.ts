@@ -10,6 +10,7 @@ import { registerSlot } from '../../renderToOpcodes/index.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
 import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../background/instance.js';
+import { setupLynxEnv } from '../lynx/env.js';
 import { Slot } from '../runtime/components/slot.js';
 import { setRoot } from '../runtime/page/root-instance.js';
 
@@ -26,3 +27,5 @@ if (__BACKGROUND__) {
   installElementTemplateHydrationListener();
   lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;
 }
+
+setupLynxEnv();
