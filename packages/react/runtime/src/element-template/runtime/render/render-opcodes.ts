@@ -80,12 +80,13 @@ export function renderOpcodesIntoElementTemplate(
         // 2. insertBefore: [2, slotId, null, childRef]
         const initOpcodes: any[] = [];
 
-        for (const [partId, attributes] of Object.entries(frame.attrs)) {
-          initOpcodes.push(4, Number(partId), attributes);
+        for (const partIdString in frame.attrs) {
+          initOpcodes.push(4, Number(partIdString), frame.attrs[partIdString as unknown as number]);
         }
 
-        for (const [slotIdString, children] of Object.entries(frame.slotChildren)) {
+        for (const slotIdString in frame.slotChildren) {
           const slotId = Number(slotIdString);
+          const children = frame.slotChildren[slotIdString as unknown as number]!;
           for (const child of children) {
             initOpcodes.push(2, slotId, null, child.ref);
           }
@@ -109,11 +110,12 @@ export function renderOpcodesIntoElementTemplate(
           {},
           // Only include attrs if not empty for optimization?
           // For now, keep it simple.
-          { ...frame.attrs },
+          frame.attrs,
         ];
 
-        for (const [slotIdString, children] of Object.entries(frame.slotChildren)) {
+        for (const slotIdString in frame.slotChildren) {
           const slotId = Number(slotIdString);
+          const children = frame.slotChildren[slotIdString as unknown as number]!;
           serializedInstance[2][slotId] = children.map((child) => child.serialized);
         }
 
