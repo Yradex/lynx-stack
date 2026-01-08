@@ -6,6 +6,11 @@ import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } fr
 import type { SerializedETInstance } from '../../protocol/types.js';
 import { createElementTemplateHandle } from '../template/handle.js';
 
+interface HydratedNode {
+  ref: ElementRef;
+  serialized: SerializedETInstance;
+}
+
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
   templateKey: string | null;
@@ -14,7 +19,7 @@ interface Frame {
   attrs: Record<number, Record<string, any>>;
 
   // Collected Slot children: Map<slotId, ChildNode[]>
-  slotChildren: Map<number, ElementRef[]>;
+  slotChildren: Record<number, HydratedNode[]>;
 
   // Current active slot stack
   activeSlotStack: number[];
@@ -26,7 +31,7 @@ function createFrame(templateKey: string | null): Frame {
   return {
     templateKey,
     attrs: {},
-    slotChildren: new Map(),
+    slotChildren: Object.create(null) as Record<number, HydratedNode[]>,
     activeSlotStack: [],
   };
 }
@@ -39,8 +44,6 @@ export function renderOpcodesIntoElementTemplate(
   const stack: Frame[] = [];
   // Initialize Root Frame
   stack.push(createFrame(null));
-
-  const hydrationMap = new Map<ElementRef, SerializedETInstance>();
 
   for (let i = 0; i < opcodes.length;) {
     const opcode = opcodes[i];
@@ -81,9 +84,10 @@ export function renderOpcodesIntoElementTemplate(
           initOpcodes.push(4, Number(partId), attributes);
         }
 
-        for (const [slotId, children] of frame.slotChildren) {
+        for (const [slotIdString, children] of Object.entries(frame.slotChildren)) {
+          const slotId = Number(slotIdString);
           for (const child of children) {
-            initOpcodes.push(2, slotId, null, child);
+            initOpcodes.push(2, slotId, null, child.ref);
           }
         }
 
@@ -108,13 +112,12 @@ export function renderOpcodesIntoElementTemplate(
           { ...frame.attrs },
         ];
 
-        for (const [slotId, children] of frame.slotChildren) {
-          serializedInstance[2][slotId] = children.map((child) => {
-            return hydrationMap.get(child)!;
-          });
+        for (const [slotIdString, children] of Object.entries(frame.slotChildren)) {
+          const slotId = Number(slotIdString);
+          serializedInstance[2][slotId] = children.map((child) => child.serialized);
         }
 
-        hydrationMap.set(elementRef, serializedInstance);
+        const hydratedNode: HydratedNode = { ref: elementRef, serialized: serializedInstance };
 
         // Append to parent
         const parentFrame = stack[stack.length - 1];
@@ -143,11 +146,11 @@ export function renderOpcodesIntoElementTemplate(
               const currentSlot = parentFrame.activeSlotStack[
                 parentFrame.activeSlotStack.length - 1
               ];
-              const list = parentFrame.slotChildren.get(currentSlot!);
+              const list = parentFrame.slotChildren[currentSlot!];
               if (list) {
-                list.push(elementRef);
+                list.push(hydratedNode);
               } else {
-                parentFrame.slotChildren.set(currentSlot!, [elementRef]);
+                parentFrame.slotChildren[currentSlot!] = [hydratedNode];
               }
             }
           }
@@ -203,7 +206,7 @@ export function renderOpcodesIntoElementTemplate(
             {},
             { 0: { text } },
           ];
-          hydrationMap.set(textRef, serializedText);
+          const hydratedText: HydratedNode = { ref: textRef, serialized: serializedText };
 
           if (frame.templateKey === null) {
             // Root text
@@ -218,11 +221,11 @@ export function renderOpcodesIntoElementTemplate(
               );
             } else {
               const currentSlot = frame.activeSlotStack[frame.activeSlotStack.length - 1];
-              const list = frame.slotChildren.get(currentSlot!);
+              const list = frame.slotChildren[currentSlot!];
               if (list) {
-                list.push(textRef);
+                list.push(hydratedText);
               } else {
-                frame.slotChildren.set(currentSlot!, [textRef]);
+                frame.slotChildren[currentSlot!] = [hydratedText];
               }
             }
           }
