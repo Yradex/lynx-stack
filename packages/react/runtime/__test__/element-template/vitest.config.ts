@@ -57,7 +57,7 @@ function transformReactLynxPlugin(): Plugin {
 
       return {
         code,
-        map: null,
+        map: result.map ?? null,
       };
     },
   };

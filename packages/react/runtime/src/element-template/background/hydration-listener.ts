@@ -1,10 +1,11 @@
 // Copyright 2026 The Lynx Authors. All rights reserved.
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
-import { hydrate } from './hydrate.js';
+import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.js';
+import { hydrateIntoContext } from './hydrate.js';
 import { BackgroundElementTemplateInstance } from './instance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
-import type { ElementTemplatePatchStream, SerializedETInstance } from '../protocol/types.js';
+import type { SerializedETInstance } from '../protocol/types.js';
 import { __root } from '../runtime/page/root-instance.js';
 
 let listener:
@@ -19,21 +20,25 @@ export function installElementTemplateHydrationListener(): void {
     const instances = data as SerializedETInstance[];
     const root = __root as BackgroundElementTemplateInstance;
 
-    const stream: ElementTemplatePatchStream = [];
+    resetGlobalCommitContext();
     let after = root.firstChild;
     for (const before of instances) {
       if (!after) {
         break;
       }
-      hydrate(before, after, stream);
+      hydrateIntoContext(before, after);
       after = after.nextSibling;
     }
 
-    if (stream.length > 0) {
+    if (GlobalCommitContext.patches.length > 0) {
       lynx.getCoreContext().dispatchEvent({
         type: ElementTemplateLifecycleConstant.update,
-        data: stream,
+        data: {
+          patches: GlobalCommitContext.patches,
+          flushOptions: GlobalCommitContext.flushOptions,
+        },
       });
+      resetGlobalCommitContext();
     }
   };
 

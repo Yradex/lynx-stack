@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
-import type { ElementTemplatePatchStream } from '../protocol/types.js';
+import type { ElementTemplateCommitContext } from '../protocol/types.js';
 import { applyElementTemplatePatches } from '../runtime/patch.js';
 
 let listener:
@@ -15,8 +15,10 @@ export function installElementTemplatePatchListener(): void {
 
   listener = (event: { data: unknown }) => {
     const { data } = event;
-    const stream = data as ElementTemplatePatchStream;
-    applyElementTemplatePatches(stream);
+    const payload = data as ElementTemplateCommitContext;
+    if (Array.isArray(payload?.patches)) {
+      applyElementTemplatePatches(payload.patches);
+    }
     __FlushElementTree();
   };
 

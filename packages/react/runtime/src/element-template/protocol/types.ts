@@ -10,3 +10,8 @@ export type SerializedETInstance = [
 ];
 
 export type ElementTemplatePatchStream = (number | string | null | unknown[])[];
+
+export interface ElementTemplateCommitContext {
+  patches: ElementTemplatePatchStream;
+  flushOptions: Record<string, unknown>;
+}

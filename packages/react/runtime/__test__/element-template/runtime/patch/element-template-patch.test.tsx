@@ -7,13 +7,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { hydrate as hydrateBackground } from '../../../../src/element-template/background/hydrate.js';
 import type { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
 import { root } from '../../../../src/element-template/index.js';
+import {
+  installElementTemplatePatchListener,
+  resetElementTemplatePatchListener,
+} from '../../../../src/element-template/native/patch-listener.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
+import { ElementTemplateOpcodes } from '../../../../src/element-template/protocol/opcodes.js';
 import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { applyElementTemplatePatches } from '../../../../src/element-template/runtime/patch.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { ElementTemplateEnvManager } from '../../test-utils/envManager.js';
 import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { registerTemplates } from '../../test-utils/registry.js';
 import { serializeToJSX } from '../../test-utils/serializer.js';
 
 declare const renderPage: () => void;
@@ -43,11 +50,15 @@ describe('ElementTemplate patch stream (apply)', () => {
   let hydrationData: SerializedETInstance[] = [];
   let cleanupNative: () => void;
   let onHydrate: (event: { data: unknown }) => void;
+  let mockPatchElementTemplate: ReportErrorMock;
+  let mockFlushElementTree: ReportErrorMock;
 
   beforeEach(() => {
     vi.clearAllMocks();
     const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
     cleanupNative = installed.cleanup;
+    mockPatchElementTemplate = installed.mockPatchElementTemplate as unknown as ReportErrorMock;
+    mockFlushElementTree = installed.mockFlushElementTree as unknown as ReportErrorMock;
 
     hydrationData = [];
     envManager.resetEnv('background');
@@ -66,6 +77,7 @@ describe('ElementTemplate patch stream (apply)', () => {
 
   afterEach(() => {
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
+    resetElementTemplatePatchListener();
     cleanupNative();
     envManager.setUseElementTemplate(false);
   });
@@ -238,6 +250,113 @@ describe('ElementTemplate patch stream (apply)', () => {
     expect(serializeToJSX(__page)).toBe(beforeJSX);
   });
 
+  it('accepts commit context payload on update event', () => {
+    function App() {
+      const id = __BACKGROUND__ ? 'bg' : 'main';
+      return <view id={id} />;
+    }
+
+    const { before, after } = renderAndCollect(App);
+    const stream = hydrateBackground(before, after);
+    expect(stream.length).toBeGreaterThan(0);
+
+    envManager.switchToMainThread();
+    installElementTemplatePatchListener();
+    mockPatchElementTemplate.mockClear();
+    mockFlushElementTree.mockClear();
+
+    envManager.switchToBackground();
+    lynx.getCoreContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.update,
+      data: { patches: stream, flushOptions: {} },
+    });
+    envManager.switchToMainThread();
+
+    expect(mockPatchElementTemplate.mock.calls.length).toBeGreaterThan(0);
+    expect(mockFlushElementTree.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it('detaches node from old slot when applying insertBefore into new slot', () => {
+    root.render(<view />);
+    envManager.switchToMainThread();
+    renderPage();
+
+    registerTemplates([
+      {
+        templateId: '_et_test_detach',
+        compiledTemplate: {
+          tag: '_et_test_detach',
+          attributes: {},
+          children: [
+            { tag: 'slot', attributes: { 'part-id': 0 } },
+            { tag: 'slot', attributes: { 'part-id': 1 } },
+          ],
+        },
+      },
+    ]);
+
+    applyElementTemplatePatches([0, 20, '_et_test_detach', []]);
+    const page = __page as unknown as { children?: unknown[] };
+    page.children ??= [];
+    page.children.push(ElementTemplateRegistry.get(20)!.nativeRef);
+
+    applyElementTemplatePatches([
+      0,
+      10,
+      'raw-text',
+      'A',
+      0,
+      11,
+      'raw-text',
+      'B',
+    ]);
+
+    applyElementTemplatePatches([
+      20,
+      [
+        ElementTemplateOpcodes.insertBefore,
+        0,
+        null,
+        10,
+        ElementTemplateOpcodes.insertBefore,
+        0,
+        null,
+        11,
+      ],
+    ]);
+
+    expect(serializeToJSX(__page)).toMatchInlineSnapshot(`
+      "<page>
+        <view />
+        <_et_test_detach>
+          <raw-text text="A" />
+          <raw-text text="B" />
+
+        </_et_test_detach>
+      </page>"
+    `);
+
+    applyElementTemplatePatches([
+      20,
+      [
+        ElementTemplateOpcodes.insertBefore,
+        1,
+        null,
+        10,
+      ],
+    ]);
+
+    expect(serializeToJSX(__page)).toMatchInlineSnapshot(`
+      "<page>
+        <view />
+        <_et_test_detach>
+          <raw-text text="B" />
+          <raw-text text="A" />
+        </_et_test_detach>
+      </page>"
+    `);
+  });
+
   it('reports illegal handleId 0 on create', () => {
     root.render(<view />);
     envManager.switchToMainThread();
@@ -256,18 +375,6 @@ describe('ElementTemplate patch stream (apply)', () => {
     renderPage();
 
     applyElementTemplatePatches([999, [4, 0, { a: 1 }]]);
-
-    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
-    expect(reportError.mock.calls).toHaveLength(1);
-    resetReportedErrors();
-  });
-
-  it('reports unknown opcode', () => {
-    root.render(<view />);
-    envManager.switchToMainThread();
-    renderPage();
-
-    applyElementTemplatePatches([-1, [999]]);
 
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(reportError.mock.calls).toHaveLength(1);

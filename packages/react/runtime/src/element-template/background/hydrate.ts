@@ -2,18 +2,33 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { BackgroundElementTemplateInstance, BackgroundElementTemplateText } from './instance.js';
+import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.js';
+import {
+  BackgroundElementTemplateInstance,
+  BackgroundElementTemplateSlot,
+  BackgroundElementTemplateText,
+} from './instance.js';
 import { backgroundElementTemplateInstanceManager } from './manager.js';
-import { isDirectOrDeepEqual } from '../../utils.js';
 import type { ElementTemplatePatchStream, SerializedETInstance } from '../protocol/types.js';
 
-const enum ElementTemplatePatchOpcode {
-  InsertBefore = 2,
-  RemoveChild = 3,
-  SetAttributes = 4,
+const RAW_TEXT_TEMPLATE_KEY = 'raw-text';
+
+export function hydrate(
+  before: SerializedETInstance,
+  after: BackgroundElementTemplateInstance,
+): ElementTemplatePatchStream {
+  resetGlobalCommitContext();
+  hydrateIntoContext(before, after);
+  return GlobalCommitContext.patches;
 }
 
-const RAW_TEXT_TEMPLATE_KEY = 'raw-text';
+export function hydrateIntoContext(
+  before: SerializedETInstance,
+  after: BackgroundElementTemplateInstance,
+  created?: Set<number>,
+): void {
+  hydrateImpl(before, after, created ?? new Set<number>());
+}
 
 interface DiffResult<K> {
   $$diff: true;
@@ -71,56 +86,62 @@ function diffArrayAction<T, K>(
   return result;
 }
 
-export function hydrate(
+function hydrateImpl(
   before: SerializedETInstance,
   after: BackgroundElementTemplateInstance,
-  stream: ElementTemplatePatchStream = [],
-): ElementTemplatePatchStream {
+  created: Set<number>,
+): void {
   if (before[1] !== after.type && __DEV__) {
     lynx.reportError(
       new Error(
         `ElementTemplate hydrate key mismatch: main='${before[1]}' background='${after.type}'.`,
       ),
     );
-    return stream;
+    return;
   }
 
   backgroundElementTemplateInstanceManager.updateId(after.instanceId, before[0]);
 
   if (before[1] === RAW_TEXT_TEMPLATE_KEY) {
-    return stream;
+    return;
   }
 
-  diffAttributes(before[3], after.attrs, after.instanceId, stream);
+  const beforeAttrs = before[3] ?? {};
+  const bgAttrs = after.attrs;
+  after.attrs = beforeAttrs;
+  after.setAttribute('attrs', bgAttrs);
 
   const beforeSlots = before[2] ?? {};
   const slotIds = new Set<number>();
   for (const key of Object.keys(beforeSlots)) {
     slotIds.add(Number(key));
   }
-  for (const key of after.slotChildren.keys()) {
-    slotIds.add(key);
-  }
 
   for (const slotId of slotIds) {
-    const beforeChildren = beforeSlots[slotId] ?? [];
-    const afterChildren = after.slotChildren.get(slotId) ?? [];
-    diffInstanceList(beforeChildren, afterChildren, after.instanceId, slotId, stream);
+    syncSlotChildren(after, slotId, beforeSlots[slotId] ?? [], created);
   }
 
-  return stream;
+  for (const slotId of after.slotChildren.keys()) {
+    if (slotIds.has(slotId)) {
+      continue;
+    }
+    syncSlotChildren(after, slotId, [], created);
+  }
 }
 
-function diffInstanceList(
-  beforeList: SerializedETInstance[],
-  afterList: BackgroundElementTemplateInstance[],
-  parentId: number,
+function syncSlotChildren(
+  parent: BackgroundElementTemplateInstance,
   slotId: number,
-  stream: ElementTemplatePatchStream,
+  beforeChildren: SerializedETInstance[],
+  created: Set<number>,
 ): void {
+  const slot = ensureSlot(parent, slotId);
+
+  const afterChildren = collectChildren(slot);
+
   const beforeMap: Record<string, Array<[SerializedETInstance, number]>> = {};
-  for (let i = 0; i < beforeList.length; i += 1) {
-    const node = beforeList[i]!;
+  for (let i = 0; i < beforeChildren.length; i += 1) {
+    const node = beforeChildren[i]!;
     const key = getSerializedInstanceKey(node);
     (beforeMap[key] ??= []).push([node, i]);
   }
@@ -133,8 +154,8 @@ function diffInstanceList(
   };
 
   let lastPlacedIndex = 0;
-  for (let i = 0; i < afterList.length; i += 1) {
-    const afterNode = afterList[i]!;
+  for (let i = 0; i < afterChildren.length; i += 1) {
+    const afterNode = afterChildren[i]!;
     const key = getBackgroundInstanceKey(afterNode);
     const beforeNodes = beforeMap[key];
     let beforeNode: [SerializedETInstance, number] | undefined;
@@ -145,7 +166,7 @@ function diffInstanceList(
 
     if (beforeNode) {
       const [beforeInstance, oldIndex] = beforeNode;
-      hydrate(beforeInstance, afterNode, stream);
+      hydrateImpl(beforeInstance, afterNode, created);
       if (oldIndex < lastPlacedIndex) {
         diffResult.m[oldIndex] = i;
       } else {
@@ -166,161 +187,151 @@ function diffInstanceList(
     return;
   }
 
+  const mainOrder: BackgroundElementTemplateInstance[] = [];
+  for (const serialized of beforeChildren) {
+    const reused = backgroundElementTemplateInstanceManager.get(serialized[0]);
+    mainOrder.push(reused ?? createPlaceholder(serialized));
+  }
+
+  replaceChildren(slot, mainOrder);
+
   diffArrayAction(
-    beforeList,
+    beforeChildren,
     diffResult,
     (node, target) => {
       const beforeId = target ? target[0] : null;
-      reconstructInstanceTree([node], parentId, slotId, beforeId, stream);
+      const beforeChild = beforeId == null
+        ? null
+        : backgroundElementTemplateInstanceManager.get(beforeId)!;
+      emitCreateRecursive(node, created);
+      slot.insertBefore(node, beforeChild);
       return (target ?? node) as unknown as SerializedETInstance;
     },
     (node) => {
       const childId = node[0];
-      pushUpdate(stream, parentId, [
-        ElementTemplatePatchOpcode.RemoveChild,
-        slotId,
-        childId,
-      ]);
+      const child = backgroundElementTemplateInstanceManager.get(childId);
+      if (child && child.parent === slot) {
+        slot.removeChild(child);
+      }
     },
     (node, target) => {
       const childId = node[0];
+      const child = backgroundElementTemplateInstanceManager.get(childId);
       const beforeId = target ? target[0] : null;
-      pushUpdate(stream, parentId, [
-        ElementTemplatePatchOpcode.InsertBefore,
-        slotId,
-        beforeId,
-        childId,
-      ]);
+      const beforeChild = beforeId == null
+        ? null
+        : backgroundElementTemplateInstanceManager.get(beforeId)!;
+      if (child && child.parent === slot) {
+        slot.insertBefore(child, beforeChild);
+      }
     },
   );
 }
 
-function diffAttributes(
-  beforeAttrs: Record<number, Record<string, unknown>> | undefined,
-  afterAttrs: Map<number, Record<string, unknown>>,
-  targetId: number,
-  stream: ElementTemplatePatchStream,
-): void {
-  const beforeMap = new Map<number, Record<string, unknown>>();
-  if (beforeAttrs) {
-    for (const [partId, props] of Object.entries(beforeAttrs)) {
-      beforeMap.set(Number(partId), props);
-    }
+function emitCreateRecursive(node: BackgroundElementTemplateInstance, created: Set<number>): void {
+  if (created.has(node.instanceId)) {
+    return;
   }
-
-  const seenParts = new Set<number>();
-  for (const [partId, nextProps] of afterAttrs) {
-    seenParts.add(partId);
-    const prevProps = beforeMap.get(partId);
-    const patch: Record<string, unknown> = {};
-
-    for (const key in nextProps) {
-      const nextValue = nextProps[key];
-      const prevValue = prevProps?.[key];
-      if (!isDirectOrDeepEqual(nextValue, prevValue)) {
-        patch[key] = nextValue;
-      }
-    }
-
-    if (prevProps) {
-      for (const key in prevProps) {
-        if (!(key in nextProps)) {
-          patch[key] = undefined;
-        }
-      }
-    }
-
-    if (Object.keys(patch).length > 0) {
-      pushUpdate(stream, targetId, [
-        ElementTemplatePatchOpcode.SetAttributes,
-        partId,
-        patch,
-      ]);
-    }
-  }
-
-  for (const [partId, prevProps] of beforeMap) {
-    if (seenParts.has(partId)) {
-      continue;
-    }
-    const patch: Record<string, unknown> = {};
-    for (const key in prevProps) {
-      patch[key] = undefined;
-    }
-    if (Object.keys(patch).length > 0) {
-      pushUpdate(stream, targetId, [
-        ElementTemplatePatchOpcode.SetAttributes,
-        partId,
-        patch,
-      ]);
-    }
-  }
-}
-
-function reconstructInstanceTree(
-  nodes: BackgroundElementTemplateInstance[],
-  parentId: number,
-  slotId: number,
-  beforeId: number | null,
-  stream: ElementTemplatePatchStream,
-): void {
-  for (const node of nodes) {
-    createInstanceNode(node, stream);
-
-    const slotChildren = node.slotChildren;
-    for (const [childSlotId, children] of slotChildren) {
-      for (const child of children) {
-        reconstructInstanceTree([child], node.instanceId, childSlotId, null, stream);
-      }
-    }
-
-    pushUpdate(stream, parentId, [
-      ElementTemplatePatchOpcode.InsertBefore,
-      slotId,
-      beforeId,
-      node.instanceId,
-    ]);
-  }
-}
-
-function createInstanceNode(
-  node: BackgroundElementTemplateInstance,
-  stream: ElementTemplatePatchStream,
-): void {
+  created.add(node.instanceId);
+  node.emitCreate();
   if (node.type === RAW_TEXT_TEMPLATE_KEY) {
-    const text = node instanceof BackgroundElementTemplateText ? node.text : '';
-    pushCreate(stream, node.instanceId, RAW_TEXT_TEMPLATE_KEY, text);
     return;
   }
 
-  const initOpcodes: unknown[] = [];
-  for (const [partId, attrs] of node.attrs) {
-    initOpcodes.push(ElementTemplatePatchOpcode.SetAttributes, partId, attrs);
+  let slot = node.firstChild;
+  while (slot) {
+    if (slot instanceof BackgroundElementTemplateSlot && slot.partId !== -1) {
+      const children = collectChildren(slot);
+      for (const child of children) {
+        emitCreateRecursive(child, created);
+      }
+
+      replaceChildren(slot, []);
+
+      for (const child of children) {
+        slot.insertBefore(child, null);
+      }
+    }
+    slot = slot.nextSibling;
   }
-  pushCreate(stream, node.instanceId, node.type, initOpcodes);
 }
 
-function pushUpdate(
-  stream: ElementTemplatePatchStream,
-  targetId: number,
-  opcodes: unknown[],
-): void {
-  const lastHeader = stream[stream.length - 2];
-  const lastOpcodes = stream[stream.length - 1];
-  if (lastHeader === targetId && Array.isArray(lastOpcodes)) {
-    lastOpcodes.push(...opcodes);
-    return;
+function ensureSlot(
+  parent: BackgroundElementTemplateInstance,
+  slotId: number,
+): BackgroundElementTemplateSlot {
+  let child = parent.firstChild;
+  while (child) {
+    if (child instanceof BackgroundElementTemplateSlot && child.partId === slotId) {
+      return child;
+    }
+    child = child.nextSibling;
   }
-  stream.push(targetId, opcodes);
+
+  const slot = new BackgroundElementTemplateSlot();
+  slot.setAttribute('id', slotId);
+  parent.appendChild(slot);
+  return slot;
 }
 
-function pushCreate(
-  stream: ElementTemplatePatchStream,
-  handleId: number,
-  templateKey: string,
-  initOpcodes: unknown[] | string,
+function collectChildren(slot: BackgroundElementTemplateSlot): BackgroundElementTemplateInstance[] {
+  const res: BackgroundElementTemplateInstance[] = [];
+  let child = slot.firstChild;
+  while (child) {
+    res.push(child);
+    child = child.nextSibling;
+  }
+  return res;
+}
+
+function replaceChildren(
+  parent: BackgroundElementTemplateInstance,
+  children: BackgroundElementTemplateInstance[],
 ): void {
-  stream.push(0, handleId, templateKey, initOpcodes);
+  let child = parent.firstChild;
+  while (child) {
+    const next = child.nextSibling;
+    child.parent = null;
+    child.nextSibling = null;
+    child.previousSibling = null;
+    child = next;
+  }
+
+  parent.firstChild = null;
+  parent.lastChild = null;
+
+  let prev: BackgroundElementTemplateInstance | null = null;
+  for (const c of children) {
+    c.parent = parent;
+    c.previousSibling = prev;
+    c.nextSibling = null;
+    if (prev) {
+      prev.nextSibling = c;
+    } else {
+      parent.firstChild = c;
+    }
+    prev = c;
+    parent.lastChild = c;
+  }
+}
+
+function createPlaceholder(serialized: SerializedETInstance): BackgroundElementTemplateInstance {
+  const [id, type, , attrs] = serialized;
+  let node: BackgroundElementTemplateInstance;
+  if (type === RAW_TEXT_TEMPLATE_KEY) {
+    const text = attrs?.[0]?.['text'];
+    node = new BackgroundElementTemplateText(typeof text === 'string' ? text : '');
+  } else {
+    node = new BackgroundElementTemplateInstance(type);
+  }
+  backgroundElementTemplateInstanceManager.updateId(node.instanceId, id);
+  return node;
+}
+
+function isEmptyDiffResult(result: DiffResult<unknown>): boolean {
+  return Object.keys(result.i).length === 0
+    && result.r.length === 0
+    && Object.keys(result.m).length === 0;
 }
 
 function getSerializedInstanceKey(instance: SerializedETInstance): string {
@@ -337,10 +348,4 @@ function getBackgroundInstanceKey(instance: BackgroundElementTemplateInstance): 
     return `${RAW_TEXT_TEMPLATE_KEY}:${text}`;
   }
   return instance.type;
-}
-
-function isEmptyDiffResult(result: DiffResult<unknown>): boolean {
-  return Object.keys(result.i).length === 0
-    && result.r.length === 0
-    && Object.keys(result.m).length === 0;
 }

@@ -2,8 +2,12 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  GlobalCommitContext,
+  resetGlobalCommitContext,
+} from '../../../../src/element-template/background/commit-context.js';
 import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
@@ -282,30 +286,19 @@ describe('BackgroundElementTemplateText', () => {
     const textNode = new BackgroundElementTemplateText('');
     const attrs = { 0: { color: 'red' } };
     textNode.setAttribute('attrs', attrs);
-    expect(textNode.attrs.get(0)).toEqual({ color: 'red' });
+    expect(textNode.attrs[0]).toEqual({ color: 'red' });
   });
 });
 
 describe('BackgroundElementTemplateInstance Shadow State', () => {
-  it('should accept attrs assignment as Map directly', () => {
-    const instance = new BackgroundElementTemplateInstance('view');
-    const attrsMap = new Map<number, Record<string, unknown>>([
-      [0, { id: 'a' }],
-    ]);
-    instance.attrs = attrsMap;
-
-    expect(instance.attrs).toBe(attrsMap);
-    expect(instance.attrs.get(0)).toEqual({ id: 'a' });
-  });
-
-  it('should accept attrs assignment as object and normalize into Map', () => {
+  it('should accept attrs assignment as object and normalize', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     instance.attrs = { 0: { id: 'a' } };
 
-    expect(instance.attrs.get(0)).toEqual({ id: 'a' });
+    expect(instance.attrs[0]).toEqual({ id: 'a' });
 
     instance.attrs = { 0: { id: 'b' } };
-    expect(instance.attrs.get(0)).toEqual({ id: 'b' });
+    expect(instance.attrs[0]).toEqual({ id: 'b' });
   });
 
   it('should update attrs map when setAttribute("attrs", ...) is called', () => {
@@ -316,11 +309,13 @@ describe('BackgroundElementTemplateInstance Shadow State', () => {
     };
     instance.setAttribute('attrs', attrs);
 
-    expect(instance.attrs.size).toBe(2);
-    expect(instance.attrs.get(0)).toEqual({ id: 'a' });
-    expect(instance.attrs.get(1)).toEqual({ class: 'foo' });
+    expect(Object.keys(instance.attrs)).toHaveLength(2);
+    expect(instance.attrs[0]).toEqual({ id: 'a' });
+    expect(instance.attrs[1]).toEqual({ class: 'foo' });
   });
+});
 
+describe('BackgroundElementTemplateSlot Children', () => {
   it('should update partId for slot when setAttribute is called', () => {
     const slot = new BackgroundElementTemplateSlot();
     slot.setAttribute('id', 10);
@@ -370,5 +365,90 @@ describe('BackgroundElementTemplateInstance Shadow State', () => {
 
     const slotChildren = root.slotChildren;
     expect(slotChildren.size).toBe(0);
+  });
+});
+
+describe('BackgroundElementTemplateInstance Patch Stream', () => {
+  beforeEach(() => {
+    backgroundElementTemplateInstanceManager.clear();
+    backgroundElementTemplateInstanceManager.nextId = 0;
+    resetGlobalCommitContext();
+  });
+
+  it('treats non-object attrs entry as empty object', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.setAttribute('attrs', { 0: { a: 1 } });
+    resetGlobalCommitContext();
+
+    instance.setAttribute('attrs', { 0: null } as unknown as Record<string, unknown>);
+    const stream = GlobalCommitContext.patches;
+    resetGlobalCommitContext();
+    expect(stream).toEqual([
+      1,
+      [
+        4,
+        0,
+        {
+          a: undefined,
+        },
+      ],
+    ]);
+  });
+
+  it('does not emit patch when attrs part props reference is reused', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    const props = { a: 1 };
+    instance.setAttribute('attrs', { 0: props });
+    resetGlobalCommitContext();
+
+    instance.setAttribute('attrs', { 0: props });
+    expect(GlobalCommitContext.patches).toEqual([]);
+  });
+
+  it('treats nullish attrs as empty object', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.setAttribute('attrs', { 0: { a: 1 } });
+    resetGlobalCommitContext();
+
+    instance.setAttribute('attrs', undefined as unknown as Record<string, unknown>);
+    const stream = GlobalCommitContext.patches;
+    resetGlobalCommitContext();
+    expect(stream).toEqual([
+      1,
+      [
+        4,
+        0,
+        {
+          a: undefined,
+        },
+      ],
+    ]);
+  });
+
+  it('supports silent insertBefore without emitting patches', () => {
+    const root = new BackgroundElementTemplateInstance('root');
+    const slot = new BackgroundElementTemplateSlot();
+    slot.setAttribute('id', 0);
+    root.appendChild(slot);
+
+    const child = new BackgroundElementTemplateInstance('view');
+    slot.insertBefore(child, null, true);
+
+    expect(GlobalCommitContext.patches).toEqual([]);
+  });
+
+  it('reports error for emitCreate with illegal handleId 0 in dev', () => {
+    const lynxObj = globalThis.lynx as typeof lynx & { reportError?: (error: Error) => void };
+    const oldReportError = lynxObj.reportError;
+    const reportErrorSpy = vi.fn();
+    lynxObj.reportError = reportErrorSpy;
+
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.instanceId = 0;
+    instance.emitCreate();
+
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
+
+    lynxObj.reportError = oldReportError;
   });
 });

@@ -3,6 +3,8 @@
 // LICENSE file in the root directory of this source tree.
 
 import { ElementTemplateRegistry } from './template/registry.js';
+import { ElementTemplateOpcodes } from '../protocol/opcodes.js';
+import type { ElementTemplateOpcode } from '../protocol/opcodes.js';
 import type { ElementTemplatePatchStream } from '../protocol/types.js';
 
 export type { ElementTemplatePatchStream } from '../protocol/types.js';
@@ -54,9 +56,9 @@ export function applyElementTemplatePatches(stream: ElementTemplatePatchStream):
 function resolveOpcodes(opcodes: unknown[]): void {
   let i = 0;
   while (i < opcodes.length) {
-    const opcode = opcodes[i] as number;
+    const opcode = opcodes[i] as ElementTemplateOpcode;
     switch (opcode) {
-      case 2: {
+      case ElementTemplateOpcodes.insertBefore: {
         const beforeIndex = i + 2;
         const childIndex = i + 3;
         const beforeId = opcodes[beforeIndex] as number | null;
@@ -68,20 +70,16 @@ function resolveOpcodes(opcodes: unknown[]): void {
         i += 4;
         break;
       }
-      case 3: {
+      case ElementTemplateOpcodes.removeChild: {
         const childIndex = i + 2;
         const childId = opcodes[childIndex] as number;
         opcodes[childIndex] = resolveHandle(childId);
         i += 3;
         break;
       }
-      case 4: {
+      case ElementTemplateOpcodes.setAttributes: {
         i += 3;
         break;
-      }
-      default: {
-        lynx.reportError(new Error(`ElementTemplate patch has unknown opcode ${opcode}.`));
-        i += 1;
       }
     }
   }

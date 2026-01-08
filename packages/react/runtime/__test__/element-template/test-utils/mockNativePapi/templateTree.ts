@@ -6,6 +6,8 @@ function isUnknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
 }
 
+const elementTemplateParentListByNodeRef = new WeakMap<object, unknown[]>();
+
 export interface CompiledTemplateNode {
   tag?: string;
   templateId?: string;
@@ -108,6 +110,16 @@ export function applyOpcodesToTemplateInstance(root: CompiledTemplateNode, opcod
       const beforeRef = opcodes[i + 2];
       const childRef = opcodes[i + 3];
 
+      if (isRecord(childRef)) {
+        const previousList = elementTemplateParentListByNodeRef.get(childRef);
+        if (previousList) {
+          const previousIndex = previousList.indexOf(childRef);
+          if (previousIndex >= 0) {
+            previousList.splice(previousIndex, 1);
+          }
+        }
+      }
+
       const slot = (typeof slotId === 'string' || typeof slotId === 'number')
         ? nodesByPartId.get(Number(slotId))
         : undefined;
@@ -136,6 +148,10 @@ export function applyOpcodesToTemplateInstance(root: CompiledTemplateNode, opcod
         }
       }
 
+      if (isRecord(childRef)) {
+        elementTemplateParentListByNodeRef.set(childRef, list);
+      }
+
       i += 4;
       continue;
     }
@@ -152,6 +168,10 @@ export function applyOpcodesToTemplateInstance(root: CompiledTemplateNode, opcod
         if (index >= 0) {
           slot.children.splice(index, 1);
         }
+      }
+
+      if (isRecord(childRef)) {
+        elementTemplateParentListByNodeRef.delete(childRef);
       }
 
       i += 3;

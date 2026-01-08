@@ -10,7 +10,13 @@ import {
   BackgroundElementTemplateText,
 } from './instance.js';
 
-export function setupBackgroundElementTemplateDocument(): void {
+export interface BackgroundElementTemplateDocument {
+  createElement(type: string): BackgroundElementTemplateInstance;
+  createElementNS(ns: string, type: string): BackgroundElementTemplateInstance;
+  createTextNode(text: string): BackgroundElementTemplateInstance;
+}
+
+export function setupBackgroundElementTemplateDocument(): BackgroundElementTemplateDocument {
   const doc = {
     createElement(type: string): BackgroundElementTemplateInstance {
       if (type === 'slot') {
@@ -30,4 +36,6 @@ export function setupBackgroundElementTemplateDocument(): void {
   };
 
   options.document = doc as unknown as Document;
+
+  return doc;
 }

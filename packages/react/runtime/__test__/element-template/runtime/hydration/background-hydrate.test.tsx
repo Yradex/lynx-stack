@@ -4,7 +4,14 @@
 
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { hydrate as hydrateBackground } from '../../../../src/element-template/background/hydrate.js';
+import {
+  GlobalCommitContext,
+  resetGlobalCommitContext,
+} from '../../../../src/element-template/background/commit-context.js';
+import {
+  hydrate as hydrateBackground,
+  hydrateIntoContext,
+} from '../../../../src/element-template/background/hydrate.js';
 import { installElementTemplateHydrationListener } from '../../../../src/element-template/background/hydration-listener.js';
 import {
   BackgroundElementTemplateInstance,
@@ -423,10 +430,10 @@ describe('ElementTemplate background hydrate', () => {
       backgroundElementTemplateInstanceManager.nextId = 0;
 
       const after = new BackgroundElementTemplateInstance('view');
-      after.attrs = new Map([
-        [0, { a: 1, b: 2 }],
-        [1, { c: 3 }],
-      ]);
+      after.attrs = {
+        0: { a: 1, b: 2 },
+        1: { c: 3 },
+      };
 
       const before: SerializedETInstance = [-1, 'view', {}, {
         0: { a: 1, b: 9, d: 4 },
@@ -910,6 +917,64 @@ describe('ElementTemplate background hydrate', () => {
           ],
         ]
       `);
+    });
+
+    it('iterates existing slots when locating a later slot id', () => {
+      backgroundElementTemplateInstanceManager.clear();
+      backgroundElementTemplateInstanceManager.nextId = 0;
+
+      const rootInstance = new BackgroundElementTemplateInstance('root');
+      const slot0 = new BackgroundElementTemplateSlot();
+      slot0.setAttribute('id', 0);
+      rootInstance.appendChild(slot0);
+      const slot1 = new BackgroundElementTemplateSlot();
+      slot1.setAttribute('id', 1);
+      rootInstance.appendChild(slot1);
+
+      const before = [-1, 'root', { 1: [] }, {}] as unknown as SerializedETInstance;
+      const stream = hydrateBackground(before, rootInstance);
+      expect(stream).toEqual([]);
+    });
+
+    it('skips duplicate create emission for the same node in one session', () => {
+      backgroundElementTemplateInstanceManager.clear();
+      backgroundElementTemplateInstanceManager.nextId = 0;
+
+      const rootInstance = new BackgroundElementTemplateInstance('root');
+      const slot0 = new BackgroundElementTemplateSlot();
+      slot0.setAttribute('id', 0);
+      rootInstance.appendChild(slot0);
+      const child = new BackgroundElementTemplateInstance('child');
+      slot0.appendChild(child);
+
+      const before = [-1, 'root', { 0: [] }, {}] as unknown as SerializedETInstance;
+
+      const created = new Set<number>();
+      resetGlobalCommitContext();
+      hydrateIntoContext(before, rootInstance, created);
+      const first = GlobalCommitContext.patches;
+      resetGlobalCommitContext();
+      expect(first.includes(0)).toBe(true);
+
+      resetGlobalCommitContext();
+      hydrateIntoContext(before, rootInstance, created);
+      const second = GlobalCommitContext.patches;
+      resetGlobalCommitContext();
+      expect(second.includes(0)).toBe(false);
+    });
+
+    it('handles missing attrs element and undefined slot record', () => {
+      backgroundElementTemplateInstanceManager.clear();
+      backgroundElementTemplateInstanceManager.nextId = 0;
+
+      const rootInstance = new BackgroundElementTemplateInstance('root');
+      const slot0 = new BackgroundElementTemplateSlot();
+      slot0.setAttribute('id', 0);
+      rootInstance.appendChild(slot0);
+
+      const before = [-1, 'root', { 0: undefined }] as unknown as SerializedETInstance;
+      const stream = hydrateBackground(before, rootInstance);
+      expect(stream).toEqual([]);
     });
   });
 

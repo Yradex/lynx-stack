@@ -1,44 +1,43 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { setupBackgroundElementTemplateDocument } from '../../../../src/element-template/background/document.js';
-import { options } from 'preact';
+import type { BackgroundElementTemplateDocument } from '../../../../src/element-template/background/document.js';
 import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
 import { Slot } from '../../../../src/element-template/runtime/components/slot.js';
 
 describe('Background Element Template Adapter', () => {
-  // @ts-expect-error
-  let doc: any;
+  let doc: BackgroundElementTemplateDocument;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    setupBackgroundElementTemplateDocument();
-    doc = options.document;
+    doc = setupBackgroundElementTemplateDocument();
   });
 
   it('creates BackgroundElementTemplateInstance for normal elements', () => {
     const el = doc.createElement('view');
     expect(el).toBeInstanceOf(BackgroundElementTemplateInstance);
-    expect((el as any).type).toBe('view');
+    expect(el.type).toBe('view');
     expect(el).not.toHaveProperty('text');
   });
 
   it('creates BackgroundElementTemplateSlot for "slot" type', () => {
     const el = doc.createElement('slot');
     expect(el).toBeInstanceOf(BackgroundElementTemplateInstance);
-    expect((el as any).type).toBe('slot');
+    expect(el.type).toBe('slot');
   });
 
   it('creates BackgroundElementTemplateText (via instance) for text nodes', () => {
     const node = doc.createTextNode('hello');
     expect(node).toBeInstanceOf(BackgroundElementTemplateInstance);
-    expect((node as any).type).toBe('raw-text');
-    expect((node as any).text).toBe('hello');
+    expect(node.type).toBe('raw-text');
+    expect((node as BackgroundElementTemplateInstance & { text: string }).text).toBe('hello');
   });
 
   describe('BackgroundElementTemplateInstance', () => {
     it('supports setAttribute (attrs)', () => {
       const el = new BackgroundElementTemplateInstance('view');
       el.setAttribute('attrs', { 0: { id: 'test' } });
-      expect(el.attrs.get(0)).toEqual({ id: 'test' });
+      expect(el.attrs[0]).toEqual({ id: 'test' });
     });
 
     it('supports hierarchy operations', () => {
@@ -69,16 +68,14 @@ describe('Background Element Template Adapter', () => {
   describe('Slot Component', () => {
     it('returns <slot> element in background', () => {
       vi.stubGlobal('__BACKGROUND__', true);
-      const res = Slot({ id: 10, children: 'content' });
-      // In a real environment this would be a VNode, but let's check basic structure if possible,
-      // or at least that it doesn't return just children.
-      // Since we are mocking __BACKGROUND__, Slot should return JSX.
-      // In this test env, JSX might be transpiled or just return an object.
-      // We check if it is an object with type 'slot' or similar.
-      expect(res).not.toBe('content');
-      expect(res.type).toBe('slot');
-      expect(res.props.id).toBe(10);
-      expect(res.props.children).toBe('content');
+      const vnode = Slot({ id: 10, children: 'content' }) as unknown as {
+        type: string;
+        props: { id: number; children: unknown };
+      };
+      expect(vnode).not.toBe('content');
+      expect(vnode.type).toBe('slot');
+      expect(vnode.props.id).toBe(10);
+      expect(vnode.props.children).toBe('content');
 
       vi.unstubAllGlobals();
     });
