@@ -32,22 +32,24 @@ function renderMainThread(): void {
   if (__PROFILE__) {
     profileStart('ReactLynx::renderOpcodes');
   }
+  let instances = [];
   try {
-    const instances = renderOpcodesIntoElementTemplate(opcodes, __page);
-    if (__PROFILE__) {
-      profileStart('ReactLynx::packSerializedETInstance');
-    }
-    lynx.getJSContext().dispatchEvent({
-      type: ElementTemplateLifecycleConstant.hydrate,
-      data: instances,
-    });
-    if (__PROFILE__) {
-      profileEnd();
-    }
+    instances = renderOpcodesIntoElementTemplate(opcodes, __page);
   } finally {
     if (__PROFILE__) {
       profileEnd();
     }
+  }
+
+  if (__PROFILE__) {
+    profileStart('ReactLynx::packSerializedETInstance');
+  }
+  lynx.getJSContext().dispatchEvent({
+    type: ElementTemplateLifecycleConstant.hydrate,
+    data: instances,
+  });
+  if (__PROFILE__) {
+    profileEnd();
   }
 }
 

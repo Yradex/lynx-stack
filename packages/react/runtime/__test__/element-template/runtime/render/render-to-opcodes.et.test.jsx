@@ -1,8 +1,8 @@
 // Copyright 2024 The Lynx Authors. All rights reserved.
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { options } from 'preact';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   __OpAttr,
@@ -126,6 +126,63 @@ describe('Element Template renderToOpcodes', () => {
       'a',
       __OpText,
       'b',
+      __OpEnd,
+    ]);
+  });
+
+  it('should render jsx map result in order', () => {
+    globalThis.__USE_ELEMENT_TEMPLATE__ = true;
+
+    const items = [1, 2, 3];
+    const vnode = (
+      <view>
+        {items.map(i => <view></view>)}
+      </view>
+    );
+
+    const opcodes = renderToString(vnode);
+
+    expect(opcodes).toEqual([
+      __OpBegin,
+      vnode,
+      __OpSlot,
+      0,
+      __OpBegin,
+      expect.objectContaining({ type: expect.stringMatching(/_et_/) }),
+      __OpEnd,
+      __OpBegin,
+      expect.objectContaining({ type: expect.stringMatching(/_et_/) }),
+      __OpEnd,
+      __OpBegin,
+      expect.objectContaining({ type: expect.stringMatching(/_et_/) }),
+      __OpEnd,
+      __OpEnd,
+    ]);
+  });
+
+  it('should render array map result in order', () => {
+    globalThis.__USE_ELEMENT_TEMPLATE__ = true;
+
+    const items = [1, 2, 3];
+    const vnode = (
+      <view>
+        {items.map(i => i + '')}
+      </view>
+    );
+
+    const opcodes = renderToString(vnode);
+
+    expect(opcodes).toEqual([
+      __OpBegin,
+      vnode,
+      __OpSlot,
+      0,
+      __OpText,
+      '1',
+      __OpText,
+      '2',
+      __OpText,
+      '3',
       __OpEnd,
     ]);
   });

@@ -5,8 +5,8 @@
 export type SerializedETInstance = [
   number,
   string,
-  Record<number, SerializedETInstance[]>,
-  Record<number, Record<string, unknown>>?,
+  Record<number, SerializedETInstance[]> | undefined,
+  Record<number, Record<string, unknown>> | undefined,
 ];
 
 export type ElementTemplatePatchStream = (number | string | null | unknown[])[];

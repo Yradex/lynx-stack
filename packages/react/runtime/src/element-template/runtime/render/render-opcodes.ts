@@ -11,7 +11,7 @@ interface Frame {
   templateKey: string | null;
 
   // Collected dynamic attributes: Map<partId, attributes>
-  attrs: Record<number, Record<string, any>>;
+  attrs: Record<number, Record<string, any>> | undefined;
 
   // Collected Slot children: Map<slotId, SerializedETInstance[]>
   slotChildren: Record<number, SerializedETInstance[]>;
@@ -34,7 +34,7 @@ export function renderOpcodesIntoElementTemplate(
     // Initialize Root Frame
     {
       templateKey: null,
-      attrs: {},
+      attrs: undefined,
       slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
       slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
       activeSlotId: -1,
@@ -48,7 +48,7 @@ export function renderOpcodesIntoElementTemplate(
         const vnode = opcodes[i + 1] as { type: string };
         stack.push({
           templateKey: vnode.type,
-          attrs: {},
+          attrs: undefined,
           slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
           slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
           activeSlotId: -1,
@@ -77,23 +77,15 @@ export function renderOpcodesIntoElementTemplate(
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
-        // Collect Hydration Info
-        const serializedInstance: SerializedETInstance = [
-          0,
-          templateKey,
-          frame.slotChildren,
-          // Only include attrs if not empty for optimization?
-          // For now, keep it simple.
-          frame.attrs,
-        ];
-
         // Construct Init Opcodes
         // 1. setAttributes: [4, partId, attributes]
         // 2. insertBefore: [2, slotId, null, childRef]
         const initOpcodes: any[] = [];
 
-        for (const partIdString in frame.attrs) {
-          initOpcodes.push(4, Number(partIdString), frame.attrs[partIdString as unknown as number]);
+        if (frame.attrs) {
+          for (const partIdString in frame.attrs) {
+            initOpcodes.push(4, Number(partIdString), frame.attrs[partIdString as unknown as number]);
+          }
         }
 
         for (const slotIdString in frame.slotChildrenRef) {
@@ -115,7 +107,15 @@ export function renderOpcodesIntoElementTemplate(
         // Register Handle
         const handle = createElementTemplateHandle(elementRef);
 
-        serializedInstance[0] = handle.id;
+        // Collect Hydration Info
+        const serializedInstance: SerializedETInstance = [
+          handle.id,
+          templateKey,
+          frame.slotChildren,
+          // Only include attrs if not empty for optimization?
+          // For now, keep it simple.
+          frame.attrs,
+        ];
 
         // Append to parent
         const parentFrame = stack[stack.length - 1];

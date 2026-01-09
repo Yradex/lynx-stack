@@ -83,7 +83,7 @@ describe('Hydration Data Generation', () => {
           -1,
           "_et_a94a8_test_2",
           {},
-          {},
+          undefined,
         ],
       ]
     `);
@@ -121,7 +121,7 @@ describe('Hydration Data Generation', () => {
               ],
             ],
           },
-          {},
+          undefined,
         ],
       ]
     `);
@@ -146,13 +146,13 @@ describe('Hydration Data Generation', () => {
           -1,
           "_et_a94a8_test_4",
           {},
-          {},
+          undefined,
         ],
         [
           -2,
           "_et_a94a8_test_5",
           {},
-          {},
+          undefined,
         ],
       ]
     `);
@@ -203,11 +203,11 @@ describe('Hydration Data Generation', () => {
                     ],
                   ],
                 },
-                {},
+                undefined,
               ],
             ],
           },
-          {},
+          undefined,
         ],
       ]
     `);
@@ -255,7 +255,7 @@ describe('Hydration Data Generation', () => {
                     ],
                   ],
                 },
-                {},
+                undefined,
               ],
               [
                 -4,
@@ -274,7 +274,7 @@ describe('Hydration Data Generation', () => {
                     ],
                   ],
                 },
-                {},
+                undefined,
               ],
               [
                 -6,
@@ -293,11 +293,11 @@ describe('Hydration Data Generation', () => {
                     ],
                   ],
                 },
-                {},
+                undefined,
               ],
             ],
           },
-          {},
+          undefined,
         ],
       ]
     `);
