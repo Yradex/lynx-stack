@@ -104,8 +104,7 @@ export const __OpBegin = 0;
 export const __OpEnd = 1;
 export const __OpAttr = 2;
 export const __OpText = 3;
-export const __OpSlotBegin = 4;
-export const __OpSlotEnd = 5;
+export const __OpSlot = 4;
 
 /**
  * @param {VNode} vnode
@@ -210,9 +209,8 @@ function _renderToString(
   if (typeof type === 'function') {
     /* v8 ignore start */
     if (type === Slot) {
-      opcodes.push(__OpSlotBegin, props.id);
+      opcodes.push(__OpSlot, props.id);
       _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
-      opcodes.push(__OpSlotEnd);
       if (afterDiff) afterDiff(vnode);
       vnode[PARENT] = undefined;
       if (ummountHook) ummountHook(vnode);

@@ -7,14 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
-import {
-  __OpAttr,
-  __OpBegin,
-  __OpEnd,
-  __OpSlotBegin,
-  __OpSlotEnd,
-  __OpText,
-} from '../../../../src/renderToOpcodes/index.js';
+import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../../src/renderToOpcodes/index.js';
 import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
 import { registerTemplates } from '../../test-utils/registry.js';
 
@@ -97,11 +90,10 @@ describe('renderOpcodesIntoElementTemplate', () => {
       __OpAttr,
       'attrs',
       { 0: { id: 'test' } },
-      __OpSlotBegin,
+      __OpSlot,
       1,
       __OpText,
       'Hello',
-      __OpSlotEnd,
       __OpEnd,
     ];
 
@@ -181,16 +173,14 @@ describe('renderOpcodesIntoElementTemplate', () => {
     const opcodes = [
       __OpBegin,
       { type: '_et_foo', props: {} },
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpText,
       'A',
-      __OpSlotEnd,
-      __OpSlotBegin,
+      __OpSlot,
       1,
       __OpText,
       'B',
-      __OpSlotEnd,
       __OpEnd,
     ];
 
@@ -260,20 +250,18 @@ describe('renderOpcodesIntoElementTemplate', () => {
     const opcodes = [
       __OpBegin,
       { type: '_et_outer', props: {} },
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpBegin,
       { type: '_et_inner', props: {} },
       __OpAttr,
       'attrs',
       { 0: { id: 'inner' } },
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpText,
       'X',
-      __OpSlotEnd,
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
     ];
 
@@ -400,7 +388,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
     const opcodes = [
       __OpBegin,
       { type: '_et_parent', props: {} },
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpBegin,
       { type: '_et_child_a', props: {} },
@@ -408,7 +396,6 @@ describe('renderOpcodesIntoElementTemplate', () => {
       __OpBegin,
       { type: '_et_child_b', props: {} },
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
     ];
 
@@ -423,13 +410,12 @@ describe('renderOpcodesIntoElementTemplate', () => {
     const opcodes = [
       __OpBegin,
       { type: '_et_parent', props: {} },
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpText,
       'A',
       __OpText,
       'B',
-      __OpSlotEnd,
       __OpEnd,
     ];
 

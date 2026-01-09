@@ -8,8 +8,7 @@ import {
   __OpAttr,
   __OpBegin,
   __OpEnd,
-  __OpSlotBegin,
-  __OpSlotEnd,
+  __OpSlot,
   __OpText,
   renderToString,
 } from '../../../../src/renderToOpcodes/index';
@@ -33,8 +32,7 @@ describe('Element Template renderToOpcodes', () => {
     expect(__OpEnd).toBe(1);
     expect(__OpAttr).toBe(2);
     expect(__OpText).toBe(3);
-    expect(__OpSlotBegin).toBe(4);
-    expect(__OpSlotEnd).toBe(5);
+    expect(__OpSlot).toBe(4);
   });
 
   it('should render Slot opcodes when __USE_ELEMENT_TEMPLATE__ is true', () => {
@@ -52,12 +50,11 @@ describe('Element Template renderToOpcodes', () => {
     expect(opcodes).toEqual([
       __OpBegin,
       vnode,
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpBegin,
       child,
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
     ]);
   });
@@ -78,18 +75,16 @@ describe('Element Template renderToOpcodes', () => {
     expect(opcodes).toEqual([
       __OpBegin,
       vnode,
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpBegin,
       inner,
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpBegin,
       innerChild,
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
     ]);
   });
@@ -125,13 +120,12 @@ describe('Element Template renderToOpcodes', () => {
     expect(opcodes).toEqual([
       __OpBegin,
       vnode,
-      __OpSlotBegin,
+      __OpSlot,
       0,
       __OpText,
       'a',
       __OpText,
       'b',
-      __OpSlotEnd,
       __OpEnd,
     ]);
   });
@@ -187,19 +181,17 @@ describe('Element Template renderToOpcodes', () => {
     expect(opcodes).toEqual([
       __OpBegin,
       vnode,
-      __OpSlotBegin,
+      __OpSlot,
       0,
       // CustomComponent rendered content (which is also a template):
       __OpBegin,
       expect.objectContaining({ type: expect.stringMatching(/_et_/) }), // CustomComponent root template
-      __OpSlotBegin,
+      __OpSlot,
       0, // The slot inside CustomComponent
       __OpBegin,
       child, // passed child (static template)
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
-      __OpSlotEnd,
       __OpEnd,
     ]);
   });
@@ -224,11 +216,10 @@ describe('Element Template renderToOpcodes', () => {
       __OpAttr,
       'attrs',
       { 0: { id: 'test' } },
-      __OpSlotBegin,
+      __OpSlot,
       1,
       __OpText,
       'Hello',
-      __OpSlotEnd,
       __OpEnd,
     ]);
   });

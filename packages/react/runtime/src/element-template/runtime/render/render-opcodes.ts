@@ -2,7 +2,7 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } from '../../../renderToOpcodes/index.js';
+import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
 import type { SerializedETInstance } from '../../protocol/types.js';
 import { createElementTemplateHandle } from '../template/handle.js';
 
@@ -156,16 +156,11 @@ export function renderOpcodesIntoElementTemplate(
         i += 3;
         break;
       }
-      case __OpSlotBegin: {
+      case __OpSlot: {
         const slotId = opcodes[i + 1] as number;
         const frame = stack[stack.length - 1];
         frame!.activeSlotId = slotId;
         i += 2;
-        break;
-      }
-      case __OpSlotEnd: {
-        stack[stack.length - 1]!.activeSlotId = -1;
-        i += 1;
         break;
       }
       case __OpText: {
