@@ -6,11 +6,6 @@ import { __OpAttr, __OpBegin, __OpEnd, __OpSlotBegin, __OpSlotEnd, __OpText } fr
 import type { SerializedETInstance } from '../../protocol/types.js';
 import { createElementTemplateHandle } from '../template/handle.js';
 
-interface HydratedNode {
-  ref: ElementRef;
-  serialized: SerializedETInstance;
-}
-
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
   templateKey: string | null;
@@ -18,39 +13,46 @@ interface Frame {
   // Collected dynamic attributes: Map<partId, attributes>
   attrs: Record<number, Record<string, any>>;
 
-  // Collected Slot children: Map<slotId, ChildNode[]>
-  slotChildren: Record<number, HydratedNode[]>;
+  // Collected Slot children: Map<slotId, SerializedETInstance[]>
+  slotChildren: Record<number, SerializedETInstance[]>;
 
-  // Current active slot stack
-  activeSlotStack: number[];
+  // Collected Slot children refs: Map<slotId, ElementRef[]>
+  slotChildrenRef: Record<number, ElementRef[]>;
+
+  // Current active slot id, -1 means none
+  activeSlotId: number;
 }
 
 interface RootNode {}
-
-function createFrame(templateKey: string | null): Frame {
-  return {
-    templateKey,
-    attrs: {},
-    slotChildren: Object.create(null) as Record<number, HydratedNode[]>,
-    activeSlotStack: [],
-  };
-}
 
 export function renderOpcodesIntoElementTemplate(
   opcodes: unknown[],
   root: RootNode,
 ): SerializedETInstance[] {
   const rootInstances: SerializedETInstance[] = [];
-  const stack: Frame[] = [];
-  // Initialize Root Frame
-  stack.push(createFrame(null));
+  const stack: Frame[] = [
+    // Initialize Root Frame
+    {
+      templateKey: null,
+      attrs: {},
+      slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
+      slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
+      activeSlotId: -1,
+    },
+  ];
 
   for (let i = 0; i < opcodes.length;) {
     const opcode = opcodes[i];
     switch (opcode) {
       case __OpBegin: {
         const vnode = opcodes[i + 1] as { type: string };
-        stack.push(createFrame(vnode.type));
+        stack.push({
+          templateKey: vnode.type,
+          attrs: {},
+          slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
+          slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
+          activeSlotId: -1,
+        });
         i += 2;
         break;
       }
@@ -75,6 +77,16 @@ export function renderOpcodesIntoElementTemplate(
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
+        // Collect Hydration Info
+        const serializedInstance: SerializedETInstance = [
+          0,
+          templateKey,
+          frame.slotChildren,
+          // Only include attrs if not empty for optimization?
+          // For now, keep it simple.
+          frame.attrs,
+        ];
+
         // Construct Init Opcodes
         // 1. setAttributes: [4, partId, attributes]
         // 2. insertBefore: [2, slotId, null, childRef]
@@ -84,11 +96,11 @@ export function renderOpcodesIntoElementTemplate(
           initOpcodes.push(4, Number(partIdString), frame.attrs[partIdString as unknown as number]);
         }
 
-        for (const slotIdString in frame.slotChildren) {
+        for (const slotIdString in frame.slotChildrenRef) {
           const slotId = Number(slotIdString);
-          const children = frame.slotChildren[slotIdString as unknown as number]!;
-          for (const child of children) {
-            initOpcodes.push(2, slotId, null, child.ref);
+          const childrenRefs = frame.slotChildrenRef[slotIdString as unknown as number]!;
+          for (let childIndex = 0; childIndex < childrenRefs.length; childIndex += 1) {
+            initOpcodes.push(2, slotId, null, childrenRefs[childIndex]);
           }
         }
 
@@ -103,23 +115,7 @@ export function renderOpcodesIntoElementTemplate(
         // Register Handle
         const handle = createElementTemplateHandle(elementRef);
 
-        // Collect Hydration Info
-        const serializedInstance: SerializedETInstance = [
-          handle.id,
-          templateKey,
-          {},
-          // Only include attrs if not empty for optimization?
-          // For now, keep it simple.
-          frame.attrs,
-        ];
-
-        for (const slotIdString in frame.slotChildren) {
-          const slotId = Number(slotIdString);
-          const children = frame.slotChildren[slotIdString as unknown as number]!;
-          serializedInstance[2][slotId] = children.map((child) => child.serialized);
-        }
-
-        const hydratedNode: HydratedNode = { ref: elementRef, serialized: serializedInstance };
+        serializedInstance[0] = handle.id;
 
         // Append to parent
         const parentFrame = stack[stack.length - 1];
@@ -129,31 +125,19 @@ export function renderOpcodesIntoElementTemplate(
             __AppendElement(root, elementRef as FiberElement);
             rootInstances.push(serializedInstance);
           } else {
-            // Parent is another template
-            // Must append to parent's active slot
-            if (parentFrame.activeSlotStack.length === 0) {
-              // This implies a component is direct child of another component without Slot?
-              // In Element Template, children MUST be in a Slot or invalid?
-              // Or maybe it's a direct attribute?
-              // The design says: "Exception! Text/Node must be in a Slot"
-              // Only root children can be without slot? (No, because we just handled root case)
-              // If we are here, we are inside a template frame.
-              // Templates only accept children via Slots.
-              lynx.reportError(
-                new Error(
-                  `ElementTemplate: Content encountered outside of any Slot in template '${parentFrame.templateKey}'. Content dropped.`,
-                ),
-              );
+            const currentSlot = parentFrame.activeSlotId;
+            const refList = parentFrame.slotChildrenRef[currentSlot];
+            if (refList) {
+              refList.push(elementRef);
             } else {
-              const currentSlot = parentFrame.activeSlotStack[
-                parentFrame.activeSlotStack.length - 1
-              ];
-              const list = parentFrame.slotChildren[currentSlot!];
-              if (list) {
-                list.push(hydratedNode);
-              } else {
-                parentFrame.slotChildren[currentSlot!] = [hydratedNode];
-              }
+              parentFrame.slotChildrenRef[currentSlot] = [elementRef];
+            }
+
+            const serializedList = parentFrame.slotChildren[currentSlot];
+            if (serializedList) {
+              serializedList.push(serializedInstance);
+            } else {
+              parentFrame.slotChildren[currentSlot] = [serializedInstance];
             }
           }
         }
@@ -166,14 +150,7 @@ export function renderOpcodesIntoElementTemplate(
         const value = opcodes[i + 2] as Record<string, any>;
         const frame = stack[stack.length - 1];
         if (frame && name === 'attrs') {
-          // value is { partId: { key: val } }
-          // Merge into frame.attrs
-          // Note: value structure from compiler/renderToOpcodes might be { 0: {...}, 1: {...} }
-          // We can just Object.assign or iterate.
-          // Since renderToOpcodes passes the object directly, we can merge.
-          // frame.attrs is Record<number, ...>
-          // We should merge safely.
-          Object.assign(frame.attrs, value);
+          frame.attrs = value;
         }
         // Ignore other attributes for now (static ones handled by template)
         i += 3;
@@ -182,17 +159,12 @@ export function renderOpcodesIntoElementTemplate(
       case __OpSlotBegin: {
         const slotId = opcodes[i + 1] as number;
         const frame = stack[stack.length - 1];
-        if (frame) {
-          frame.activeSlotStack.push(slotId);
-        }
+        frame!.activeSlotId = slotId;
         i += 2;
         break;
       }
       case __OpSlotEnd: {
-        const frame = stack[stack.length - 1];
-        if (frame) {
-          frame.activeSlotStack.pop();
-        }
+        stack[stack.length - 1]!.activeSlotId = -1;
         i += 1;
         break;
       }
@@ -208,27 +180,25 @@ export function renderOpcodesIntoElementTemplate(
             {},
             { 0: { text } },
           ];
-          const hydratedText: HydratedNode = { ref: textRef, serialized: serializedText };
 
           if (frame.templateKey === null) {
             // Root text
             __AppendElement(root, textRef);
           } else {
             // Inside template
-            if (frame.activeSlotStack.length === 0) {
-              lynx.reportError(
-                new Error(
-                  `ElementTemplate: Text encountered outside of any Slot in template '${frame.templateKey}'. Content: '${text}'`,
-                ),
-              );
+            const currentSlot = frame.activeSlotId;
+            const refList = frame.slotChildrenRef[currentSlot];
+            if (refList) {
+              refList.push(textRef);
             } else {
-              const currentSlot = frame.activeSlotStack[frame.activeSlotStack.length - 1];
-              const list = frame.slotChildren[currentSlot!];
-              if (list) {
-                list.push(hydratedText);
-              } else {
-                frame.slotChildren[currentSlot!] = [hydratedText];
-              }
+              frame.slotChildrenRef[currentSlot] = [textRef];
+            }
+
+            const serializedList = frame.slotChildren[currentSlot];
+            if (serializedList) {
+              serializedList.push(serializedText);
+            } else {
+              frame.slotChildren[currentSlot] = [serializedText];
             }
           }
         }

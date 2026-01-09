@@ -396,39 +396,6 @@ describe('renderOpcodesIntoElementTemplate', () => {
     ]);
   });
 
-  it('logs when element is encountered outside of a slot', () => {
-    const opcodes = [
-      __OpBegin,
-      { type: '_et_parent', props: {} },
-      __OpBegin,
-      { type: '_et_child', props: {} },
-      __OpEnd,
-      __OpEnd,
-    ];
-
-    renderOpcodesIntoElementTemplate(opcodes, root);
-
-    expect(mockReportError).toHaveBeenCalled();
-    mockReportError.mockClear();
-    (globalThis as any).__LYNX_REPORT_ERROR_CALLS = [];
-  });
-
-  it('logs when text is encountered outside of a slot', () => {
-    const opcodes = [
-      __OpBegin,
-      { type: '_et_parent', props: {} },
-      __OpText,
-      'Oops',
-      __OpEnd,
-    ];
-
-    renderOpcodesIntoElementTemplate(opcodes, root);
-
-    expect(mockReportError).toHaveBeenCalled();
-    mockReportError.mockClear();
-    (globalThis as any).__LYNX_REPORT_ERROR_CALLS = [];
-  });
-
   it('handles multiple template children in the same slot', () => {
     const opcodes = [
       __OpBegin,

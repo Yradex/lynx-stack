@@ -34,10 +34,16 @@ function renderMainThread(): void {
   }
   try {
     const instances = renderOpcodesIntoElementTemplate(opcodes, __page);
+    if (__PROFILE__) {
+      profileStart('ReactLynx::packSerializedETInstance');
+    }
     lynx.getJSContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.hydrate,
       data: instances,
     });
+    if (__PROFILE__) {
+      profileEnd();
+    }
   } finally {
     if (__PROFILE__) {
       profileEnd();
