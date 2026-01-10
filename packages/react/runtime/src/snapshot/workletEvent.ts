@@ -7,6 +7,7 @@ import type { Worklet } from '@lynx-js/react/worklet-runtime/bindings';
 import { describeInvalidValue } from '../debug/describeInvalidValue.js';
 import { isMainThreadHydrating } from '../lifecycle/patch/isMainThreadHydrating.js';
 import { SnapshotInstance } from '../snapshot.js';
+import { resolveMtfFromPatch } from '../worklet/patchWorkletTable.js';
 
 function formatEventAttribute(workletType: string, eventType: string, eventName: string): string {
   const suffix = eventType.endsWith('Event') ? eventType.slice(0, -'Event'.length) : eventType;
@@ -41,15 +42,19 @@ function updateWorkletEvent(
   eventType: string,
   eventName: string,
 ): void {
+  const rawValue = snapshot.__values![expIndex];
+  const resolved = resolveMtfFromPatch(rawValue);
+  if (resolved !== rawValue) {
+    snapshot.__values![expIndex] = resolved;
+  }
   if (!snapshot.__elements) {
     return;
   }
-  const rawValue = snapshot.__values![expIndex];
-  if (__DEV__ && rawValue !== null && rawValue !== undefined && typeof rawValue !== 'object') {
-    reportInvalidWorkletValue(snapshot, elementIndex, workletType, eventType, eventName, rawValue);
+  if (__DEV__ && resolved !== null && resolved !== undefined && typeof resolved !== 'object') {
+    reportInvalidWorkletValue(snapshot, elementIndex, workletType, eventType, eventName, resolved);
     return;
   }
-  const value = (rawValue ?? {}) as Worklet;
+  const value = (resolved ?? {}) as Worklet;
   value._workletType = workletType;
 
   if (workletType === 'main-thread') {

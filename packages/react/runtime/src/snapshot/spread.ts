@@ -124,6 +124,9 @@ function updateSpread(
             get [index]() {
               return v;
             },
+            set [index](value: unknown) {
+              newValue[key] = value;
+            },
           },
           __id: snapshot.__id,
           __elements: snapshot.__elements,

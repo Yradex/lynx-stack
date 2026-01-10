@@ -7,6 +7,7 @@ import type { Element, Worklet, WorkletRefImpl } from '@lynx-js/react/worklet-ru
 
 import { isMainThreadHydrating } from '../lifecycle/patch/isMainThreadHydrating.js';
 import type { SnapshotInstance } from '../snapshot.js';
+import { resolveMtfFromPatch } from '../worklet/patchWorkletTable.js';
 
 let mtRefQueue: (WorkletRefImpl<Element> | Worklet | Element)[] = [];
 
@@ -47,6 +48,12 @@ export function updateWorkletRef(
   elementIndex: number,
   _workletType: string,
 ): void {
+  const rawValue = snapshot.__values![expIndex];
+  const value = resolveMtfFromPatch(rawValue) as (WorkletRefImpl<Element> | Worklet | undefined);
+  if (value !== rawValue) {
+    snapshot.__values![expIndex] = value;
+  }
+
   if (!snapshot.__elements) {
     return;
   }
@@ -56,7 +63,6 @@ export function updateWorkletRef(
     snapshot.__worklet_ref_set?.delete(oldValue);
   }
 
-  const value = snapshot.__values![expIndex] as (WorkletRefImpl<Element> | Worklet | undefined);
   if (value === null || value === undefined) {
     // do nothing
   } else if (value._wvid) {

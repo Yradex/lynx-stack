@@ -37,6 +37,7 @@ import {
 import { hydrationMap } from './snapshotInstanceHydrationMap.js';
 import { isDirectOrDeepEqual } from './utils.js';
 import { onPostWorkletCtx } from './worklet/ctx.js';
+import { internMtfCtxForPatch } from './worklet/patchWorkletTable.js';
 
 export class BackgroundSnapshotInstance {
   constructor(public type: string) {
@@ -338,19 +339,27 @@ export class BackgroundSnapshotInstance {
           index,
         );
         if (needUpdate) {
+          const spreadToCommit: Record<string, unknown> = { ...newSpread };
           for (const key in newSpread) {
             const newSpreadValue = newSpread[key];
             if (!newSpreadValue) {
               continue;
             }
             if ((newSpreadValue as { _wkltId?: string })._wkltId) {
-              newSpread[key] = onPostWorkletCtx(newSpreadValue as Worklet);
+              const ctx = onPostWorkletCtx(newSpreadValue as Worklet);
+              if (ctx) {
+                newSpread[key] = ctx;
+                spreadToCommit[key] = internMtfCtxForPatch(
+                  ctx as unknown as Record<string, unknown> & { _wkltId: unknown },
+                );
+              }
             } else if ((newSpreadValue as { __isGesture?: boolean }).__isGesture) {
               processGestureBackground(newSpreadValue as GestureKind);
             } else if (key == '__lynx_timing_flag' && oldSpread?.[key] != newSpreadValue && globalPipelineOptions) {
               globalPipelineOptions.needTimestamps = true;
             }
           }
+          return { needUpdate, valueToCommit: spreadToCommit };
         }
         return { needUpdate, valueToCommit: newSpread };
       }
@@ -359,7 +368,13 @@ export class BackgroundSnapshotInstance {
         return { needUpdate: false, valueToCommit: 1 };
       }
       if ('_wkltId' in newValueObj) {
-        return { needUpdate: true, valueToCommit: onPostWorkletCtx(newValueObj as Worklet) };
+        const ctx = onPostWorkletCtx(newValueObj as Worklet);
+        return {
+          needUpdate: true,
+          valueToCommit: ctx
+            ? internMtfCtxForPatch(ctx as unknown as Record<string, unknown> & { _wkltId: unknown })
+            : ctx,
+        };
       }
       if ('__isGesture' in newValueObj) {
         processGestureBackground(newValueObj as unknown as GestureKind);
@@ -408,23 +423,31 @@ export function hydrate(
             // `value.__spread` my contain event ids using snapshot ids before hydration. Remove it.
             delete value.__spread;
             const __spread = transformSpread(after, index, value);
+            const __spreadToCommit: Record<string, unknown> = { ...__spread };
             for (const key in __spread) {
               const v = __spread[key];
               if (v && typeof v === 'object') {
                 if ('_wkltId' in v) {
-                  onPostWorkletCtx(v as Worklet);
+                  const mtfCtx = onPostWorkletCtx(v as unknown as Parameters<typeof onPostWorkletCtx>[0]);
+                  __spread[key] = mtfCtx;
+                  __spreadToCommit[key] = mtfCtx
+                    ? internMtfCtxForPatch(mtfCtx as unknown as Record<string, unknown> & { _wkltId: unknown })
+                    : mtfCtx;
                 } else if ('__isGesture' in v) {
                   processGestureBackground(v as GestureKind);
                 }
               }
             }
             (after.__values![index]! as Record<string, unknown>)['__spread'] = __spread;
-            value = __spread;
+            value = __spreadToCommit;
           } else if ('__ref' in value) {
             // skip patch
             value = old;
           } else if ('_wkltId' in value) {
-            onPostWorkletCtx(value as Worklet);
+            const mtfCtx = onPostWorkletCtx(value as unknown as Parameters<typeof onPostWorkletCtx>[0]);
+            value = mtfCtx
+              ? internMtfCtxForPatch(mtfCtx as unknown as Record<string, unknown> & { _wkltId: unknown })
+              : mtfCtx;
           } else if ('__isGesture' in value) {
             processGestureBackground(value as GestureKind);
           }

@@ -29,15 +29,16 @@ import { COMMIT } from '../../renderToOpcodes/constants.js';
 import { applyQueuedRefs } from '../../snapshot/ref.js';
 import { backgroundSnapshotInstanceManager } from '../../snapshot.js';
 import { hook, isEmptyObject } from '../../utils.js';
+import {
+  delayedRunOnMainThreadData,
+  takeDelayedRunOnMainThreadData,
+} from '../../worklet/call/delayedRunOnMainThreadData.js';
+import { takeMtfTableForPatch } from '../../worklet/patchWorkletTable.js';
 import { sendMTRefInitValueToMainThread } from '../../worklet/ref/updateInitValue.js';
 import { getReloadVersion } from '../pass.js';
 import type { SnapshotPatch } from './snapshotPatch.js';
 import { takeGlobalSnapshotPatch } from './snapshotPatch.js';
 import { profileEnd, profileStart } from '../../debug/utils.js';
-import {
-  delayedRunOnMainThreadData,
-  takeDelayedRunOnMainThreadData,
-} from '../../worklet/call/delayedRunOnMainThreadData.js';
 import { isRendering } from '../isRendering.js';
 
 let globalFlushOptions: FlushOptions = {};
@@ -69,6 +70,7 @@ interface PatchList {
   patchList: Patch[];
   delayedRunOnMainThreadData?: RunWorkletCtxData[];
   flushOptions?: FlushOptions;
+  mtfTable?: unknown[];
 }
 
 /**
@@ -197,6 +199,10 @@ function commitPatchUpdate(patchList: PatchList, patchOptions: GlobalPatchOption
     profileStart('ReactLynx::commitChanges');
   }
   markTiming('packChangesStart');
+  const mtfTable = takeMtfTableForPatch();
+  if (mtfTable) {
+    patchList.mtfTable = mtfTable;
+  }
   const obj: {
     data: string;
     patchOptions: PatchOptions;

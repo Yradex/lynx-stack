@@ -278,7 +278,7 @@ describe('WorkletRef', () => {
           [
             "rLynxChange",
             {
-              "data": "{"patchList":[{"snapshotPatch":[3,-2,0,{"_wvid":1},3,-3,0,{"_wkltId":233,"_execId":2},3,-4,0,{"_wkltId":233,"_execId":3}],"id":6}]}",
+              "data": "{"patchList":[{"snapshotPatch":[3,-2,0,{"_wvid":1},3,-3,0,{"$mtfRef":0},3,-4,0,{"$mtfRef":1}],"id":6}],"mtfTable":[{"_wkltId":233,"_execId":2},{"_wkltId":233,"_execId":3}]}",
               "patchOptions": {
                 "isHydration": true,
                 "pipelineOptions": {
@@ -386,7 +386,7 @@ describe('WorkletRef', () => {
           [
             "rLynxChange",
             {
-              "data": "{"patchList":[{"id":7,"snapshotPatch":[3,-2,0,{"_wvid":2},3,-3,0,{"_wvid":3},3,-4,0,{"_wkltId":233,"_execId":4}]}]}",
+              "data": "{"patchList":[{"id":7,"snapshotPatch":[3,-2,0,{"_wvid":2},3,-3,0,{"_wvid":3},3,-4,0,{"$mtfRef":0}]}],"mtfTable":[{"_wkltId":233,"_execId":4}]}",
               "patchOptions": {
                 "reloadVersion": 0,
               },
