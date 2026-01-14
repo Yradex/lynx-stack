@@ -56,7 +56,7 @@ export function renderOpcodesIntoElementTemplate(
           slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
           slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
           activeSlotId: -1,
-          nodeCount: vnode.props ? (vnode.props['__nodeCount'] as number ?? null) : null,
+          nodeCount: vnode.props!['__nodeCount'] as number ?? null,
         });
         i += 2;
         break;
@@ -155,12 +155,8 @@ export function renderOpcodesIntoElementTemplate(
         const name = opcodes[i + 1] as string;
         const value = opcodes[i + 2] as Record<string, any>;
         const frame = stack[stack.length - 1];
-        if (frame) {
-          if (name === 'attrs') {
-            frame.attrs = value;
-          } else if (name === '__nodeCount') {
-            frame.nodeCount = value as unknown as number;
-          }
+        if (frame && name === 'attrs') {
+          frame.attrs = value;
         }
         // Ignore other attributes for now (static ones handled by template)
         i += 3;
