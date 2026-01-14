@@ -8,4 +8,4 @@ const _et_da39a_test_1 = "_et_da39a_test_1";
             __spread: true
         }
     }
-}}/>;
+}} __nodeCount={2}/>;
