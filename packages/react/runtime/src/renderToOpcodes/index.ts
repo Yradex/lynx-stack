@@ -318,6 +318,7 @@ function _renderToString(
       case 'ref':
       case '__self':
       case '__source':
+      case '__nodeCount':
         continue;
 
       default: {}

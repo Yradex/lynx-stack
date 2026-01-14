@@ -123,6 +123,7 @@ declare global {
     customSectionsPath: string,
     bundleUrl: string | null | undefined,
     opcodes: any[] | null | undefined,
+    nodeCount: number | null | undefined,
     options: Map<string, any> | undefined | null,
   ): ElementRef;
 

@@ -127,6 +127,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
             },
           ],
           null,
+          null,
         ],
         [
           "__AppendElement",
@@ -219,6 +220,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
             },
           ],
           null,
+          null,
         ],
         [
           "__AppendElement",
@@ -295,6 +297,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
             },
           ],
           null,
+          null,
         ],
         [
           "__ElementFromBinary",
@@ -322,6 +325,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
               "type": "insertBefore",
             },
           ],
+          null,
           null,
         ],
         [

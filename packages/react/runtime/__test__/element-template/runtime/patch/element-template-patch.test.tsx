@@ -154,6 +154,7 @@ describe('ElementTemplate patch stream (apply)', () => {
         9,
         "_et_a94a8_test_4",
         [],
+        null,
         -5,
         [
           2,
@@ -295,7 +296,7 @@ describe('ElementTemplate patch stream (apply)', () => {
       },
     ]);
 
-    applyElementTemplatePatches([0, 20, '_et_test_detach', []]);
+    applyElementTemplatePatches([0, 20, '_et_test_detach', [], null]);
     const page = __page as unknown as { children?: unknown[] };
     page.children ??= [];
     page.children.push(ElementTemplateRegistry.get(20)!.nativeRef);

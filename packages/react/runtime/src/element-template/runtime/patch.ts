@@ -22,6 +22,9 @@ export function applyElementTemplatePatches(stream: ElementTemplatePatchStream):
       const initPayload = stream[i++] as unknown[] | string;
 
       if (handleId === 0 && __DEV__) {
+        if (templateKey !== RAW_TEXT_TEMPLATE_KEY) {
+          i++; // skip nodeCount
+        }
         lynx.reportError(new Error('ElementTemplate patch has illegal handleId 0.'));
         continue;
       }
@@ -31,9 +34,10 @@ export function applyElementTemplatePatches(stream: ElementTemplatePatchStream):
         const text = typeof initPayload === 'string' ? initPayload : '';
         nativeRef = __CreateRawText(text);
       } else {
+        const nodeCount = stream[i++] as number | null;
         const initOpcodes = Array.isArray(initPayload) ? initPayload : [];
         resolveOpcodes(initOpcodes);
-        nativeRef = __ElementFromBinary(templateKey, null, initOpcodes, null);
+        nativeRef = __ElementFromBinary(templateKey, null, initOpcodes, nodeCount, null);
       }
 
       if (nativeRef) {

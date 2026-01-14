@@ -62,6 +62,7 @@ describe('renderPage with Element Template', () => {
           "_et_a94a8_test_1",
           null,
           [],
+          2,
           null,
         ],
         [

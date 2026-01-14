@@ -25,6 +25,7 @@ type AttrsByPartId = Record<number, Record<string, unknown>>;
 export class BackgroundElementTemplateInstance {
   public instanceId: number = 0; // Assigned by manager
   public type: string;
+  public nodeCount: number | null = null;
 
   public parent: BackgroundElementTemplateInstance | null = null;
   public firstChild: BackgroundElementTemplateInstance | null = null;
@@ -93,7 +94,7 @@ export class BackgroundElementTemplateInstance {
       const attrs = attrsByPartId[partIdStr as unknown as number];
       initOpcodes.push(ElementTemplateOpcodes.setAttributes, Number(partIdStr), attrs);
     }
-    GlobalCommitContext.patches.push(0, this.instanceId, this.type, initOpcodes);
+    GlobalCommitContext.patches.push(0, this.instanceId, this.type, initOpcodes, this.nodeCount);
   }
 
   // DOM API for Preact
@@ -217,6 +218,10 @@ export class BackgroundElementTemplateInstance {
   setAttribute(key: string, value: unknown): void {
     if (key === 'attrs') {
       const rawAttrs = (value ?? {}) as Record<string, unknown>;
+      if ('__nodeCount' in rawAttrs) {
+        this.nodeCount = rawAttrs['__nodeCount'] as number;
+        delete rawAttrs['__nodeCount'];
+      }
       const prev = this._attrs;
       const next: AttrsByPartId = {};
 

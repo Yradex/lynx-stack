@@ -44,13 +44,14 @@ export function installMockNativePapi(
     const tag = args[0];
     const component = args[1];
     const opcodes = args[2];
-    const config = args[3];
+    const nodeCount = args[3];
+    const config = args[4];
 
     if (typeof tag !== 'string') {
       throw new Error(`ElementTemplate: __ElementFromBinary tag must be string, got '${String(tag)}'.`);
     }
 
-    nativeLog.push(['__ElementFromBinary', tag, component, formatOpcodes(opcodes), config]);
+    nativeLog.push(['__ElementFromBinary', tag, component, formatOpcodes(opcodes), nodeCount, config]);
 
     if (!templateRepo.has(tag)) {
       throw new Error(

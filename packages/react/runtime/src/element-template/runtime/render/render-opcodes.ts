@@ -21,6 +21,9 @@ interface Frame {
 
   // Current active slot id, -1 means none
   activeSlotId: number;
+
+  // The number of nodes in the template
+  nodeCount: number | null;
 }
 
 interface RootNode {}
@@ -38,6 +41,7 @@ export function renderOpcodesIntoElementTemplate(
       slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
       slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
       activeSlotId: -1,
+      nodeCount: null,
     },
   ];
 
@@ -45,13 +49,14 @@ export function renderOpcodesIntoElementTemplate(
     const opcode = opcodes[i];
     switch (opcode) {
       case __OpBegin: {
-        const vnode = opcodes[i + 1] as { type: string };
+        const vnode = opcodes[i + 1] as { type: string; props?: Record<string, any> };
         stack.push({
           templateKey: vnode.type,
           attrs: undefined,
           slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
           slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
           activeSlotId: -1,
+          nodeCount: vnode.props ? (vnode.props['__nodeCount'] as number ?? null) : null,
         });
         i += 2;
         break;
@@ -101,6 +106,7 @@ export function renderOpcodesIntoElementTemplate(
           templateKey,
           null,
           initOpcodes,
+          frame.nodeCount,
           null,
         );
 
@@ -149,8 +155,12 @@ export function renderOpcodesIntoElementTemplate(
         const name = opcodes[i + 1] as string;
         const value = opcodes[i + 2] as Record<string, any>;
         const frame = stack[stack.length - 1];
-        if (frame && name === 'attrs') {
-          frame.attrs = value;
+        if (frame) {
+          if (name === 'attrs') {
+            frame.attrs = value;
+          } else if (name === '__nodeCount') {
+            frame.nodeCount = value as unknown as number;
+          }
         }
         // Ignore other attributes for now (static ones handled by template)
         i += 3;

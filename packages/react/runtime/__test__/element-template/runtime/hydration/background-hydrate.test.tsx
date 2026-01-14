@@ -489,6 +489,7 @@ describe('ElementTemplate background hydrate', () => {
           4,
           "_et_a94a8_test_13",
           [],
+          null,
           -1,
           [
             2,
@@ -616,6 +617,7 @@ describe('ElementTemplate background hydrate', () => {
           6,
           "_et_a94a8_test_26",
           [],
+          null,
           -4,
           [
             2,
@@ -645,6 +647,7 @@ describe('ElementTemplate background hydrate', () => {
           5,
           "_et_a94a8_test_29",
           [],
+          null,
           -3,
           [
             2,
@@ -676,6 +679,7 @@ describe('ElementTemplate background hydrate', () => {
           3,
           "child",
           [],
+          null,
           -1,
           [
             2,
@@ -762,6 +766,7 @@ describe('ElementTemplate background hydrate', () => {
               "id": "card",
             },
           ],
+          null,
           0,
           6,
           "raw-text",
@@ -1033,6 +1038,7 @@ describe('ElementTemplate background hydrate', () => {
           10,
           "_et_a94a8_test_36",
           [],
+          null,
           -4,
           [
             2,
