@@ -5,10 +5,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  GlobalCommitContext,
-  resetGlobalCommitContext,
-} from '../../../../src/element-template/background/commit-context.js';
-import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
   BackgroundElementTemplateText,
@@ -250,6 +246,21 @@ describe('BackgroundElementTemplateInstance', () => {
     expect(parent.firstChild).toBeNull();
     expect(child.parent).toBeNull();
   });
+
+  it('reports error for emitCreate with illegal handleId 0 in dev', () => {
+    const lynxObj = globalThis.lynx as typeof lynx & { reportError?: (error: Error) => void };
+    const oldReportError = lynxObj.reportError;
+    const reportErrorSpy = vi.fn();
+    lynxObj.reportError = reportErrorSpy;
+
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.instanceId = 0;
+    instance.emitCreate();
+
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
+
+    lynxObj.reportError = oldReportError;
+  });
 });
 
 describe('BackgroundElementTemplateSlot', () => {
@@ -365,90 +376,5 @@ describe('BackgroundElementTemplateSlot Children', () => {
 
     const slotChildren = root.slotChildren;
     expect(slotChildren.size).toBe(0);
-  });
-});
-
-describe('BackgroundElementTemplateInstance Patch Stream', () => {
-  beforeEach(() => {
-    backgroundElementTemplateInstanceManager.clear();
-    backgroundElementTemplateInstanceManager.nextId = 0;
-    resetGlobalCommitContext();
-  });
-
-  it('treats non-object attrs entry as empty object', () => {
-    const instance = new BackgroundElementTemplateInstance('view');
-    instance.setAttribute('attrs', { 0: { a: 1 } });
-    resetGlobalCommitContext();
-
-    instance.setAttribute('attrs', { 0: null } as unknown as Record<string, unknown>);
-    const stream = GlobalCommitContext.patches;
-    resetGlobalCommitContext();
-    expect(stream).toEqual([
-      1,
-      [
-        4,
-        0,
-        {
-          a: undefined,
-        },
-      ],
-    ]);
-  });
-
-  it('does not emit patch when attrs part props reference is reused', () => {
-    const instance = new BackgroundElementTemplateInstance('view');
-    const props = { a: 1 };
-    instance.setAttribute('attrs', { 0: props });
-    resetGlobalCommitContext();
-
-    instance.setAttribute('attrs', { 0: props });
-    expect(GlobalCommitContext.patches).toEqual([]);
-  });
-
-  it('treats nullish attrs as empty object', () => {
-    const instance = new BackgroundElementTemplateInstance('view');
-    instance.setAttribute('attrs', { 0: { a: 1 } });
-    resetGlobalCommitContext();
-
-    instance.setAttribute('attrs', undefined as unknown as Record<string, unknown>);
-    const stream = GlobalCommitContext.patches;
-    resetGlobalCommitContext();
-    expect(stream).toEqual([
-      1,
-      [
-        4,
-        0,
-        {
-          a: undefined,
-        },
-      ],
-    ]);
-  });
-
-  it('supports silent insertBefore without emitting patches', () => {
-    const root = new BackgroundElementTemplateInstance('root');
-    const slot = new BackgroundElementTemplateSlot();
-    slot.setAttribute('id', 0);
-    root.appendChild(slot);
-
-    const child = new BackgroundElementTemplateInstance('view');
-    slot.insertBefore(child, null, true);
-
-    expect(GlobalCommitContext.patches).toEqual([]);
-  });
-
-  it('reports error for emitCreate with illegal handleId 0 in dev', () => {
-    const lynxObj = globalThis.lynx as typeof lynx & { reportError?: (error: Error) => void };
-    const oldReportError = lynxObj.reportError;
-    const reportErrorSpy = vi.fn();
-    lynxObj.reportError = reportErrorSpy;
-
-    const instance = new BackgroundElementTemplateInstance('view');
-    instance.instanceId = 0;
-    instance.emitCreate();
-
-    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
-
-    lynxObj.reportError = oldReportError;
   });
 });

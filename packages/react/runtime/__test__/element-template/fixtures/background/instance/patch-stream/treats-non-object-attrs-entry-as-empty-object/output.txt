@@ -1,0 +1,10 @@
+Array [
+  1,
+  Array [
+    4,
+    0,
+    Object {
+      "a": undefined,
+    },
+  ],
+]
