@@ -21,5 +21,5 @@ function App() {
             "data-a": attrs,
             "b": attrs
         }
-    }} __nodeCount={1}/>;
+    }}/>;
 }

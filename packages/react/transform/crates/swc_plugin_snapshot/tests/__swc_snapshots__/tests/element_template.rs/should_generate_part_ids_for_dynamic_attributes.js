@@ -7,4 +7,4 @@ const _et_da39a_test_1 = "_et_da39a_test_1";
     1: {
         "data-value": value
     }
-}} __nodeCount={4}/>;
+}}/>;

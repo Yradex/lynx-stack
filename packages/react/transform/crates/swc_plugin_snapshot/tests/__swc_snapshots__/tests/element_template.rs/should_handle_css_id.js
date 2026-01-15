@@ -2,4 +2,4 @@
  * @jsxCSSId 100
  */ import * as ReactLynx from "@lynx-js/react";
 const _et_da39a_test_1 = "_et_da39a_test_1";
-<_et_da39a_test_1 __nodeCount={2}/>;
+<_et_da39a_test_1/>;

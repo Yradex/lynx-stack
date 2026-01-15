@@ -1244,25 +1244,6 @@ where
     });
   }
 
-  fn count_template_nodes(&self, v: &serde_json::Value) -> i32 {
-    let mut count = 0;
-    if let serde_json::Value::Object(map) = v {
-      if map.contains_key("tag") {
-        count += 1;
-      }
-      if let Some(serde_json::Value::Array(children)) = map.get("children") {
-        for child in children {
-          count += self.count_template_nodes(child);
-        }
-      }
-    } else if let serde_json::Value::Array(arr) = v {
-      for elem in arr {
-        count += self.count_template_nodes(elem);
-      }
-    }
-    count
-  }
-
   fn element_template_to_json(&self, expr: &Expr) -> serde_json::Value {
     match expr {
       Expr::Lit(lit) => match lit {
@@ -2092,8 +2073,6 @@ where
     self.current_snapshot_id = Some(snapshot_id.clone());
     self.current_snapshot_defs.push(entry_snapshot_uid_def);
 
-    let mut current_template_node_count: Option<i32> = None;
-
     if use_element_template {
       let mut slot_index: i32 = 0;
       let template_expr = self.element_template_from_jsx_element(node, &mut slot_index);
@@ -2101,11 +2080,8 @@ where
         .strip_prefix("_et_")
         .unwrap_or(snapshot_uid.as_str());
 
-      let compiled_template = self.element_template_to_json(&template_expr);
-      let node_count = self.count_template_nodes(&compiled_template);
-      current_template_node_count = Some(node_count);
-
       if let Some(element_templates) = &self.element_templates {
+        let compiled_template = self.element_template_to_json(&template_expr);
         element_templates.borrow_mut().push(ElementTemplateAsset {
           template_id: format!("_et_{suffix}"),
           compiled_template,
@@ -2173,18 +2149,6 @@ where
               }))
             }
           };
-
-          if let Some(count) = current_template_node_count {
-            snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
-              span: DUMMY_SP,
-              name: JSXAttrName::Ident(IdentName::new("__nodeCount".into(), DUMMY_SP)),
-              value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-                span: DUMMY_SP,
-                expr: JSXExpr::Expr(Box::new(i32_to_expr(&count))),
-              })),
-            }));
-          }
-
           snapshot_attrs
         },
         self_closing: wrap_dynamic_part.dynamic_part_count == 0,
