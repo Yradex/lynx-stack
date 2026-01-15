@@ -17,6 +17,7 @@ export interface RunFixtureOptions {
   fixturesRoot: string;
   run: (context: FixtureContext) => Promise<void> | void;
   filter?: string[];
+  allowEmpty?: boolean;
 }
 
 export function isUpdateMode(): boolean {
@@ -24,12 +25,21 @@ export function isUpdateMode(): boolean {
   return raw ? UPDATE_VALUES.has(raw) : false;
 }
 
-export function runFixtureTests({ fixturesRoot, run, filter }: RunFixtureOptions): void {
+export function runFixtureTests({
+  fixturesRoot,
+  run,
+  filter,
+  allowEmpty = false,
+}: RunFixtureOptions): void {
   const fixtures = listFixtureDirs(fixturesRoot);
   const requested = filter ?? parseFixtureFilter();
   const targets = requested.length > 0 ? requested : fixtures;
 
   if (targets.length === 0) {
+    if (allowEmpty) {
+      it.todo('fixtures pending');
+      return;
+    }
     throw new Error('No fixtures found to run.');
   }
 

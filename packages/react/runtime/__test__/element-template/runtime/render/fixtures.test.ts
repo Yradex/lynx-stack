@@ -68,8 +68,18 @@ describe('Fixture Integration Tests', () => {
     globalThis.__USE_ELEMENT_TEMPLATE__ = undefined;
   });
 
+  const fixtures = fs
+    .readdirSync(FIXTURES_DIR)
+    .filter(entry => {
+      const fixtureDir = path.join(FIXTURES_DIR, entry);
+      if (!fs.statSync(fixtureDir).isDirectory()) return false;
+      return fs.existsSync(path.join(fixtureDir, 'index.tsx'));
+    })
+    .sort();
+
   runFixtureTests({
     fixturesRoot: FIXTURES_DIR,
+    filter: fixtures,
     async run({ fixtureDir, fixtureName, update, tempDir }) {
       const sourcePath = path.join(fixtureDir, 'index.tsx');
       const compiledJsPath = path.join(fixtureDir, 'index.js.txt');
