@@ -285,8 +285,6 @@ export class BackgroundElementTemplateInstance {
       this._attrs = next;
     } else if (key === 'id' && this instanceof BackgroundElementTemplateSlot) {
       this.partId = Number(value);
-    } else if (key === '__nodeCount') {
-      this.nodeCount = Number(value);
     }
   }
 }
