@@ -489,7 +489,7 @@ describe('ElementTemplate background hydrate', () => {
           4,
           "_et_a94a8_test_13",
           [],
-          null,
+          1,
           -1,
           [
             2,
@@ -617,7 +617,7 @@ describe('ElementTemplate background hydrate', () => {
           6,
           "_et_a94a8_test_26",
           [],
-          null,
+          1,
           -4,
           [
             2,
@@ -647,7 +647,7 @@ describe('ElementTemplate background hydrate', () => {
           5,
           "_et_a94a8_test_29",
           [],
-          null,
+          1,
           -3,
           [
             2,
@@ -1038,7 +1038,7 @@ describe('ElementTemplate background hydrate', () => {
           10,
           "_et_a94a8_test_36",
           [],
-          null,
+          1,
           -4,
           [
             2,
