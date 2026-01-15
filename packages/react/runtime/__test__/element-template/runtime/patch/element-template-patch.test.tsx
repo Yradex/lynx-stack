@@ -154,7 +154,7 @@ describe('ElementTemplate patch stream (apply)', () => {
         9,
         "_et_a94a8_test_4",
         [],
-        null,
+        1,
         -5,
         [
           2,
