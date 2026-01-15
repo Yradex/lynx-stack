@@ -5,7 +5,6 @@ Array [
     null,
     Array [],
     null,
-    null,
   ],
   Array [
     "__AppendElement",

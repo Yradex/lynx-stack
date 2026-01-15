@@ -4,7 +4,6 @@ Object {
     3,
     "child",
     Array [],
-    null,
     -1,
     Array [
       2,

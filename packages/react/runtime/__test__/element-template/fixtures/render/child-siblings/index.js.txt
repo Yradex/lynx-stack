@@ -5,14 +5,19 @@ const _et_7a8c6_test_3 = "_et_7a8c6_test_3";
 const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
 export function App() {
     return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
+        __nodeCount: 2,
         children: /*#__PURE__*/ _jsxs(Slot, {
             id: 0,
             children: [
                 /*#__PURE__*/ _jsx(Sub, {
-                    children: /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {})
+                    children: /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+                        __nodeCount: 1
+                    })
                 }),
                 /*#__PURE__*/ _jsx(Sub, {
-                    children: /*#__PURE__*/ _jsx(_et_7a8c6_test_3, {})
+                    children: /*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
+                        __nodeCount: 1
+                    })
                 })
             ]
         })
@@ -21,6 +26,7 @@ export function App() {
 const _et_7a8c6_test_4 = "_et_7a8c6_test_4";
 function Sub(props) {
     return /*#__PURE__*/ _jsx(_et_7a8c6_test_4, {
+        __nodeCount: 2,
         children: /*#__PURE__*/ _jsx(Slot, {
             id: 0,
             children: props.children

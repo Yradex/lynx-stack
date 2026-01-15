@@ -5,14 +5,12 @@ Array [
     null,
     Array [],
     null,
-    null,
   ],
   Array [
     "__ElementFromBinary",
     "_et_child_b",
     null,
     Array [],
-    null,
     null,
   ],
   Array [
@@ -41,7 +39,6 @@ Array [
         "type": "insertBefore",
       },
     ],
-    null,
     null,
   ],
   Array [

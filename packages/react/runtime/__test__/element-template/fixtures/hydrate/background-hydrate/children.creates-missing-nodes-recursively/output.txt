@@ -10,7 +10,6 @@ Object {
         "id": "card",
       },
     ],
-    null,
     0,
     6,
     "raw-text",

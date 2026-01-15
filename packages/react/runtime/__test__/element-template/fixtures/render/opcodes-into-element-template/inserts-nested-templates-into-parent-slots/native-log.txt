@@ -25,7 +25,6 @@ Array [
       },
     ],
     null,
-    null,
   ],
   Array [
     "__ElementFromBinary",
@@ -53,7 +52,6 @@ Array [
         "type": "insertBefore",
       },
     ],
-    null,
     null,
   ],
   Array [

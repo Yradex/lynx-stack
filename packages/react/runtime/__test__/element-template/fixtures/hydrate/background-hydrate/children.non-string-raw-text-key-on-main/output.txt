@@ -10,7 +10,6 @@ Object {
     4,
     "_et_a94a8_test_42",
     Array [],
-    2,
     0,
     6,
     "raw-text",

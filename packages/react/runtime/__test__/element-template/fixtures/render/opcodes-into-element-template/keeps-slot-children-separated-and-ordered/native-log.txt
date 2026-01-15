@@ -30,7 +30,6 @@ Array [
       },
     ],
     null,
-    null,
   ],
   Array [
     "__AppendElement",

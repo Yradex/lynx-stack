@@ -9,7 +9,6 @@ Array [
     "_et_a94a8_test_1",
     null,
     Array [],
-    2,
     null,
   ],
   Array [

@@ -16,7 +16,6 @@ Object {
     4,
     "_et_a94a8_test_35",
     Array [],
-    1,
     -4,
     Array [
       2,
@@ -28,7 +27,6 @@ Object {
     5,
     "_et_a94a8_test_36",
     Array [],
-    1,
     -4,
     Array [
       2,
@@ -40,7 +38,6 @@ Object {
     6,
     "_et_a94a8_test_37",
     Array [],
-    1,
     -4,
     Array [
       2,
