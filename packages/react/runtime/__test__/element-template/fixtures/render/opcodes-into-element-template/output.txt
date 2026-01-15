@@ -1,0 +1,333 @@
+Object {
+  "appends-root-text-via-append-element": Object {
+    "nativeLog": Array [
+      Array [
+        "__CreateRawText",
+        "root",
+      ],
+      Array [
+        "__AppendElement",
+        "root",
+        "\"root\"",
+      ],
+    ],
+    "rootChildren": Array [
+      Object {
+        "text": "root",
+        "type": "rawText",
+      },
+    ],
+  },
+  "builds-init-opcodes-from-attrs-and-slot-text": Object {
+    "nativeLog": Array [
+      Array [
+        "__CreateRawText",
+        "Hello",
+      ],
+      Array [
+        "__ElementFromBinary",
+        "_et_foo",
+        null,
+        Array [
+          Object {
+            "attributes": Object {
+              "id": "test",
+            },
+            "id": 0,
+            "type": "setAttributes",
+          },
+          Object {
+            "id": 1,
+            "node": Object {
+              "text": "Hello",
+              "type": "rawText",
+            },
+            "type": "insertBefore",
+          },
+        ],
+        null,
+        null,
+      ],
+      Array [
+        "__AppendElement",
+        "root",
+        "<_et_foo />",
+      ],
+    ],
+    "registryNode": Object {
+      "attributes": Object {
+        "part-id": 0,
+      },
+      "children": Array [
+        Object {
+          "attributes": Object {
+            "id": "test",
+            "part-id": 0,
+          },
+          "tag": "slot",
+        },
+        Object {
+          "attributes": Object {
+            "part-id": 1,
+          },
+          "children": Array [
+            Object {
+              "text": "Hello",
+              "type": "rawText",
+            },
+          ],
+          "tag": "slot",
+        },
+      ],
+      "tag": "_et_foo",
+      "templateId": "_et_foo",
+    },
+    "rootChild": Object {
+      "attributes": Object {
+        "part-id": 0,
+      },
+      "children": Array [
+        Object {
+          "attributes": Object {
+            "id": "test",
+            "part-id": 0,
+          },
+          "tag": "slot",
+        },
+        Object {
+          "attributes": Object {
+            "part-id": 1,
+          },
+          "children": Array [
+            Object {
+              "text": "Hello",
+              "type": "rawText",
+            },
+          ],
+          "tag": "slot",
+        },
+      ],
+      "tag": "_et_foo",
+      "templateId": "_et_foo",
+    },
+    "rootChildMatchesRegistry": true,
+  },
+  "handles-multiple-template-children-in-the-same-slot": Object {
+    "slotChildrenCount": 2,
+    "slotChildrenTags": Array [
+      "_et_child_a",
+      "_et_child_b",
+    ],
+  },
+  "handles-multiple-text-nodes-in-the-same-slot": Object {
+    "slotChildren": Array [
+      Object {
+        "text": "A",
+        "type": "rawText",
+      },
+      Object {
+        "text": "B",
+        "type": "rawText",
+      },
+    ],
+  },
+  "ignores-non-attrs-opcode-payloads": Object {
+    "rootChild": Object {
+      "attributes": Object {
+        "part-id": 0,
+      },
+      "children": Array [
+        Object {
+          "attributes": Object {
+            "part-id": 0,
+          },
+          "tag": "slot",
+        },
+        Object {
+          "attributes": Object {
+            "part-id": 1,
+          },
+          "tag": "slot",
+        },
+      ],
+      "tag": "_et_foo",
+      "templateId": "_et_foo",
+    },
+  },
+  "inserts-nested-templates-into-parent-slots": Object {
+    "nativeLog": Array [
+      Array [
+        "__CreateRawText",
+        "X",
+      ],
+      Array [
+        "__ElementFromBinary",
+        "_et_inner",
+        null,
+        Array [
+          Object {
+            "attributes": Object {
+              "id": "inner",
+            },
+            "id": 0,
+            "type": "setAttributes",
+          },
+          Object {
+            "id": 0,
+            "node": Object {
+              "text": "X",
+              "type": "rawText",
+            },
+            "type": "insertBefore",
+          },
+        ],
+        null,
+        null,
+      ],
+      Array [
+        "__ElementFromBinary",
+        "_et_outer",
+        null,
+        Array [
+          Object {
+            "id": 0,
+            "node": Object {
+              "attributes": Object {
+                "id": "inner",
+                "part-id": 0,
+              },
+              "children": Array [
+                Object {
+                  "attributes": Object {
+                    "part-id": 1,
+                  },
+                  "tag": "slot",
+                },
+              ],
+              "tag": "_et_inner",
+              "templateId": "_et_inner",
+            },
+            "type": "insertBefore",
+          },
+        ],
+        null,
+        null,
+      ],
+      Array [
+        "__AppendElement",
+        "root",
+        "<_et_outer />",
+      ],
+    ],
+    "registryHas": Object {
+      "-1": true,
+      "-2": true,
+    },
+    "rootChild": Object {
+      "attributes": Object {},
+      "children": Array [
+        Object {
+          "attributes": Object {
+            "part-id": 0,
+          },
+          "children": Array [
+            Object {
+              "attributes": Object {
+                "id": "inner",
+                "part-id": 0,
+              },
+              "children": Array [
+                Object {
+                  "attributes": Object {
+                    "part-id": 1,
+                  },
+                  "tag": "slot",
+                },
+              ],
+              "tag": "_et_inner",
+              "templateId": "_et_inner",
+            },
+          ],
+          "tag": "slot",
+        },
+      ],
+      "tag": "_et_outer",
+      "templateId": "_et_outer",
+    },
+  },
+  "keeps-slot-children-separated-and-ordered": Object {
+    "nativeLog": Array [
+      Array [
+        "__CreateRawText",
+        "A",
+      ],
+      Array [
+        "__CreateRawText",
+        "B",
+      ],
+      Array [
+        "__ElementFromBinary",
+        "_et_foo",
+        null,
+        Array [
+          Object {
+            "id": 0,
+            "node": Object {
+              "text": "A",
+              "type": "rawText",
+            },
+            "type": "insertBefore",
+          },
+          Object {
+            "id": 1,
+            "node": Object {
+              "text": "B",
+              "type": "rawText",
+            },
+            "type": "insertBefore",
+          },
+        ],
+        null,
+        null,
+      ],
+      Array [
+        "__AppendElement",
+        "root",
+        "<_et_foo />",
+      ],
+    ],
+    "rootChild": Object {
+      "attributes": Object {
+        "part-id": 0,
+      },
+      "children": Array [
+        Object {
+          "attributes": Object {
+            "part-id": 0,
+          },
+          "children": Array [
+            Object {
+              "text": "A",
+              "type": "rawText",
+            },
+          ],
+          "tag": "slot",
+        },
+        Object {
+          "attributes": Object {
+            "part-id": 1,
+          },
+          "children": Array [
+            Object {
+              "text": "B",
+              "type": "rawText",
+            },
+          ],
+          "tag": "slot",
+        },
+      ],
+      "tag": "_et_foo",
+      "templateId": "_et_foo",
+    },
+  },
+}

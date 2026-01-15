@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { format as prettyFormat } from 'pretty-format';
 import { expect, it } from 'vitest';
 
 const UPDATE_VALUES = new Set(['1', 'true', 'yes', 'on']);
@@ -21,8 +22,20 @@ export interface RunFixtureOptions {
 }
 
 export function isUpdateMode(): boolean {
-  const raw = process.env['UPDATE']?.toLowerCase();
-  return raw ? UPDATE_VALUES.has(raw) : false;
+  const envCandidates = [
+    process.env['UPDATE'],
+    process.env['UPDATE_SNAPSHOTS'],
+    process.env['VITEST_UPDATE'],
+  ];
+  for (const rawValue of envCandidates) {
+    const raw = rawValue?.toLowerCase();
+    if (raw && UPDATE_VALUES.has(raw)) {
+      return true;
+    }
+  }
+
+  const argv = process.argv;
+  return argv.includes('-u') || argv.includes('--update') || argv.includes('--update-snapshots');
 }
 
 export function runFixtureTests({
@@ -94,6 +107,10 @@ export function assertOrUpdateTextFile(options: {
 
   const expected = fs.readFileSync(filePath, 'utf8');
   expect(actual).toBe(expected);
+}
+
+export function formatFixtureOutput(value: unknown): string {
+  return `${prettyFormat(value, { printFunctionName: false })}\n`;
 }
 
 export function assertMissingFile(options: {

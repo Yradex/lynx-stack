@@ -1,0 +1,182 @@
+Object {
+  "jsx-map-dynamic-list": Array [
+    Array [
+      -10,
+      "_et_a94a8_test_8",
+      Object {
+        "0": Array [
+          Array [
+            -3,
+            "_et_a94a8_test_9",
+            Object {
+              "0": Array [
+                Array [
+                  -2,
+                  "_et_a94a8_test_10",
+                  Object {
+                    "0": Array [
+                      Array [
+                        -1,
+                        "raw-text",
+                        Object {},
+                        Object {
+                          "0": Object {
+                            "text": "item-1",
+                          },
+                        },
+                      ],
+                    ],
+                  },
+                  undefined,
+                ],
+              ],
+            },
+            undefined,
+          ],
+          Array [
+            -6,
+            "_et_a94a8_test_9",
+            Object {
+              "0": Array [
+                Array [
+                  -5,
+                  "_et_a94a8_test_10",
+                  Object {
+                    "0": Array [
+                      Array [
+                        -4,
+                        "raw-text",
+                        Object {},
+                        Object {
+                          "0": Object {
+                            "text": "item-2",
+                          },
+                        },
+                      ],
+                    ],
+                  },
+                  undefined,
+                ],
+              ],
+            },
+            undefined,
+          ],
+          Array [
+            -9,
+            "_et_a94a8_test_9",
+            Object {
+              "0": Array [
+                Array [
+                  -8,
+                  "_et_a94a8_test_10",
+                  Object {
+                    "0": Array [
+                      Array [
+                        -7,
+                        "raw-text",
+                        Object {},
+                        Object {
+                          "0": Object {
+                            "text": "item-3",
+                          },
+                        },
+                      ],
+                    ],
+                  },
+                  undefined,
+                ],
+              ],
+            },
+            undefined,
+          ],
+        ],
+      },
+      undefined,
+    ],
+  ],
+  "multiple-root-instances": Array [
+    Array [
+      -1,
+      "_et_a94a8_test_4",
+      Object {},
+      undefined,
+    ],
+    Array [
+      -2,
+      "_et_a94a8_test_5",
+      Object {},
+      undefined,
+    ],
+  ],
+  "nested-instances": Array [
+    Array [
+      -1,
+      "_et_a94a8_test_2",
+      Object {},
+      undefined,
+    ],
+  ],
+  "simple-element": Array [
+    Array [
+      -1,
+      "_et_a94a8_test_1",
+      Object {},
+      Object {
+        "0": Object {
+          "id": "logo.png",
+        },
+      },
+    ],
+  ],
+  "sub-components": Array [
+    Array [
+      -3,
+      "_et_a94a8_test_7",
+      Object {
+        "0": Array [
+          Array [
+            -2,
+            "_et_a94a8_test_6",
+            Object {
+              "0": Array [
+                Array [
+                  -1,
+                  "raw-text",
+                  Object {},
+                  Object {
+                    "0": Object {
+                      "text": "inner",
+                    },
+                  },
+                ],
+              ],
+            },
+            undefined,
+          ],
+        ],
+      },
+      undefined,
+    ],
+  ],
+  "text-children": Array [
+    Array [
+      -2,
+      "_et_a94a8_test_3",
+      Object {
+        "0": Array [
+          Array [
+            -1,
+            "raw-text",
+            Object {},
+            Object {
+              "0": Object {
+                "text": "Hello",
+              },
+            },
+          ],
+        ],
+      },
+      undefined,
+    ],
+  ],
+}

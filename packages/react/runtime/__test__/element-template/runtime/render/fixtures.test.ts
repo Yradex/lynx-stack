@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
+import { describe, expect, vi } from 'vitest';
 
 import { resetElementTemplateHydrationListener } from '../../../../src/element-template/background/hydration-listener.js';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
@@ -20,6 +20,7 @@ import { serializeToJSX } from '../../test-utils/serializer.js';
 import {
   assertMissingFile,
   assertOrUpdateTextFile,
+  formatFixtureOutput,
   expectReportErrorCount,
   runFixtureTests,
 } from '../../test-utils/fixtureRunner.js';
@@ -41,39 +42,19 @@ interface TransformResult {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures');
+const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures/render');
 
 describe('Fixture Integration Tests', () => {
-  let root: RootNode;
-  let nativeLog: unknown[];
-  let cleanup: () => void;
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-    ElementTemplateRegistry.clear();
-    resetTemplateId();
-    globalThis.__USE_ELEMENT_TEMPLATE__ = true;
-
-    const installed = installMockNativePapi();
-    nativeLog = installed.nativeLog as unknown[];
-    cleanup = installed.cleanup;
-    root = { type: 'page', id: '0', children: [] };
-  });
-
-  afterEach(() => {
-    resetElementTemplateHydrationListener();
-    // TODO: ???
-    removeCtxNotFoundEventListener();
-    cleanup();
-    globalThis.__USE_ELEMENT_TEMPLATE__ = undefined;
-  });
-
   const fixtures = fs
     .readdirSync(FIXTURES_DIR)
     .filter(entry => {
       const fixtureDir = path.join(FIXTURES_DIR, entry);
       if (!fs.statSync(fixtureDir).isDirectory()) return false;
-      return fs.existsSync(path.join(fixtureDir, 'index.tsx'));
+      return (
+        fs.existsSync(path.join(fixtureDir, 'index.tsx'))
+        || fs.existsSync(path.join(fixtureDir, 'case.ts'))
+        || fs.existsSync(path.join(fixtureDir, 'case.tsx'))
+      );
     })
     .sort();
 
@@ -81,6 +62,9 @@ describe('Fixture Integration Tests', () => {
     fixturesRoot: FIXTURES_DIR,
     filter: fixtures,
     async run({ fixtureDir, fixtureName, update, tempDir }) {
+      const casePath = fs.existsSync(path.join(fixtureDir, 'case.ts'))
+        ? path.join(fixtureDir, 'case.ts')
+        : path.join(fixtureDir, 'case.tsx');
       const sourcePath = path.join(fixtureDir, 'index.tsx');
       const compiledJsPath = path.join(fixtureDir, 'index.js.txt');
       const templatesPath = path.join(fixtureDir, 'templates.json.txt');
@@ -88,110 +72,152 @@ describe('Fixture Integration Tests', () => {
       const papiPath = path.join(fixtureDir, 'papi.txt');
       const tempImportPath = path.join(tempDir, 'temp_actual.js');
 
+      if (fs.existsSync(casePath)) {
+        const relativePath = path.relative(__dirname, casePath);
+        const modulePath = (relativePath.startsWith('.') ? relativePath : `./${relativePath}`)
+          .split(path.sep)
+          .join('/');
+        const caseModule = (await import(modulePath)) as {
+          run: (context: { fixtureDir: string; fixtureName: string }) => Promise<unknown> | unknown;
+          reportErrorCount?: number;
+        };
+        const outputPath = path.join(fixtureDir, 'output.txt');
+        const reportErrorCount = caseModule.reportErrorCount ?? 0;
+        const output = await caseModule.run({ fixtureDir, fixtureName });
+
+        expectReportErrorCount(reportErrorCount);
+        assertOrUpdateTextFile({
+          path: outputPath,
+          actual: formatFixtureOutput(output),
+          update,
+          fixtureName,
+          label: 'output',
+        });
+        return;
+      }
+
       if (!fs.existsSync(sourcePath)) {
         throw new Error(`Source file missing for fixture "${fixtureName}"`);
       }
 
-      // 1. Compile source code
-      const code = fs.readFileSync(sourcePath, 'utf8');
-      const { transformReactLynx } = await import('@lynx-js/react-transform');
-      const transformOptions = {
-        mode: 'test',
-        pluginName: 'test-plugin',
-        filename: 'index.tsx',
-        sourcemap: false,
-        cssScope: false,
-        snapshot: {
-          preserveJsx: false,
-          runtimePkg: '@lynx-js/react/element-template/internal',
-          filename: 'index.tsx',
-          target: 'LEPUS',
-          experimentalEnableElementTemplate: true,
-        },
-        shake: false,
-        compat: true,
-        directiveDCE: false,
-        defineDCE: false,
-        worklet: false,
-        refresh: false,
-      } as Parameters<typeof transformReactLynx>[1];
-      const result = (await transformReactLynx(code, transformOptions)) as TransformResult;
+      vi.resetAllMocks();
+      ElementTemplateRegistry.clear();
+      resetTemplateId();
+      globalThis.__USE_ELEMENT_TEMPLATE__ = true;
 
-      let outputCode = result.code ?? '';
-      outputCode = outputCode.replace(/from ["']react\/jsx-runtime["']/g, 'from "@lynx-js/react/jsx-runtime"');
+      const installed = installMockNativePapi();
+      const nativeLog = installed.nativeLog as unknown[];
+      const cleanup = installed.cleanup;
+      const root: RootNode = { type: 'page', id: '0', children: [] };
 
-      const outputTemplates = result.elementTemplates ? JSON.stringify(result.elementTemplates, null, 2) : '';
-
-      // 2. Verify or Bless Compilation Artifacts
-      assertOrUpdateTextFile({
-        path: compiledJsPath,
-        actual: outputCode,
-        update,
-        fixtureName,
-        label: 'compiled js',
-      });
-
-      if (outputTemplates) {
-        assertOrUpdateTextFile({
-          path: templatesPath,
-          actual: outputTemplates,
-          update,
-          fixtureName,
-          label: 'templates',
-        });
-      } else {
-        assertMissingFile({
-          path: templatesPath,
-          update,
-          fixtureName,
-          label: 'templates',
-        });
-      }
-
-      // 3. Register templates
-      if (update && outputTemplates) {
-        registerTemplates(JSON.parse(outputTemplates) as any[]);
-      } else if (fs.existsSync(templatesPath)) {
-        const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8')) as any[];
-        registerTemplates(templates);
-      }
-
-      // 4. Load the component
-      // To import the compiled code, we must write it to a .js file temporarily.
-      fs.writeFileSync(tempImportPath, outputCode);
       try {
-        const module = (await import(`${tempImportPath}?t=${Date.now()}`)) as { App: unknown };
-        const App = module.App;
+        // 1. Compile source code
+        const code = fs.readFileSync(sourcePath, 'utf8');
+        const { transformReactLynx } = await import('@lynx-js/react-transform');
+        const transformOptions = {
+          mode: 'test',
+          pluginName: 'test-plugin',
+          filename: 'index.tsx',
+          sourcemap: false,
+          cssScope: false,
+          snapshot: {
+            preserveJsx: false,
+            runtimePkg: '@lynx-js/react/element-template/internal',
+            filename: 'index.tsx',
+            target: 'LEPUS',
+            experimentalEnableElementTemplate: true,
+          },
+          shake: false,
+          compat: true,
+          directiveDCE: false,
+          defineDCE: false,
+          worklet: false,
+          refresh: false,
+        } as Parameters<typeof transformReactLynx>[1];
+        const result = (await transformReactLynx(code, transformOptions)) as TransformResult;
 
-        // 5. Render
-        const vnode = { type: App, props: {}, key: null, ref: null };
-        const opcodes = renderToString(vnode, null);
-        renderOpcodesIntoElementTemplate(opcodes, root);
+        let outputCode = result.code ?? '';
+        outputCode = outputCode.replace(/from ["']react\/jsx-runtime["']/g, 'from "@lynx-js/react/jsx-runtime"');
 
-        const actualJSX = serializeToJSX(root.children[0]);
-        const actualPapi = JSON.stringify(nativeLog, null, 2);
+        const outputTemplates = result.elementTemplates ? JSON.stringify(result.elementTemplates, null, 2) : '';
 
-        // 6. Verify or Bless Output Snapshot
+        // 2. Verify or Bless Compilation Artifacts
         assertOrUpdateTextFile({
-          path: expectedPath,
-          actual: actualJSX,
+          path: compiledJsPath,
+          actual: outputCode,
           update,
           fixtureName,
-          label: 'jsx output',
+          label: 'compiled js',
         });
-        assertOrUpdateTextFile({
-          path: papiPath,
-          actual: actualPapi,
-          update,
-          fixtureName,
-          label: 'papi log',
-        });
-      } finally {
-        if (fs.existsSync(tempImportPath)) {
-          fs.unlinkSync(tempImportPath);
+
+        if (outputTemplates) {
+          assertOrUpdateTextFile({
+            path: templatesPath,
+            actual: outputTemplates,
+            update,
+            fixtureName,
+            label: 'templates',
+          });
+        } else {
+          assertMissingFile({
+            path: templatesPath,
+            update,
+            fixtureName,
+            label: 'templates',
+          });
         }
+
+        // 3. Register templates
+        if (update && outputTemplates) {
+          registerTemplates(JSON.parse(outputTemplates) as any[]);
+        } else if (fs.existsSync(templatesPath)) {
+          const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8')) as any[];
+          registerTemplates(templates);
+        }
+
+        // 4. Load the component
+        // To import the compiled code, we must write it to a .js file temporarily.
+        fs.writeFileSync(tempImportPath, outputCode);
+        try {
+          const module = (await import(`${tempImportPath}?t=${Date.now()}`)) as { App: unknown };
+          const App = module.App;
+
+          // 5. Render
+          const vnode = { type: App, props: {}, key: null, ref: null };
+          const opcodes = renderToString(vnode, null);
+          renderOpcodesIntoElementTemplate(opcodes, root);
+
+          const actualJSX = serializeToJSX(root.children[0]);
+          const actualPapi = JSON.stringify(nativeLog, null, 2);
+
+          // 6. Verify or Bless Output Snapshot
+          assertOrUpdateTextFile({
+            path: expectedPath,
+            actual: actualJSX,
+            update,
+            fixtureName,
+            label: 'jsx output',
+          });
+          assertOrUpdateTextFile({
+            path: papiPath,
+            actual: actualPapi,
+            update,
+            fixtureName,
+            label: 'papi log',
+          });
+        } finally {
+          if (fs.existsSync(tempImportPath)) {
+            fs.unlinkSync(tempImportPath);
+          }
+        }
+        expectReportErrorCount(0);
+      } finally {
+        resetElementTemplateHydrationListener();
+        // TODO: ???
+        removeCtxNotFoundEventListener();
+        cleanup();
+        globalThis.__USE_ELEMENT_TEMPLATE__ = undefined;
       }
-      expectReportErrorCount(0);
     },
   });
 });
