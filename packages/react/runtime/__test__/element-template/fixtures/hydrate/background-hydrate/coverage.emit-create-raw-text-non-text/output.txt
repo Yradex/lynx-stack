@@ -1,0 +1,8 @@
+Object {
+  "patches": Array [
+    0,
+    1,
+    "raw-text",
+    "",
+  ],
+}

@@ -1,0 +1,30 @@
+Array [
+  Array [
+    -3,
+    "_et_a94a8_test_7",
+    Object {
+      "0": Array [
+        Array [
+          -2,
+          "_et_a94a8_test_6",
+          Object {
+            "0": Array [
+              Array [
+                -1,
+                "raw-text",
+                Object {},
+                Object {
+                  "0": Object {
+                    "text": "inner",
+                  },
+                },
+              ],
+            ],
+          },
+          undefined,
+        ],
+      ],
+    },
+    undefined,
+  ],
+]

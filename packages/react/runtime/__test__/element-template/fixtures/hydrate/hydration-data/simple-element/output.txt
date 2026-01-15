@@ -1,0 +1,12 @@
+Array [
+  Array [
+    -1,
+    "_et_a94a8_test_1",
+    Object {},
+    Object {
+      "0": Object {
+        "id": "logo.png",
+      },
+    },
+  ],
+]

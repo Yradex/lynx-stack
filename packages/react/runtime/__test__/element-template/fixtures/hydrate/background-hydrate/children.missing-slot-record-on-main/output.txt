@@ -1,0 +1,16 @@
+Object {
+  "stream": Array [
+    0,
+    3,
+    "child",
+    Array [],
+    null,
+    -1,
+    Array [
+      2,
+      0,
+      null,
+      3,
+    ],
+  ],
+}

@@ -1,0 +1,14 @@
+Object {
+  "stream": Array [
+    -1,
+    Array [
+      4,
+      0,
+      Object {
+        "info": Object {
+          "key": "new",
+        },
+      },
+    ],
+  ],
+}

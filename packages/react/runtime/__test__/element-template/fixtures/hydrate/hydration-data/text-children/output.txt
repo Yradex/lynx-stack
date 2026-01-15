@@ -1,0 +1,21 @@
+Array [
+  Array [
+    -2,
+    "_et_a94a8_test_3",
+    Object {
+      "0": Array [
+        Array [
+          -1,
+          "raw-text",
+          Object {},
+          Object {
+            "0": Object {
+              "text": "Hello",
+            },
+          },
+        ],
+      ],
+    },
+    undefined,
+  ],
+]

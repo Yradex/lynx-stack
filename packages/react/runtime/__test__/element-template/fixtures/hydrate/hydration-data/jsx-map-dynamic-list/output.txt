@@ -1,0 +1,95 @@
+Array [
+  Array [
+    -10,
+    "_et_a94a8_test_8",
+    Object {
+      "0": Array [
+        Array [
+          -3,
+          "_et_a94a8_test_9",
+          Object {
+            "0": Array [
+              Array [
+                -2,
+                "_et_a94a8_test_10",
+                Object {
+                  "0": Array [
+                    Array [
+                      -1,
+                      "raw-text",
+                      Object {},
+                      Object {
+                        "0": Object {
+                          "text": "item-1",
+                        },
+                      },
+                    ],
+                  ],
+                },
+                undefined,
+              ],
+            ],
+          },
+          undefined,
+        ],
+        Array [
+          -6,
+          "_et_a94a8_test_9",
+          Object {
+            "0": Array [
+              Array [
+                -5,
+                "_et_a94a8_test_10",
+                Object {
+                  "0": Array [
+                    Array [
+                      -4,
+                      "raw-text",
+                      Object {},
+                      Object {
+                        "0": Object {
+                          "text": "item-2",
+                        },
+                      },
+                    ],
+                  ],
+                },
+                undefined,
+              ],
+            ],
+          },
+          undefined,
+        ],
+        Array [
+          -9,
+          "_et_a94a8_test_9",
+          Object {
+            "0": Array [
+              Array [
+                -8,
+                "_et_a94a8_test_10",
+                Object {
+                  "0": Array [
+                    Array [
+                      -7,
+                      "raw-text",
+                      Object {},
+                      Object {
+                        "0": Object {
+                          "text": "item-3",
+                        },
+                      },
+                    ],
+                  ],
+                },
+                undefined,
+              ],
+            ],
+          },
+          undefined,
+        ],
+      ],
+    },
+    undefined,
+  ],
+]
