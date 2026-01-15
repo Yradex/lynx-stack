@@ -5,7 +5,6 @@ const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
 class Inner extends Component {
     render() {
         return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
-            __nodeCount: 2,
             children: /*#__PURE__*/ _jsx(Slot, {
                 id: 0,
                 children: this.props.message
@@ -17,7 +16,6 @@ const _et_7a8c6_test_2 = "_et_7a8c6_test_2";
 export class App extends Component {
     render() {
         return /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
-            __nodeCount: 2,
             children: /*#__PURE__*/ _jsx(Slot, {
                 id: 0,
                 children: /*#__PURE__*/ _jsx(Inner, {
