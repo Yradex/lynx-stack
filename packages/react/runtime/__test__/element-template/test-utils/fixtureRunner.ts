@@ -31,6 +31,14 @@ export function runFixtureTests({
   filter,
   allowEmpty = false,
 }: RunFixtureOptions): void {
+  if (!fs.existsSync(fixturesRoot)) {
+    if (allowEmpty) {
+      it.todo('fixtures pending');
+      return;
+    }
+    throw new Error(`Fixtures root not found: ${fixturesRoot}`);
+  }
+
   const fixtures = listFixtureDirs(fixturesRoot);
   const requested = filter ?? parseFixtureFilter();
   const targets = requested.length > 0 ? requested : fixtures;
