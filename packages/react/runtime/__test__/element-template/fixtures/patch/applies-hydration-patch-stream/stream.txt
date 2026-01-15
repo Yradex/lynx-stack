@@ -1,0 +1,82 @@
+Array [
+  -5,
+  Array [
+    4,
+    0,
+    Object {
+      "id": "bg",
+    },
+  ],
+  -3,
+  Array [
+    3,
+    0,
+    Object {
+      "text": "Main",
+      "type": "rawText",
+    },
+  ],
+  0,
+  7,
+  "raw-text",
+  "BG",
+  -3,
+  Array [
+    2,
+    0,
+    null,
+    Object {
+      "text": "BG",
+      "type": "rawText",
+    },
+  ],
+  -5,
+  Array [
+    2,
+    1,
+    null,
+    Object {
+      "children": Array [
+        Object {
+          "attributes": Object {
+            "part-id": 0,
+          },
+          "children": Array [
+            Object {
+              "text": "BG",
+              "type": "rawText",
+            },
+          ],
+          "tag": "slot",
+        },
+      ],
+      "tag": "text",
+      "templateId": "_et_a94a8_test_3",
+    },
+    2,
+    1,
+    null,
+    Object {
+      "attributes": Object {
+        "id": "a",
+      },
+      "tag": "view",
+      "templateId": "_et_a94a8_test_1",
+    },
+  ],
+  0,
+  9,
+  "_et_a94a8_test_4",
+  Array [],
+  1,
+  -5,
+  Array [
+    2,
+    1,
+    null,
+    Object {
+      "tag": "image",
+      "templateId": "_et_a94a8_test_4",
+    },
+  ],
+]

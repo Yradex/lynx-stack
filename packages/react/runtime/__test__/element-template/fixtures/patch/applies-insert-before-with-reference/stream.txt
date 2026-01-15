@@ -1,0 +1,77 @@
+Array [
+  -3,
+  Array [
+    3,
+    0,
+    Object {
+      "attributes": Object {
+        "id": "a",
+      },
+      "tag": "view",
+      "templateId": "_et_a94a8_test_4",
+    },
+    3,
+    0,
+    Object {
+      "attributes": Object {
+        "id": "b",
+      },
+      "tag": "view",
+      "templateId": "_et_a94a8_test_5",
+    },
+  ],
+  0,
+  4,
+  "_et_a94a8_test_1",
+  Array [],
+  1,
+  -3,
+  Array [
+    2,
+    0,
+    null,
+    Object {
+      "attributes": Object {
+        "id": "x",
+      },
+      "tag": "view",
+      "templateId": "_et_a94a8_test_1",
+    },
+  ],
+  0,
+  5,
+  "_et_a94a8_test_2",
+  Array [],
+  1,
+  -3,
+  Array [
+    2,
+    0,
+    null,
+    Object {
+      "attributes": Object {
+        "id": "a",
+      },
+      "tag": "view",
+      "templateId": "_et_a94a8_test_2",
+    },
+  ],
+  0,
+  6,
+  "_et_a94a8_test_3",
+  Array [],
+  1,
+  -3,
+  Array [
+    2,
+    0,
+    null,
+    Object {
+      "attributes": Object {
+        "id": "b",
+      },
+      "tag": "view",
+      "templateId": "_et_a94a8_test_3",
+    },
+  ],
+]

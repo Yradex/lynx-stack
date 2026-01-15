@@ -1,0 +1,8 @@
+"<page>
+  <view />
+  <_et_test_detach>
+    <raw-text text=\"A\" />
+    <raw-text text=\"B\" />
+
+  </_et_test_detach>
+</page>"
