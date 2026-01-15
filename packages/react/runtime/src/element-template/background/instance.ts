@@ -218,6 +218,10 @@ export class BackgroundElementTemplateInstance {
   setAttribute(key: string, value: unknown): void {
     if (key === 'attrs') {
       const rawAttrs = (value ?? {}) as Record<string, unknown>;
+      if ('__nodeCount' in rawAttrs) {
+        this.nodeCount = rawAttrs['__nodeCount'] as number;
+        delete rawAttrs['__nodeCount'];
+      }
       const prev = this._attrs;
       const next: AttrsByPartId = {};
 
