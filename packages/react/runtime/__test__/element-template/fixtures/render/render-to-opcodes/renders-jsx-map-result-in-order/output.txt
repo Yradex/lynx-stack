@@ -1,0 +1,16 @@
+Array [
+  0,
+  "vnode:root",
+  4,
+  0,
+  0,
+  "vnode:item-0",
+  1,
+  0,
+  "vnode:item-1",
+  1,
+  0,
+  "vnode:item-2",
+  1,
+  1,
+]

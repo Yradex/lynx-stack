@@ -1,0 +1,35 @@
+Array [
+  Array [
+    "__CreateRawText",
+    "Hello",
+  ],
+  Array [
+    "__ElementFromBinary",
+    "_et_foo",
+    null,
+    Array [
+      Object {
+        "attributes": Object {
+          "id": "test",
+        },
+        "id": 0,
+        "type": "setAttributes",
+      },
+      Object {
+        "id": 1,
+        "node": Object {
+          "text": "Hello",
+          "type": "rawText",
+        },
+        "type": "insertBefore",
+      },
+    ],
+    null,
+    null,
+  ],
+  Array [
+    "__AppendElement",
+    "root",
+    "<_et_foo />",
+  ],
+]

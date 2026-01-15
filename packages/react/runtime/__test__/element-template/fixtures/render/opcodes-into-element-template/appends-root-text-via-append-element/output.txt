@@ -1,0 +1,8 @@
+Object {
+  "rootChildren": Array [
+    Object {
+      "text": "root",
+      "type": "rawText",
+    },
+  ],
+}

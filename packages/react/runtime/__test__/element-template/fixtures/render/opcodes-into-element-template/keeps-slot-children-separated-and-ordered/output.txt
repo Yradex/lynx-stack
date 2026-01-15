@@ -1,0 +1,35 @@
+Object {
+  "rootChild": Object {
+    "attributes": Object {
+      "part-id": 0,
+    },
+    "children": Array [
+      Object {
+        "attributes": Object {
+          "part-id": 0,
+        },
+        "children": Array [
+          Object {
+            "text": "A",
+            "type": "rawText",
+          },
+        ],
+        "tag": "slot",
+      },
+      Object {
+        "attributes": Object {
+          "part-id": 1,
+        },
+        "children": Array [
+          Object {
+            "text": "B",
+            "type": "rawText",
+          },
+        ],
+        "tag": "slot",
+      },
+    ],
+    "tag": "_et_foo",
+    "templateId": "_et_foo",
+  },
+}

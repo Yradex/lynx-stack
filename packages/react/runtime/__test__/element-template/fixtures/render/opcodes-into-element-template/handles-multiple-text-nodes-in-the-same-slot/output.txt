@@ -1,0 +1,12 @@
+Object {
+  "slotChildren": Array [
+    Object {
+      "text": "A",
+      "type": "rawText",
+    },
+    Object {
+      "text": "B",
+      "type": "rawText",
+    },
+  ],
+}

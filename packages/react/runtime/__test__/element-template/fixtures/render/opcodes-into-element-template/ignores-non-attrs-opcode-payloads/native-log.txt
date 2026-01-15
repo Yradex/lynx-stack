@@ -1,0 +1,15 @@
+Array [
+  Array [
+    "__ElementFromBinary",
+    "_et_foo",
+    null,
+    Array [],
+    null,
+    null,
+  ],
+  Array [
+    "__AppendElement",
+    "root",
+    "<_et_foo />",
+  ],
+]

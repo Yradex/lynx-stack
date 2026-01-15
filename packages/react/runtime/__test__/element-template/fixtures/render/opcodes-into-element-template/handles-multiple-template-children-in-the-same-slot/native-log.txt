@@ -1,0 +1,52 @@
+Array [
+  Array [
+    "__ElementFromBinary",
+    "_et_child_a",
+    null,
+    Array [],
+    null,
+    null,
+  ],
+  Array [
+    "__ElementFromBinary",
+    "_et_child_b",
+    null,
+    Array [],
+    null,
+    null,
+  ],
+  Array [
+    "__ElementFromBinary",
+    "_et_parent",
+    null,
+    Array [
+      Object {
+        "id": 0,
+        "node": Object {
+          "attributes": Object {},
+          "children": Array [],
+          "tag": "_et_child_a",
+          "templateId": "_et_child_a",
+        },
+        "type": "insertBefore",
+      },
+      Object {
+        "id": 0,
+        "node": Object {
+          "attributes": Object {},
+          "children": Array [],
+          "tag": "_et_child_b",
+          "templateId": "_et_child_b",
+        },
+        "type": "insertBefore",
+      },
+    ],
+    null,
+    null,
+  ],
+  Array [
+    "__AppendElement",
+    "root",
+    "<_et_parent />",
+  ],
+]

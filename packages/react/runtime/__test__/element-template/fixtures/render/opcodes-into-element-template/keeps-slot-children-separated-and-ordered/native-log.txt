@@ -1,0 +1,40 @@
+Array [
+  Array [
+    "__CreateRawText",
+    "A",
+  ],
+  Array [
+    "__CreateRawText",
+    "B",
+  ],
+  Array [
+    "__ElementFromBinary",
+    "_et_foo",
+    null,
+    Array [
+      Object {
+        "id": 0,
+        "node": Object {
+          "text": "A",
+          "type": "rawText",
+        },
+        "type": "insertBefore",
+      },
+      Object {
+        "id": 1,
+        "node": Object {
+          "text": "B",
+          "type": "rawText",
+        },
+        "type": "insertBefore",
+      },
+    ],
+    null,
+    null,
+  ],
+  Array [
+    "__AppendElement",
+    "root",
+    "<_et_foo />",
+  ],
+]

@@ -1,0 +1,10 @@
+Array [
+  0,
+  "vnode:root",
+  4,
+  0,
+  0,
+  "vnode:child",
+  1,
+  1,
+]

@@ -1,0 +1,6 @@
+Object {
+  "vnode:item-0": "_et_*",
+  "vnode:item-1": "_et_*",
+  "vnode:item-2": "_et_*",
+  "vnode:root": "_et_*",
+}

@@ -1,0 +1,11 @@
+Array [
+  Array [
+    "__CreateRawText",
+    "root",
+  ],
+  Array [
+    "__AppendElement",
+    "root",
+    "\"root\"",
+  ],
+]

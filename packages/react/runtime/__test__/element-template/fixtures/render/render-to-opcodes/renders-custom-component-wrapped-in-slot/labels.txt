@@ -1,0 +1,4 @@
+Object {
+  "vnode:child": "_et_*",
+  "vnode:root": "_et_*",
+}

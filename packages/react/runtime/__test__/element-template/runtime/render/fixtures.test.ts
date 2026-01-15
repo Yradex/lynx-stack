@@ -45,22 +45,8 @@ const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures/render');
 
 describe('Fixture Integration Tests', () => {
-  const fixtures = fs
-    .readdirSync(FIXTURES_DIR)
-    .filter(entry => {
-      const fixtureDir = path.join(FIXTURES_DIR, entry);
-      if (!fs.statSync(fixtureDir).isDirectory()) return false;
-      return (
-        fs.existsSync(path.join(fixtureDir, 'index.tsx'))
-        || fs.existsSync(path.join(fixtureDir, 'case.ts'))
-        || fs.existsSync(path.join(fixtureDir, 'case.tsx'))
-      );
-    })
-    .sort();
-
   runFixtureTests({
     fixturesRoot: FIXTURES_DIR,
-    filter: fixtures,
     async run({ fixtureDir, fixtureName, update, tempDir }) {
       const casePath = fs.existsSync(path.join(fixtureDir, 'case.ts'))
         ? path.join(fixtureDir, 'case.ts')
@@ -81,18 +67,41 @@ describe('Fixture Integration Tests', () => {
           run: (context: { fixtureDir: string; fixtureName: string }) => Promise<unknown> | unknown;
           reportErrorCount?: number;
         };
-        const outputPath = path.join(fixtureDir, 'output.txt');
         const reportErrorCount = caseModule.reportErrorCount ?? 0;
-        const output = await caseModule.run({ fixtureDir, fixtureName });
+        const result = await caseModule.run({ fixtureDir, fixtureName });
+        let output = result;
+        let files: Record<string, unknown> | undefined;
+        if (result && typeof result === 'object' && !Array.isArray(result)) {
+          const candidate = result as { output?: unknown; files?: Record<string, unknown> };
+          if ('output' in candidate || 'files' in candidate) {
+            output = candidate.output;
+            files = candidate.files;
+          }
+        }
 
         expectReportErrorCount(reportErrorCount);
-        assertOrUpdateTextFile({
-          path: outputPath,
-          actual: formatFixtureOutput(output),
-          update,
-          fixtureName,
-          label: 'output',
-        });
+        if (files) {
+          for (const [fileName, value] of Object.entries(files)) {
+            assertOrUpdateTextFile({
+              path: path.join(fixtureDir, fileName),
+              actual: formatFixtureOutput(value),
+              update,
+              fixtureName,
+              label: fileName,
+            });
+          }
+        }
+        const hasOutputFile = files ? Object.prototype.hasOwnProperty.call(files, 'output.txt') : false;
+        if (output !== undefined && !hasOutputFile) {
+          const outputPath = path.join(fixtureDir, 'output.txt');
+          assertOrUpdateTextFile({
+            path: outputPath,
+            actual: formatFixtureOutput(output),
+            update,
+            fixtureName,
+            label: 'output',
+          });
+        }
         return;
       }
 

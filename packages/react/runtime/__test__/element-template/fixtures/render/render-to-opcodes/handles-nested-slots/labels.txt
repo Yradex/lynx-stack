@@ -1,0 +1,5 @@
+Object {
+  "vnode:inner": "_et_*",
+  "vnode:inner-child": "_et_*",
+  "vnode:root": "_et_*",
+}

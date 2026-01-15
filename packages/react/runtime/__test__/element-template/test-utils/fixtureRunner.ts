@@ -159,10 +159,31 @@ function listFixtureDirs(fixturesRoot: string): string[] {
     throw new Error(`Fixtures root not found: ${fixturesRoot}`);
   }
 
-  return fs
-    .readdirSync(fixturesRoot)
-    .filter(entry => fs.statSync(path.join(fixturesRoot, entry)).isDirectory())
-    .sort();
+  const results: string[] = [];
+
+  function hasFixtureFiles(dir: string): boolean {
+    return ['case.ts', 'case.tsx', 'index.tsx'].some(fileName => fs.existsSync(path.join(dir, fileName)));
+  }
+
+  function walk(dir: string): void {
+    if (hasFixtureFiles(dir)) {
+      const relative = path.relative(fixturesRoot, dir);
+      if (relative && relative !== '.') {
+        results.push(relative);
+      }
+      return;
+    }
+
+    for (const entry of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, entry);
+      if (fs.statSync(fullPath).isDirectory()) {
+        walk(fullPath);
+      }
+    }
+  }
+
+  walk(fixturesRoot);
+  return results.sort();
 }
 
 function parseFixtureFilter(): string[] {

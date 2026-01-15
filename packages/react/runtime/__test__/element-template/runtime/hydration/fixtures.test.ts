@@ -37,17 +37,40 @@ describe('Hydration fixtures', () => {
         run: (context: { fixtureDir: string; fixtureName: string }) => Promise<unknown> | unknown;
         reportErrorCount?: number;
       };
-      const output = await caseModule.run({ fixtureDir, fixtureName });
+      const result = await caseModule.run({ fixtureDir, fixtureName });
       const reportErrorCount = caseModule.reportErrorCount ?? 0;
+      let output = result;
+      let files: Record<string, unknown> | undefined;
+      if (result && typeof result === 'object' && !Array.isArray(result)) {
+        const candidate = result as { output?: unknown; files?: Record<string, unknown> };
+        if ('output' in candidate || 'files' in candidate) {
+          output = candidate.output;
+          files = candidate.files;
+        }
+      }
 
       expectReportErrorCount(reportErrorCount);
-      assertOrUpdateTextFile({
-        path: path.join(fixtureDir, 'output.txt'),
-        actual: formatFixtureOutput(output),
-        update,
-        fixtureName,
-        label: 'output',
-      });
+      if (files) {
+        for (const [fileName, value] of Object.entries(files)) {
+          assertOrUpdateTextFile({
+            path: path.join(fixtureDir, fileName),
+            actual: formatFixtureOutput(value),
+            update,
+            fixtureName,
+            label: fileName,
+          });
+        }
+      }
+      const hasOutputFile = files ? Object.prototype.hasOwnProperty.call(files, 'output.txt') : false;
+      if (output !== undefined && !hasOutputFile) {
+        assertOrUpdateTextFile({
+          path: path.join(fixtureDir, 'output.txt'),
+          actual: formatFixtureOutput(output),
+          update,
+          fixtureName,
+          label: 'output',
+        });
+      }
     },
   });
 });
