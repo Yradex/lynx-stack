@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
 
 import { resetElementTemplateHydrationListener } from '../../../../src/element-template/background/hydration-listener.js';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
@@ -17,6 +17,12 @@ import { renderToString } from '../../../../src/renderToOpcodes/index.js';
 import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
 import { registerTemplates } from '../../test-utils/registry.js';
 import { serializeToJSX } from '../../test-utils/serializer.js';
+import {
+  assertMissingFile,
+  assertOrUpdateTextFile,
+  expectReportErrorCount,
+  runFixtureTests,
+} from '../../test-utils/fixtureRunner.js';
 
 declare global {
   var __USE_ELEMENT_TEMPLATE__: boolean | undefined;
@@ -36,8 +42,6 @@ interface TransformResult {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures');
-
-const isUpdate = process.env['UPDATE'] === '1' || process.env['UPDATE'] === 'true';
 
 describe('Fixture Integration Tests', () => {
   let root: RootNode;
@@ -64,17 +68,15 @@ describe('Fixture Integration Tests', () => {
     globalThis.__USE_ELEMENT_TEMPLATE__ = undefined;
   });
 
-  const fixtures = fs.readdirSync(FIXTURES_DIR).filter(f => fs.statSync(path.join(FIXTURES_DIR, f)).isDirectory());
-
-  fixtures.forEach(fixtureName => {
-    it(`fixture: ${fixtureName}`, async () => {
-      const fixtureDir = path.join(FIXTURES_DIR, fixtureName);
+  runFixtureTests({
+    fixturesRoot: FIXTURES_DIR,
+    async run({ fixtureDir, fixtureName, update, tempDir }) {
       const sourcePath = path.join(fixtureDir, 'index.tsx');
       const compiledJsPath = path.join(fixtureDir, 'index.js.txt');
       const templatesPath = path.join(fixtureDir, 'templates.json.txt');
       const expectedPath = path.join(fixtureDir, 'output.txt');
       const papiPath = path.join(fixtureDir, 'papi.txt');
-      const tempImportPath = path.join(fixtureDir, 'temp_actual.js');
+      const tempImportPath = path.join(tempDir, 'temp_actual.js');
 
       if (!fs.existsSync(sourcePath)) {
         throw new Error(`Source file missing for fixture "${fixtureName}"`);
@@ -111,33 +113,33 @@ describe('Fixture Integration Tests', () => {
       const outputTemplates = result.elementTemplates ? JSON.stringify(result.elementTemplates, null, 2) : '';
 
       // 2. Verify or Bless Compilation Artifacts
-      if (isUpdate) {
-        fs.writeFileSync(compiledJsPath, outputCode);
-        if (outputTemplates) {
-          fs.writeFileSync(templatesPath, outputTemplates);
-        } else if (fs.existsSync(templatesPath)) {
-          fs.unlinkSync(templatesPath);
-        }
-      } else {
-        if (!fs.existsSync(compiledJsPath)) {
-          throw new Error(`Compiled file missing for fixture "${fixtureName}". Run with UPDATE=1.`);
-        }
-        const expectedCode = fs.readFileSync(compiledJsPath, 'utf8');
-        expect(outputCode).toBe(expectedCode);
+      assertOrUpdateTextFile({
+        path: compiledJsPath,
+        actual: outputCode,
+        update,
+        fixtureName,
+        label: 'compiled js',
+      });
 
-        if (outputTemplates) {
-          if (!fs.existsSync(templatesPath)) {
-            throw new Error(`Templates file missing for fixture "${fixtureName}". Run with UPDATE=1.`);
-          }
-          const expectedTemplates = fs.readFileSync(templatesPath, 'utf8');
-          expect(outputTemplates).toBe(expectedTemplates);
-        } else {
-          expect(fs.existsSync(templatesPath)).toBe(false);
-        }
+      if (outputTemplates) {
+        assertOrUpdateTextFile({
+          path: templatesPath,
+          actual: outputTemplates,
+          update,
+          fixtureName,
+          label: 'templates',
+        });
+      } else {
+        assertMissingFile({
+          path: templatesPath,
+          update,
+          fixtureName,
+          label: 'templates',
+        });
       }
 
       // 3. Register templates
-      if (isUpdate && outputTemplates) {
+      if (update && outputTemplates) {
         registerTemplates(JSON.parse(outputTemplates) as any[]);
       } else if (fs.existsSync(templatesPath)) {
         const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8')) as any[];
@@ -160,31 +162,26 @@ describe('Fixture Integration Tests', () => {
         const actualPapi = JSON.stringify(nativeLog, null, 2);
 
         // 6. Verify or Bless Output Snapshot
-        if (isUpdate) {
-          fs.writeFileSync(expectedPath, actualJSX);
-          fs.writeFileSync(papiPath, actualPapi);
-        } else {
-          if (!fs.existsSync(expectedPath)) {
-            throw new Error(
-              `Expected file missing for fixture "${fixtureName}". Run with UPDATE=1 to generate it.`,
-            );
-          }
-          const expectedJSX = fs.readFileSync(expectedPath, 'utf8');
-          expect(actualJSX).toBe(expectedJSX);
-
-          if (!fs.existsSync(papiPath)) {
-            throw new Error(
-              `PAPI log missing for fixture "${fixtureName}". Run with UPDATE=1 to generate it.`,
-            );
-          }
-          const expectedPapi = fs.readFileSync(papiPath, 'utf8');
-          expect(actualPapi).toBe(expectedPapi);
-        }
+        assertOrUpdateTextFile({
+          path: expectedPath,
+          actual: actualJSX,
+          update,
+          fixtureName,
+          label: 'jsx output',
+        });
+        assertOrUpdateTextFile({
+          path: papiPath,
+          actual: actualPapi,
+          update,
+          fixtureName,
+          label: 'papi log',
+        });
       } finally {
         if (fs.existsSync(tempImportPath)) {
           fs.unlinkSync(tempImportPath);
         }
       }
-    });
+      expectReportErrorCount(0);
+    },
   });
 });
