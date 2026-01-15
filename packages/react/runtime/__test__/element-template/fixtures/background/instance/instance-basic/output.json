@@ -1,0 +1,29 @@
+{
+  "create": {
+    "type": "view",
+    "id": 1
+  },
+  "increment": {
+    "ids": [
+      1,
+      2
+    ]
+  },
+  "registered": true,
+  "tearDown": {
+    "parentId": 1,
+    "childId": 2,
+    "before": {
+      "hasParent": true,
+      "hasChild": true,
+      "parentFirst": 2,
+      "childParent": 1
+    },
+    "after": {
+      "hasParent": false,
+      "hasChild": false,
+      "parentFirst": null,
+      "childParent": null
+    }
+  }
+}

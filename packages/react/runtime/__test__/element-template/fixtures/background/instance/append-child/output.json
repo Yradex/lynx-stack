@@ -1,0 +1,20 @@
+{
+  "single": {
+    "parentFirst": 2,
+    "parentLast": 2,
+    "childParent": 1
+  },
+  "multiple": {
+    "parentFirst": 2,
+    "parentLast": 3,
+    "child1Next": 3,
+    "child2Prev": 2
+  },
+  "reparent": {
+    "parentAFirst": null,
+    "parentALast": null,
+    "parentBFirst": 3,
+    "parentBLast": 3,
+    "moverParent": 2
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "nonObjectAttrs": [
+    1,
+    [
+      4,
+      0,
+      {}
+    ]
+  ],
+  "reuseProps": [],
+  "nullishAttrs": [
+    1,
+    [
+      4,
+      0,
+      {}
+    ]
+  ],
+  "silentInsert": [],
+  "reportError": {
+    "calls": 1,
+    "message": "ElementTemplate patch has illegal handleId 0."
+  }
+}

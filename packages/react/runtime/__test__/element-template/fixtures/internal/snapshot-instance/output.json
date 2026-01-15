@@ -1,0 +1,3 @@
+{
+  "message": "SnapshotInstance should not be instantiated when using Element Template."
+}

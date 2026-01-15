@@ -1,0 +1,24 @@
+{
+  "slotType": {
+    "type": "slot"
+  },
+  "textType": {
+    "type": "raw-text",
+    "text": "hello"
+  },
+  "textSetAttr": {
+    "afterIndex": "world",
+    "afterData": "demo"
+  },
+  "textDataProp": {
+    "text": "world",
+    "data": "world"
+  },
+  "delegateAttrs": {
+    "attrs": {
+      "0": {
+        "color": "red"
+      }
+    }
+  }
+}
