@@ -14,16 +14,16 @@ import { resetTemplateId } from '../../../../src/element-template/runtime/templa
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { removeCtxNotFoundEventListener } from '../../../../src/lifecycle/patch/error.js';
 import { renderToString } from '../../../../src/renderToOpcodes/index.js';
-import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
-import { registerTemplates } from '../../test-utils/registry.js';
-import { serializeToJSX } from '../../test-utils/serializer.js';
+import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
+import { registerTemplates } from '../../test-utils/debug/registry.js';
+import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 import {
   assertMissingFile,
   assertOrUpdateTextFile,
   formatFixtureOutput,
   expectReportErrorCount,
   runFixtureTests,
-} from '../../test-utils/fixtureRunner.js';
+} from '../../test-utils/debug/fixtureRunner.js';
 
 declare global {
   var __USE_ELEMENT_TEMPLATE__: boolean | undefined;

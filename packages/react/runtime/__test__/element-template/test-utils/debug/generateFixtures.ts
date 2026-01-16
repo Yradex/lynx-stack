@@ -5,7 +5,7 @@ import { transformReactLynx } from '@lynx-js/react-transform';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.resolve(__dirname, '../fixtures');
+const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures');
 
 async function generate(fixtureName: string) {
   const fixtureDir = path.join(FIXTURES_DIR, fixtureName);

@@ -9,9 +9,9 @@ import { backgroundElementTemplateInstanceManager } from '../../../../src/elemen
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
-import { ElementTemplateEnvManager } from '../../test-utils/envManager.js';
-import { flushCoreContextEvents } from '../../test-utils/mockNativePapi/context.js';
-import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
+import { flushCoreContextEvents } from '../../test-utils/mock/mockNativePapi/context.js';
+import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
 
 import '../../../../src/element-template/native/index.js';
 

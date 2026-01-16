@@ -4,8 +4,8 @@ import { renderOpcodesIntoElementTemplate } from '../../../../../src/element-tem
 import { resetTemplateId } from '../../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../../../src/renderToOpcodes/index.js';
-import { installMockNativePapi } from '../../../test-utils/mockNativePapi.js';
-import { registerTemplates } from '../../../test-utils/registry.js';
+import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
+import { registerTemplates } from '../../../test-utils/debug/registry.js';
 
 export interface RootNode {
   type: 'root';

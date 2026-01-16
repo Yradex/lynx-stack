@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ElementTemplateEnvManager } from './envManager.js';
+import { ElementTemplateEnvManager } from '../debug/envManager.js';
 import type { ContextEvent, ContextEventTarget } from './mockNativePapi/context.js';
 import { installMockNativePapi } from './mockNativePapi.js';
 

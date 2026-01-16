@@ -4,8 +4,8 @@ import { root } from '../../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../../src/element-template/protocol/lifecycle-constant.js';
 import { resetTemplateId } from '../../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
-import { flushCoreContextEvents } from '../../../test-utils/mockNativePapi/context.js';
-import { installMockNativePapi } from '../../../test-utils/mockNativePapi.js';
+import { flushCoreContextEvents } from '../../../test-utils/mock/mockNativePapi/context.js';
+import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
 
 declare const renderPage: () => void;
 

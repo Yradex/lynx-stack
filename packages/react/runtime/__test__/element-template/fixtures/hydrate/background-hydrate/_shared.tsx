@@ -24,9 +24,9 @@ import { ElementTemplateLifecycleConstant } from '../../../../../src/element-tem
 import type { SerializedETInstance } from '../../../../../src/element-template/protocol/types.js';
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../../src/element-template/runtime/page/root-instance.js';
-import { ElementTemplateEnvManager } from '../../../test-utils/envManager.js';
-import { installMockNativePapi } from '../../../test-utils/mockNativePapi.js';
-import { serializeToJSX } from '../../../test-utils/serializer.js';
+import { ElementTemplateEnvManager } from '../../../test-utils/debug/envManager.js';
+import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
+import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 
 declare const renderPage: () => void;
 

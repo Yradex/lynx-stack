@@ -2,8 +2,8 @@ import { root } from '../../../../../src/element-template/index.js';
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
 import { resetTemplateId } from '../../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
-import { installMockNativePapi } from '../../../test-utils/mockNativePapi.js';
-import { serializeToJSX } from '../../../test-utils/serializer.js';
+import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
+import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 
 declare const renderPage: () => void;
 

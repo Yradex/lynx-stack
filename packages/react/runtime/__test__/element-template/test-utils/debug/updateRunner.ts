@@ -2,17 +2,20 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { hydrate as hydrateBackground } from '../../../src/element-template/background/hydrate.js';
-import type { BackgroundElementTemplateInstance } from '../../../src/element-template/background/instance.js';
-import { root } from '../../../src/element-template/index.js';
-import { ElementTemplateLifecycleConstant } from '../../../src/element-template/protocol/lifecycle-constant.js';
-import type { ElementTemplatePatchStream, SerializedETInstance } from '../../../src/element-template/protocol/types.js';
-import { applyElementTemplatePatches } from '../../../src/element-template/runtime/patch.js';
-import { __page } from '../../../src/element-template/runtime/page/page.js';
-import { __root } from '../../../src/element-template/runtime/page/root-instance.js';
+import { hydrate as hydrateBackground } from '../../../../src/element-template/background/hydrate.js';
+import type { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
+import { root } from '../../../../src/element-template/index.js';
+import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
+import type {
+  ElementTemplatePatchStream,
+  SerializedETInstance,
+} from '../../../../src/element-template/protocol/types.js';
+import { applyElementTemplatePatches } from '../../../../src/element-template/runtime/patch.js';
+import { __page } from '../../../../src/element-template/runtime/page/page.js';
+import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from './envManager.js';
-import { installMockNativePapi } from './mockNativePapi.js';
-import { formatOpcodes } from './mockNativePapi/templateTree.js';
+import { installMockNativePapi } from '../mock/mockNativePapi.js';
+import { formatOpcodes } from '../mock/mockNativePapi/templateTree.js';
 import { serializeBackgroundTree, serializeToJSX } from './serializer.js';
 
 declare const renderPage: () => void;

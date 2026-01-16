@@ -3,8 +3,8 @@ import { root } from '../../../../../src/element-template/index.js';
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
 import { applyElementTemplatePatches } from '../../../../../src/element-template/runtime/patch.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
-import { registerTemplates } from '../../../test-utils/registry.js';
-import { serializeToJSX } from '../../../test-utils/serializer.js';
+import { registerTemplates } from '../../../test-utils/debug/registry.js';
+import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 import { setupPatchContext, teardownPatchContext } from '../_shared.js';
 
 declare const renderPage: () => void;

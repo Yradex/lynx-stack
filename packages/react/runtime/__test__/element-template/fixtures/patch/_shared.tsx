@@ -6,8 +6,8 @@ import { resetElementTemplatePatchListener } from '../../../../src/element-templ
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
-import { ElementTemplateEnvManager } from '../../test-utils/envManager.js';
-import { installMockNativePapi } from '../../test-utils/mockNativePapi.js';
+import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
+import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
 
 declare const renderPage: () => void;
 

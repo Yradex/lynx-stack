@@ -3,11 +3,11 @@ import { fileURLToPath } from 'node:url';
 
 import { describe } from 'vitest';
 
-import { runFixtureTests } from '../test-utils/fixtureRunner.js';
+import { runFixtureTests } from './fixtureRunner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.resolve(__dirname, '../fixtures/utils');
+const FIXTURES_DIR = path.resolve(__dirname, '../../fixtures/utils');
 
 describe('Test utils fixtures', () => {
   runFixtureTests({

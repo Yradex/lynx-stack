@@ -4,11 +4,14 @@
 
 import { afterEach, beforeEach, expect } from 'vitest';
 
-import './globals.js';
-
-import { registerTemplates } from './registry.ts';
+import { injectGlobals } from './debug/globals.js';
+import { registerTemplates } from './debug/registry.ts';
+import { installMockNativePapi } from './mock/mockNativePapi.ts';
 
 globalThis.__REGISTER_ELEMENT_TEMPLATES__ = registerTemplates;
+
+injectGlobals();
+installMockNativePapi();
 
 beforeEach(() => {
   // Reset global error collection for current test

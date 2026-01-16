@@ -14,7 +14,7 @@ import {
   isUnknownArrayForMock,
 } from './mockNativePapi/templateTree.js';
 import type { CompiledTemplateNode } from './mockNativePapi/templateTree.js';
-import { clearTemplates, templateRepo } from './registry.js';
+import { clearTemplates, templateRepo } from '../debug/registry.js';
 
 const isRecord = isRecordForMock;
 const isUnknownArray = isUnknownArrayForMock;
@@ -123,8 +123,12 @@ export function installMockNativePapi(
   vi.stubGlobal('lynx', {
     ...baseLynx,
     reportError: mockReportError,
-    getJSContext: () => jsContext,
-    getCoreContext: () => coreContext,
+    getJSContext: () => {
+      return jsContext;
+    },
+    getCoreContext: () => {
+      return coreContext;
+    },
   });
 
   return {

@@ -4,7 +4,7 @@ import { BackgroundElementTemplateInstance } from '../../../../../src/element-te
 import { backgroundElementTemplateInstanceManager } from '../../../../../src/element-template/background/manager.js';
 import { root } from '../../../../../src/element-template/index.js';
 import { __root, setRoot } from '../../../../../src/element-template/runtime/page/root-instance.js';
-import { serializeBackgroundTree } from '../../../test-utils/serializer.js';
+import { serializeBackgroundTree } from '../../../test-utils/debug/serializer.js';
 
 type CaseRunner = () => unknown;
 

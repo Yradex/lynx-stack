@@ -34,31 +34,7 @@ const performance = {
   isProfileRecording: vi.fn(() => true),
 };
 
-function injectGlobals() {
-  const listeners = new Map();
-  const context = {
-    addEventListener: vi.fn((type, listener) => {
-      if (!listeners.has(type)) {
-        listeners.set(type, new Set());
-      }
-      listeners.get(type).add(listener);
-    }),
-    removeEventListener: vi.fn((type, listener) => {
-      const set = listeners.get(type);
-      if (set) {
-        set.delete(listener);
-      }
-    }),
-    dispatchEvent: vi.fn((event) => {
-      const set = listeners.get(event.type);
-      if (set) {
-        set.forEach((listener) => listener(event));
-      }
-      return 0;
-    }),
-    postMessage: vi.fn(() => {}),
-  };
-
+export function injectGlobals() {
   globalThis.__DEV__ = true;
   globalThis.__PROFILE__ = true;
   globalThis.__ALOG__ = true;
@@ -75,8 +51,6 @@ function injectGlobals() {
   globalThis.lynxCoreInject.tt = {};
   globalThis.lynx = {
     performance,
-    getJSContext: () => context,
-    getCoreContext: () => context,
   };
   globalThis.requestAnimationFrame = setTimeout;
   globalThis.cancelAnimationFrame = clearTimeout;
@@ -90,5 +64,3 @@ function injectGlobals() {
   console.profileEnd = vi.fn();
   console.alog = vi.fn();
 }
-
-injectGlobals();

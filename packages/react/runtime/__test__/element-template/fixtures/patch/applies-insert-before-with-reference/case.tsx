@@ -1,7 +1,7 @@
 import { hydrate as hydrateBackground } from '../../../../../src/element-template/background/hydrate.js';
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
 import { applyElementTemplatePatches } from '../../../../../src/element-template/runtime/patch.js';
-import { serializeToJSX } from '../../../test-utils/serializer.js';
+import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 import { renderAndCollect, setupPatchContext, teardownPatchContext } from '../_shared.js';
 
 export function run() {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { root } from '../../../src/element-template/index.js';
-import { ElementTemplateOpcodes } from '../../../src/element-template/protocol/opcodes.js';
-import type { ElementTemplatePatchStream } from '../../../src/element-template/protocol/types.js';
+import { root } from '../../../../src/element-template/index.js';
+import { ElementTemplateOpcodes } from '../../../../src/element-template/protocol/opcodes.js';
+import type { ElementTemplatePatchStream } from '../../../../src/element-template/protocol/types.js';
 import { formatPatchStream, runElementTemplateUpdate } from './updateRunner.js';
 
 describe('element-template update runner', () => {
