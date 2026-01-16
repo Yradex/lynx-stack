@@ -1,5 +1,9 @@
 import { hydrate as hydrateBackground } from '../../../../../src/element-template/background/hydrate.js';
 import {
+  GlobalCommitContext,
+  resetGlobalCommitContext,
+} from '../../../../../src/element-template/background/commit-context.js';
+import {
   installElementTemplateHydrationListener,
   resetElementTemplateHydrationListener,
 } from '../../../../../src/element-template/background/hydration-listener.js';
@@ -60,28 +64,30 @@ export function run() {
     root.render(<App label='before' />);
     envManager.switchToMainThread();
     renderPage();
-    envManager.switchToBackground();
-    envManager.switchToMainThread();
-
-    const before = hydrationData[0];
-    if (!before) {
-      throw new Error('Missing hydration payload.');
-    }
-
     const beforePageJsx = serializeToJSX(__page);
     updateEvents.length = 0;
 
     envManager.switchToBackground();
-    const backgroundRoot = __root as { __jsx?: unknown };
-    const previousJsx = backgroundRoot.__jsx;
+
+    if (hydrationData.length === 0) {
+      throw new Error('Missing hydration payload.');
+    }
+
+    resetGlobalCommitContext();
     root.render(<App label='after' />);
-    backgroundRoot.__jsx = previousJsx;
+
+    const patches = [...GlobalCommitContext.patches];
+    const flushOptions = { ...GlobalCommitContext.flushOptions };
+    resetGlobalCommitContext();
+
+    if (patches.length > 0) {
+      lynx.getCoreContext().dispatchEvent({
+        type: ElementTemplateLifecycleConstant.update,
+        data: { patches, flushOptions },
+      });
+    }
 
     envManager.switchToMainThread();
-    renderPage();
-    envManager.switchToBackground();
-    envManager.switchToMainThread();
-
     const afterPageJsx = serializeToJSX(__page);
     const updatePayload = updateEvents[updateEvents.length - 1];
     const eventPatches = updatePayload?.patches ?? [];
