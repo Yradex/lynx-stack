@@ -1,0 +1,105 @@
+import { hydrate as hydrateBackground } from '../../../../../src/element-template/background/hydrate.js';
+import {
+  installElementTemplateHydrationListener,
+  resetElementTemplateHydrationListener,
+} from '../../../../../src/element-template/background/hydration-listener.js';
+import { root } from '../../../../../src/element-template/index.js';
+import {
+  installElementTemplatePatchListener,
+  resetElementTemplatePatchListener,
+} from '../../../../../src/element-template/native/patch-listener.js';
+import { ElementTemplateLifecycleConstant } from '../../../../../src/element-template/protocol/lifecycle-constant.js';
+import type {
+  ElementTemplateCommitContext,
+  SerializedETInstance,
+} from '../../../../../src/element-template/protocol/types.js';
+import { __page } from '../../../../../src/element-template/runtime/page/page.js';
+import { __root } from '../../../../../src/element-template/runtime/page/root-instance.js';
+import { ElementTemplateEnvManager } from '../../../test-utils/envManager.js';
+import { installMockNativePapi } from '../../../test-utils/mockNativePapi.js';
+import { serializeToJSX } from '../../../test-utils/serializer.js';
+import { formatPatchStream } from '../../../test-utils/updateRunner.js';
+
+declare const renderPage: () => void;
+
+export function run() {
+  const envManager = new ElementTemplateEnvManager();
+  const { cleanup } = installMockNativePapi({ clearTemplatesOnCleanup: false });
+  const hydrationData: SerializedETInstance[] = [];
+  const updateEvents: ElementTemplateCommitContext[] = [];
+
+  const onHydrate = (event: { data: unknown }) => {
+    const data = event.data;
+    if (Array.isArray(data)) {
+      for (const item of data) {
+        hydrationData.push(item as SerializedETInstance);
+      }
+    }
+  };
+
+  const onUpdate = (event: { data: unknown }) => {
+    updateEvents.push(event.data as ElementTemplateCommitContext);
+  };
+
+  envManager.resetEnv('background');
+  envManager.setUseElementTemplate(true);
+  lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
+  lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
+  installElementTemplateHydrationListener();
+  installElementTemplatePatchListener();
+
+  try {
+    function Child({ label }: { label: string }) {
+      return <view attrs={{ 0: { id: label } }} />;
+    }
+
+    function App({ label }: { label: string }) {
+      return <Child label={label} />;
+    }
+
+    root.render(<App label='before' />);
+    envManager.switchToMainThread();
+    renderPage();
+    envManager.switchToBackground();
+    envManager.switchToMainThread();
+
+    const before = hydrationData[0];
+    if (!before) {
+      throw new Error('Missing hydration payload.');
+    }
+
+    const beforePageJsx = serializeToJSX(__page);
+    updateEvents.length = 0;
+
+    envManager.switchToBackground();
+    const backgroundRoot = __root as { __jsx?: unknown };
+    const previousJsx = backgroundRoot.__jsx;
+    root.render(<App label='after' />);
+    backgroundRoot.__jsx = previousJsx;
+
+    envManager.switchToMainThread();
+    renderPage();
+    envManager.switchToBackground();
+    envManager.switchToMainThread();
+
+    const afterPageJsx = serializeToJSX(__page);
+    const updatePayload = updateEvents[updateEvents.length - 1];
+    const eventPatches = updatePayload?.patches ?? [];
+
+    return {
+      files: {
+        'before-jsx.txt': beforePageJsx,
+        'after-jsx.txt': afterPageJsx,
+        'patches.txt': formatPatchStream(eventPatches),
+      },
+    };
+  } finally {
+    lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
+    lynx.getJSContext().removeEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
+    resetElementTemplateHydrationListener();
+    resetElementTemplatePatchListener();
+    envManager.setUseElementTemplate(false);
+    cleanup();
+    (__root as { __jsx?: unknown }).__jsx = undefined;
+  }
+}
