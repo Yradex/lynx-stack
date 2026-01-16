@@ -6,7 +6,6 @@ export function App() {
     const y = 2;
     const z = 3;
     return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
-        __nodeCount: 6,
         children: [
             /*#__PURE__*/ _jsx(Slot, {
                 id: 0,

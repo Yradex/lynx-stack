@@ -1,9 +1,6 @@
 Array [
   0,
   "vnode:root",
-  2,
-  "__nodeCount",
-  2,
   4,
   0,
   3,
