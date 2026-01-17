@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, vi } from 'vitest';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = any;
+
 import { resetElementTemplateHydrationListener } from '../../../../src/element-template/background/hydration-listener.js';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
@@ -113,6 +116,17 @@ describe('Fixture Integration Tests', () => {
       ElementTemplateRegistry.clear();
       resetTemplateId();
       globalThis.__USE_ELEMENT_TEMPLATE__ = true;
+
+      // Render-to-opcodes / template registration happens on main thread.
+      globalThis.__LEPUS__ = true;
+      globalThis.__JS__ = false;
+      globalThis.__MAIN_THREAD__ = true;
+      globalThis.__BACKGROUND__ = false;
+
+      // Required by src/lynx/env.ts when __LEPUS__ is false in some flows.
+      (globalThis as AnyRecord).lynxCoreInject ??= {};
+      (globalThis as AnyRecord).lynxCoreInject.tt ??= {};
+      (globalThis as AnyRecord).lynxCoreInject.tt._params ??= { initData: {}, updateData: {} };
 
       const installed = installMockNativePapi({ clearTemplatesOnCleanup: true });
       const nativeLog = installed.nativeLog as unknown[];

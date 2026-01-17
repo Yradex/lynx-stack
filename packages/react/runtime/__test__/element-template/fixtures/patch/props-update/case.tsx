@@ -20,6 +20,8 @@ import type {
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from '../../../test-utils/debug/envManager.js';
+import { resetTemplateId } from '../../../../../src/element-template/runtime/template/handle.js';
+import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
 import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
 import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 import { formatPatchStream } from '../../../test-utils/debug/updateRunner.js';
@@ -47,10 +49,20 @@ export function run() {
 
   envManager.resetEnv('background');
   envManager.setUseElementTemplate(true);
+
+  // Ensure consistent handle ids across threads
+  ElementTemplateRegistry.clear();
+  resetTemplateId();
+
+  envManager.switchToBackground();
   lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
-  lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
   installElementTemplateHydrationListener();
+
+  envManager.switchToMainThread();
+  lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
   installElementTemplatePatchListener();
+
+  envManager.switchToBackground();
 
   try {
     function Child({ label }: { label: string }) {
@@ -100,10 +112,14 @@ export function run() {
       },
     };
   } finally {
+    envManager.switchToBackground();
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
-    lynx.getJSContext().removeEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
     resetElementTemplateHydrationListener();
+
+    envManager.switchToMainThread();
+    lynx.getJSContext().removeEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
     resetElementTemplatePatchListener();
+
     envManager.setUseElementTemplate(false);
     cleanup();
     (__root as { __jsx?: unknown }).__jsx = undefined;

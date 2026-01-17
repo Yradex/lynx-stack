@@ -16,6 +16,33 @@ interface LynxMock {
 }
 
 describe('lynx.getJSContext mock', () => {
+  it('throws when calling cross-thread context methods', () => {
+    const envManager = new ElementTemplateEnvManager();
+    envManager.resetEnv('background');
+
+    const lynx = (globalThis as unknown as { lynx: LynxMock }).lynx;
+    const jsContext = lynx.getJSContext();
+    const coreContext = lynx.getCoreContext();
+
+    const noop = () => {};
+
+    envManager.switchToMainThread();
+    expect(() => coreContext.addEventListener('ping', noop)).toThrowError(
+      /coreContext\.addEventListener can only be called on background thread/,
+    );
+    expect(() => coreContext.dispatchEvent({ type: 'ping', data: 1 })).toThrowError(
+      /coreContext\.dispatchEvent can only be called on background thread/,
+    );
+
+    envManager.switchToBackground();
+    expect(() => jsContext.addEventListener('pong', noop)).toThrowError(
+      /jsContext\.addEventListener can only be called on main thread/,
+    );
+    expect(() => jsContext.postMessage('x')).toThrowError(
+      /jsContext\.postMessage can only be called on main thread/,
+    );
+  });
+
   it('dispatches events between jsContext and coreContext', () => {
     const envManager = new ElementTemplateEnvManager();
     envManager.resetEnv('background');
@@ -97,6 +124,8 @@ describe('lynx.getJSContext mock', () => {
       expect(g.__BACKGROUND__).toBe(true);
       receivedOnCore.push(e.data);
     };
+
+    envManager.switchToBackground();
     coreContext.addEventListener('message', onMessageOnCore);
 
     envManager.switchToMainThread();

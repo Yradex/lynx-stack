@@ -4,13 +4,14 @@ import { root } from '../../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../../src/element-template/protocol/lifecycle-constant.js';
 import { resetTemplateId } from '../../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
-import { flushCoreContextEvents } from '../../../test-utils/mock/mockNativePapi/context.js';
+import { ElementTemplateEnvManager } from '../../../test-utils/debug/envManager.js';
 import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
 
 declare const renderPage: () => void;
 
 interface HydrationContext {
   hydrationData: unknown[];
+  envManager: ElementTemplateEnvManager;
   cleanup: () => void;
   onHydrate: (event: { data: unknown }) => void;
 }
@@ -20,7 +21,10 @@ function setup(): HydrationContext {
   const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
   ElementTemplateRegistry.clear();
   resetTemplateId();
-  (globalThis as { __USE_ELEMENT_TEMPLATE__?: boolean }).__USE_ELEMENT_TEMPLATE__ = true;
+
+  const envManager = new ElementTemplateEnvManager();
+  envManager.resetEnv('background');
+  envManager.setUseElementTemplate(true);
 
   const hydrationData: unknown[] = [];
   const onHydrate = vi.fn().mockImplementation((event: { data: unknown }) => {
@@ -35,15 +39,17 @@ function setup(): HydrationContext {
 
   return {
     hydrationData,
+    envManager,
     cleanup: installed.cleanup,
     onHydrate,
   };
 }
 
 function teardown(context: HydrationContext): void {
+  context.envManager.switchToBackground();
   lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, context.onHydrate);
   context.cleanup();
-  (globalThis as { __USE_ELEMENT_TEMPLATE__?: boolean }).__USE_ELEMENT_TEMPLATE__ = undefined;
+  context.envManager.setUseElementTemplate(false);
 }
 
 type CaseRunner = (context: HydrationContext) => void;
@@ -62,8 +68,9 @@ export function runCaseByName(name: string): unknown {
   const context = setup();
   try {
     runner(context);
+    context.envManager.switchToMainThread();
     renderPage();
-    flushCoreContextEvents();
+    context.envManager.switchToBackground();
     return [...context.hydrationData];
   } finally {
     teardown(context);

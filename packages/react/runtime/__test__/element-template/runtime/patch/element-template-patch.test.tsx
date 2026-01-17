@@ -72,8 +72,12 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   afterEach(() => {
+    envManager.switchToBackground();
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
+
+    envManager.switchToMainThread();
     resetElementTemplatePatchListener();
+
     envManager.setUseElementTemplate(false);
   });
 

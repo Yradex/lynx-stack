@@ -53,8 +53,14 @@ export function setupPatchContext(): PatchContext {
 
   envManager.resetEnv('background');
   envManager.setUseElementTemplate(true);
+
+  // Core context lives on background thread
   installElementTemplateHydrationListener();
+
+  // JS context lives on main thread
+  envManager.switchToMainThread();
   installElementTemplatePatchListener();
+  envManager.switchToBackground();
 
   const onHydrate = vi.fn().mockImplementation((event: { data: unknown }) => {
     const data = event.data;
@@ -80,9 +86,13 @@ export function teardownPatchContext(context: PatchContext): void {
   try {
     context.cleanupNative();
   } finally {
+    context.envManager.switchToBackground();
     resetElementTemplateHydrationListener();
-    resetElementTemplatePatchListener();
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, context.onHydrate);
+
+    context.envManager.switchToMainThread();
+    resetElementTemplatePatchListener();
+
     context.envManager.setUseElementTemplate(false);
     (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
   }

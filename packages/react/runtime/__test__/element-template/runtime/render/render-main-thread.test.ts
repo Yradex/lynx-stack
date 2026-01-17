@@ -30,6 +30,10 @@ describe('renderMainThread', () => {
   it('should run successfully', () => {
     vi.mocked(mockRender).mockReturnValue([]);
 
+    // renderMainThread emits hydrate event on JS context (main thread)
+    globalThis.__MAIN_THREAD__ = true;
+    globalThis.__BACKGROUND__ = false;
+
     expect(() => renderMainThread()).not.toThrow();
   });
 });

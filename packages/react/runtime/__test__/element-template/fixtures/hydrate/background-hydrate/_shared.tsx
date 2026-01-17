@@ -69,6 +69,7 @@ function setup(): CaseContext {
 
 function teardown(context: CaseContext): void {
   // cleanup is automatic
+  envManager.switchToBackground();
   lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, context.onHydrate);
   envManager.setUseElementTemplate(false);
   (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
@@ -802,7 +803,10 @@ export function runCaseByName(name: string): unknown {
 {
   defineCase('full-flow.dispatches-update-event', (context) => {
     installElementTemplateHydrationListener();
+
+    envManager.switchToMainThread();
     installElementTemplatePatchListener();
+    envManager.switchToBackground();
 
     function App() {
       const id = __BACKGROUND__ ? 'bg' : 'main';
@@ -815,6 +819,8 @@ export function runCaseByName(name: string): unknown {
     const pageJsx = serializeToJSX(__page);
 
     resetElementTemplatePatchListener();
+
+    envManager.switchToBackground();
     resetElementTemplateHydrationListener();
 
     return { pageJsx };

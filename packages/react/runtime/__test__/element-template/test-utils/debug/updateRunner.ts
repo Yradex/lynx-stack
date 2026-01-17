@@ -145,6 +145,7 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
       formattedNativeLog: formatNativePatchLog(updateNativeLog),
     };
   } finally {
+    envManager.switchToBackground();
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
     envManager.setUseElementTemplate(false);
     // cleanup is automatic
