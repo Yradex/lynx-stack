@@ -17,7 +17,7 @@ import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { applyElementTemplatePatches } from '../../../../src/element-template/runtime/patch.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
-import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
+import { lastMock } from '../../test-utils/mock/mockNativePapi.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 
 declare const renderPage: () => void;
@@ -45,17 +45,16 @@ function resetReportedErrors(): void {
 describe('ElementTemplate patch stream (apply)', () => {
   const envManager = new ElementTemplateEnvManager();
   let hydrationData: SerializedETInstance[] = [];
-  let cleanupNative: () => void;
+
   let onHydrate: (event: { data: unknown }) => void;
   let mockPatchElementTemplate: ReportErrorMock;
   let mockFlushElementTree: ReportErrorMock;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
-    cleanupNative = installed.cleanup;
-    mockPatchElementTemplate = installed.mockPatchElementTemplate as unknown as ReportErrorMock;
-    mockFlushElementTree = installed.mockFlushElementTree as unknown as ReportErrorMock;
+    // mocks are already installed by setup.js beforeEach
+    mockPatchElementTemplate = lastMock!.mockPatchElementTemplate as unknown as ReportErrorMock;
+    mockFlushElementTree = lastMock!.mockFlushElementTree as unknown as ReportErrorMock;
 
     hydrationData = [];
     envManager.resetEnv('background');
@@ -75,7 +74,6 @@ describe('ElementTemplate patch stream (apply)', () => {
   afterEach(() => {
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
     resetElementTemplatePatchListener();
-    cleanupNative();
     envManager.setUseElementTemplate(false);
   });
 

@@ -8,7 +8,7 @@ import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 declare const renderPage: () => void;
 
 export function run() {
-  const mockContext = installMockNativePapi();
+  const mockContext = installMockNativePapi({ clearTemplatesOnCleanup: true });
   ElementTemplateRegistry.clear();
   resetTemplateId();
   (globalThis as { __USE_ELEMENT_TEMPLATE__?: boolean }).__USE_ELEMENT_TEMPLATE__ = true;

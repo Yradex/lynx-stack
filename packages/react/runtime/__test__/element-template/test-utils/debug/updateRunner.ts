@@ -14,7 +14,7 @@ import { applyElementTemplatePatches } from '../../../../src/element-template/ru
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from './envManager.js';
-import { installMockNativePapi } from '../mock/mockNativePapi.js';
+import { lastMock } from '../mock/mockNativePapi.js';
 import { formatOpcodes } from '../mock/mockNativePapi/templateTree.js';
 import { serializeBackgroundTree, serializeToJSX } from './serializer.js';
 
@@ -83,7 +83,7 @@ export function formatNativePatchLog(nativeLog: unknown[]): unknown[] {
 
 export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunResult {
   const envManager = new ElementTemplateEnvManager();
-  const { nativeLog, cleanup } = installMockNativePapi({ clearTemplatesOnCleanup: false });
+  const nativeLog = lastMock!.nativeLog;
   const hydrationData: SerializedETInstance[] = [];
 
   const onHydrate = (event: { data: unknown }) => {
@@ -147,6 +147,6 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
   } finally {
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
     envManager.setUseElementTemplate(false);
-    cleanup();
+    // cleanup is automatic
   }
 }

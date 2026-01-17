@@ -2,9 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
-import { createCrossThreadContextPair } from './mockNativePapi/context.js';
+// removed context import
 import {
   applyOpcodesToTemplateInstance,
   clone,
@@ -26,6 +26,8 @@ export interface MockNativePapi {
   mockPatchElementTemplate: any;
   mockReportError: any;
   mockFlushElementTree: any;
+  mockCreatePage: any;
+  mockAppendElement: any;
   cleanup: () => void;
 }
 
@@ -33,12 +35,15 @@ export interface InstallMockNativePapiOptions {
   clearTemplatesOnCleanup?: boolean;
 }
 
+export let lastMock: MockNativePapi | undefined;
+let isCleanupRegistered = false;
+
 export function installMockNativePapi(
   options: InstallMockNativePapiOptions = {},
 ): MockNativePapi {
-  const { clearTemplatesOnCleanup = true } = options;
+  const { clearTemplatesOnCleanup = false } = options;
   const nativeLog: any[] = [];
-  const { jsContext, coreContext, checkListenerLeaks } = createCrossThreadContextPair();
+  // context setup moved to installThreadContexts
 
   const mockElementFromBinary = vi.fn().mockImplementation((...args: unknown[]) => {
     const tag = args[0];
@@ -118,30 +123,24 @@ export function installMockNativePapi(
   vi.stubGlobal('__AppendElement', mockAppendElement);
   vi.stubGlobal('__PatchElementTemplate', mockPatchElementTemplate);
   vi.stubGlobal('__FlushElementTree', mockFlushElementTree);
-  const previousLynx = (globalThis as unknown as { lynx?: unknown }).lynx;
-  const baseLynx = isRecord(previousLynx) ? previousLynx : {};
+  const currentLynx = (globalThis as unknown as { lynx?: any }).lynx;
+  const baseLynx = (currentLynx && typeof currentLynx === 'object') ? currentLynx : {};
   vi.stubGlobal('lynx', {
     ...baseLynx,
     reportError: mockReportError,
-    getJSContext: () => {
-      return jsContext;
-    },
-    getCoreContext: () => {
-      return coreContext;
-    },
   });
 
-  return {
+  const result: MockNativePapi = {
     nativeLog: nativeLog,
     mockElementFromBinary: mockElementFromBinary,
     mockCreateRawText: mockCreateRawText,
     mockPatchElementTemplate: mockPatchElementTemplate,
     mockReportError: mockReportError,
     mockFlushElementTree: mockFlushElementTree,
+    mockCreatePage: mockCreatePage,
+    mockAppendElement: mockAppendElement,
     cleanup: (): void => {
-      checkListenerLeaks();
       const errorCalls = mockReportError.mock.calls;
-      vi.unstubAllGlobals();
       if (clearTemplatesOnCleanup) {
         clearTemplates();
       }
@@ -164,4 +163,14 @@ export function installMockNativePapi(
       }
     },
   };
+
+  lastMock = result;
+  if (!isCleanupRegistered) {
+    isCleanupRegistered = true;
+    afterEach(() => {
+      lastMock?.cleanup();
+    });
+  }
+
+  return result;
 }

@@ -11,7 +11,7 @@ import type { SerializedETInstance } from '../../../../src/element-template/prot
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
 import { flushCoreContextEvents } from '../../test-utils/mock/mockNativePapi/context.js';
-import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
+// removed installMockNativePapi import
 
 import '../../../../src/element-template/native/index.js';
 
@@ -25,19 +25,15 @@ interface TTMock {
 
 describe('ElementTemplate hydration listener', () => {
   const envManager = new ElementTemplateEnvManager();
-  let cleanupMock: () => void;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    const mock = installMockNativePapi();
-    cleanupMock = mock.cleanup;
     resetElementTemplateHydrationListener();
     envManager.resetEnv('background');
   });
 
   afterEach(() => {
     resetElementTemplateHydrationListener();
-    cleanupMock();
   });
 
   it('hydrates instances sent from main thread', () => {

@@ -1,8 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { ElementTemplateEnvManager } from '../debug/envManager.js';
 import type { ContextEvent, ContextEventTarget } from './mockNativePapi/context.js';
-import { installMockNativePapi } from './mockNativePapi.js';
 
 interface ThreadFlags {
   __LEPUS__: boolean | undefined;
@@ -17,16 +16,7 @@ interface LynxMock {
 }
 
 describe('lynx.getJSContext mock', () => {
-  let cleanup: (() => void) | undefined;
-
-  afterEach(() => {
-    cleanup?.();
-    cleanup = undefined;
-  });
-
   it('dispatches events between jsContext and coreContext', () => {
-    const native = installMockNativePapi();
-    cleanup = native.cleanup;
     const envManager = new ElementTemplateEnvManager();
     envManager.resetEnv('background');
 
@@ -77,8 +67,6 @@ describe('lynx.getJSContext mock', () => {
   });
 
   it('supports postMessage in both directions', () => {
-    const native = installMockNativePapi();
-    cleanup = native.cleanup;
     const envManager = new ElementTemplateEnvManager();
     envManager.resetEnv('background');
 

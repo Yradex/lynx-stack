@@ -11,10 +11,7 @@ Array [
   Array [
     3,
     0,
-    Object {
-      "text": "Main",
-      "type": "rawText",
-    },
+    -2,
   ],
   0,
   7,
@@ -25,44 +22,18 @@ Array [
     2,
     0,
     null,
-    Object {
-      "text": "BG",
-      "type": "rawText",
-    },
+    7,
   ],
   -5,
   Array [
     2,
     1,
     null,
-    Object {
-      "children": Array [
-        Object {
-          "attributes": Object {
-            "part-id": 0,
-          },
-          "children": Array [
-            Object {
-              "text": "BG",
-              "type": "rawText",
-            },
-          ],
-          "tag": "slot",
-        },
-      ],
-      "tag": "text",
-      "templateId": "_et_a94a8_test_3",
-    },
+    -3,
     2,
     1,
     null,
-    Object {
-      "attributes": Object {
-        "id": "a",
-      },
-      "tag": "view",
-      "templateId": "_et_a94a8_test_1",
-    },
+    -1,
   ],
   0,
   9,
@@ -73,9 +44,6 @@ Array [
     2,
     1,
     null,
-    Object {
-      "tag": "image",
-      "templateId": "_et_a94a8_test_4",
-    },
+    9,
   ],
 ]

@@ -114,7 +114,7 @@ describe('Fixture Integration Tests', () => {
       resetTemplateId();
       globalThis.__USE_ELEMENT_TEMPLATE__ = true;
 
-      const installed = installMockNativePapi();
+      const installed = installMockNativePapi({ clearTemplatesOnCleanup: true });
       const nativeLog = installed.nativeLog as unknown[];
       const cleanup = installed.cleanup;
       const root: RootNode = { type: 'page', id: '0', children: [] };

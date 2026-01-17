@@ -15,7 +15,6 @@ export interface RootNode {
 export interface CaseContext {
   root: RootNode;
   nativeLog: unknown[];
-  cleanup: () => void;
 }
 
 const templates = [
@@ -73,13 +72,12 @@ function setup(): CaseContext {
   ElementTemplateRegistry.clear();
   resetTemplateId();
 
-  const installed = installMockNativePapi();
+  const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
   registerTemplates(templates);
 
   return {
     root: { type: 'root' },
     nativeLog: installed.nativeLog,
-    cleanup: installed.cleanup,
   };
 }
 
@@ -88,7 +86,7 @@ export function runCase<T>(runner: (context: CaseContext) => T): T {
   try {
     return runner(context);
   } finally {
-    context.cleanup();
+    // cleanup is automatic
   }
 }
 

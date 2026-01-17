@@ -5,6 +5,7 @@ import '../../hooks/react.js';
 
 import { callDestroyLifetimeFun } from './callDestroyLifetimeFun.js';
 import { injectCalledByNative } from './main-thread-api.js';
+import { installOnMtsDestruction } from './mts-destroy.js';
 import { installElementTemplatePatchListener } from './patch-listener.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
@@ -14,18 +15,23 @@ import { setupLynxEnv } from '../lynx/env.js';
 import { Slot } from '../runtime/components/slot.js';
 import { setRoot } from '../runtime/page/root-instance.js';
 
-registerSlot(Slot);
+function init(): void {
+  registerSlot(Slot);
 
-if (__MAIN_THREAD__) {
-  injectCalledByNative();
-  installElementTemplatePatchListener();
+  if (__MAIN_THREAD__) {
+    injectCalledByNative();
+    installElementTemplatePatchListener();
+    installOnMtsDestruction();
+  }
+
+  if (__BACKGROUND__) {
+    setRoot(new BackgroundElementTemplateInstance('root'));
+    setupBackgroundElementTemplateDocument();
+    installElementTemplateHydrationListener();
+    lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;
+  }
+
+  setupLynxEnv();
 }
 
-if (__BACKGROUND__) {
-  setRoot(new BackgroundElementTemplateInstance('root'));
-  setupBackgroundElementTemplateDocument();
-  installElementTemplateHydrationListener();
-  lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;
-}
-
-setupLynxEnv();
+init();

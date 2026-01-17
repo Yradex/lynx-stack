@@ -1,3 +1,5 @@
+import { afterEach, vi } from 'vitest';
+
 export interface ContextEvent {
   type: string;
   data: unknown;
@@ -62,8 +64,13 @@ export function createCrossThreadContextPair(): {
   const coreListeners = new Map<string, Set<(event: ContextEvent) => void>>();
   const jsQueue: ContextEvent[] = [];
   const coreQueue: ContextEvent[] = [];
-  let addEventListenerCount = 0;
-  let removeEventListenerCount = 0;
+  interface ActiveListener {
+    type: string;
+    listener: (event: ContextEvent) => void;
+    stack: string;
+  }
+  const activeJSListeners = new Set<ActiveListener>();
+  const activeCoreListeners = new Set<ActiveListener>();
 
   currentQueues = {
     jsQueue,
@@ -74,34 +81,43 @@ export function createCrossThreadContextPair(): {
 
   const add = (
     store: Map<string, Set<(event: ContextEvent) => void>>,
+    activeSet: Set<ActiveListener>,
     type: string,
     listener: (event: ContextEvent) => void,
-    isJSContext: boolean,
   ) => {
-    if (!isJSContext) {
-      addEventListenerCount++;
-    }
     const set = store.get(type);
-    if (set) {
-      set.add(listener);
+    if (set?.has(listener)) {
       return;
     }
-    store.set(type, new Set([listener]));
+
+    const stack = new Error().stack?.split('\n').slice(2).join('\n') || '';
+    activeSet.add({ type, listener, stack });
+
+    if (set) {
+      set.add(listener);
+    } else {
+      store.set(type, new Set([listener]));
+    }
   };
 
   const remove = (
     store: Map<string, Set<(event: ContextEvent) => void>>,
+    activeSet: Set<ActiveListener>,
     type: string,
     listener: (event: ContextEvent) => void,
-    isJSContext: boolean,
   ) => {
     const set = store.get(type);
     if (!set) {
       return;
     }
     const existed = set.delete(listener);
-    if (existed && !isJSContext) {
-      removeEventListenerCount++;
+    if (existed) {
+      for (const item of activeSet) {
+        if (item.type === type && item.listener === listener) {
+          activeSet.delete(item);
+          break;
+        }
+      }
     }
     if (set.size === 0) {
       store.delete(type);
@@ -109,16 +125,27 @@ export function createCrossThreadContextPair(): {
   };
 
   const checkListenerLeaks = () => {
-    if (addEventListenerCount !== removeEventListenerCount) {
-      throw new Error(
-        `Event listener leak detected in JS Context: addEventListener called ${addEventListenerCount} times, but removeEventListener called ${removeEventListenerCount} times.`,
-      );
+    let errorMsg = '';
+    if (activeJSListeners.size > 0) {
+      errorMsg += `Event listener leak detected in JS Context (${activeJSListeners.size} leaks):\n`;
+      for (const item of activeJSListeners) {
+        errorMsg += `  - [${item.type}] added at:\n${item.stack}\n`;
+      }
+    }
+    if (activeCoreListeners.size > 0) {
+      errorMsg += `Event listener leak detected in Core Context (${activeCoreListeners.size} leaks):\n`;
+      for (const item of activeCoreListeners) {
+        errorMsg += `  - [${item.type}] added at:\n${item.stack}\n`;
+      }
+    }
+    if (errorMsg) {
+      throw new Error(errorMsg);
     }
   };
 
   const jsContext: ContextEventTarget = {
-    addEventListener: (type, listener) => add(jsListeners, type, listener, true),
-    removeEventListener: (type, listener) => remove(jsListeners, type, listener, true),
+    addEventListener: (type, listener) => add(jsListeners, activeJSListeners, type, listener),
+    removeEventListener: (type, listener) => remove(jsListeners, activeJSListeners, type, listener),
     dispatchEvent: (event) => {
       coreQueue.push(event);
       return 0;
@@ -129,8 +156,8 @@ export function createCrossThreadContextPair(): {
   };
 
   const coreContext: ContextEventTarget = {
-    addEventListener: (type, listener) => add(coreListeners, type, listener, false),
-    removeEventListener: (type, listener) => remove(coreListeners, type, listener, false),
+    addEventListener: (type, listener) => add(coreListeners, activeCoreListeners, type, listener),
+    removeEventListener: (type, listener) => remove(coreListeners, activeCoreListeners, type, listener),
     dispatchEvent: (event) => {
       jsQueue.push(event);
       return 0;
@@ -141,4 +168,28 @@ export function createCrossThreadContextPair(): {
   };
 
   return { jsContext, coreContext, checkListenerLeaks };
+}
+
+let isThreadContextInstalled = false;
+let currentCheckListenerLeaks: (() => void) | undefined;
+
+export function installThreadContexts(): void {
+  const { jsContext, coreContext, checkListenerLeaks } = createCrossThreadContextPair();
+  currentCheckListenerLeaks = checkListenerLeaks;
+
+  const currentLynx = (globalThis as unknown as { lynx?: any }).lynx;
+  const baseLynx = (currentLynx && typeof currentLynx === 'object') ? currentLynx : {};
+
+  vi.stubGlobal('lynx', {
+    ...baseLynx,
+    getJSContext: () => jsContext,
+    getCoreContext: () => coreContext,
+  });
+
+  if (!isThreadContextInstalled) {
+    isThreadContextInstalled = true;
+    afterEach(() => {
+      currentCheckListenerLeaks?.();
+    });
+  }
 }

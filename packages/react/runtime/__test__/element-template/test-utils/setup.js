@@ -7,15 +7,49 @@ import { afterEach, beforeEach, expect } from 'vitest';
 import { injectGlobals } from './debug/globals.js';
 import { registerTemplates } from './debug/registry.ts';
 import { installMockNativePapi } from './mock/mockNativePapi.ts';
+import { installThreadContexts } from './mock/mockNativePapi/context.ts';
+import { onMtsDestruction } from '../../../src/element-template/native/mts-destroy.ts';
 
 globalThis.__REGISTER_ELEMENT_TEMPLATES__ = registerTemplates;
 
 injectGlobals();
+
+// Initial installation for top-level module evaluation
 installMockNativePapi();
+installThreadContexts();
+
+afterEach(() => {
+  // Ensure element-template background listeners are always cleaned up
+  // (tt.callDestroyLifetimeFun is injected in background thread)
+  const g = globalThis;
+
+  g.__LEPUS__ = false;
+  g.__JS__ = true;
+  g.__MAIN_THREAD__ = false;
+  g.__BACKGROUND__ = true;
+
+  try {
+    g.lynxCoreInject?.tt?.callDestroyLifetimeFun?.();
+  } catch {}
+
+  g.__LEPUS__ = true;
+  g.__JS__ = false;
+  g.__MAIN_THREAD__ = true;
+  g.__BACKGROUND__ = false;
+
+  try {
+    onMtsDestruction();
+  } catch {}
+});
 
 beforeEach(() => {
   // Reset global error collection for current test
   globalThis.__LYNX_REPORT_ERROR_CALLS = [];
+
+  // Ensure mocks are installed and fresh for each test
+  installMockNativePapi();
+  installThreadContexts();
+
   // Access performance via globalThis.lynx which is set in globals.js
   const performance = globalThis.lynx.performance;
   if (performance && performance.profileStart && performance.profileEnd) {

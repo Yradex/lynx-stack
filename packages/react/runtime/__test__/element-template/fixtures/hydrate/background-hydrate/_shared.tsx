@@ -8,7 +8,11 @@ import {
   hydrate as hydrateBackground,
   hydrateIntoContext,
 } from '../../../../../src/element-template/background/hydrate.js';
-import { installElementTemplateHydrationListener } from '../../../../../src/element-template/background/hydration-listener.js';
+import {
+  installElementTemplateHydrationListener,
+  resetElementTemplateHydrationListener,
+} from '../../../../../src/element-template/background/hydration-listener.js';
+import '../../../../../src/element-template/native/index.js';
 import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
@@ -38,17 +42,14 @@ declare module '@lynx-js/types' {
 
 interface CaseContext {
   hydrationData: SerializedETInstance[];
-  cleanupNative: () => void;
+  onHydrate: (event: { data: unknown }) => void;
 }
 
 const envManager = new ElementTemplateEnvManager();
 
 function setup(): CaseContext {
   vi.clearAllMocks();
-  installMockNativePapi();
-  const cleanupNative = () => {
-    vi.unstubAllGlobals();
-  };
+  installMockNativePapi({ clearTemplatesOnCleanup: false });
   const hydrationData: SerializedETInstance[] = [];
   envManager.resetEnv('background');
   envManager.setUseElementTemplate(true);
@@ -63,11 +64,12 @@ function setup(): CaseContext {
   });
   lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
 
-  return { hydrationData, cleanupNative };
+  return { hydrationData, onHydrate };
 }
 
 function teardown(context: CaseContext): void {
-  context.cleanupNative();
+  // cleanup is automatic
+  lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, context.onHydrate);
   envManager.setUseElementTemplate(false);
   (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
 }
@@ -813,6 +815,7 @@ export function runCaseByName(name: string): unknown {
     const pageJsx = serializeToJSX(__page);
 
     resetElementTemplatePatchListener();
+    resetElementTemplateHydrationListener();
 
     return { pageJsx };
   });
