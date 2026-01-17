@@ -2,9 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 
-const performance = {
+export const performance = {
   __functionCallHistory: [],
   _generatePipelineOptions: vi.fn(() => {
     performance.__functionCallHistory.push(['_generatePipelineOptions']);
@@ -34,33 +34,35 @@ const performance = {
   isProfileRecording: vi.fn(() => true),
 };
 
-export function injectGlobals() {
-  globalThis.__DEV__ = true;
-  globalThis.__PROFILE__ = true;
-  globalThis.__ALOG__ = true;
-  globalThis.__JS__ = true;
-  globalThis.__LEPUS__ = true;
-  globalThis.__BACKGROUND__ = true;
-  globalThis.__MAIN_THREAD__ = true;
-  globalThis.__REF_FIRE_IMMEDIATELY__ = false;
-  globalThis.__ENABLE_SSR__ = true;
-  globalThis.__USE_ELEMENT_TEMPLATE__ = false;
-  globalThis.__FIRST_SCREEN_SYNC_TIMING__ = 'immediately';
-  globalThis.globDynamicComponentEntry = '__Card__';
-  globalThis.lynxCoreInject = {};
-  globalThis.lynxCoreInject.tt = {};
-  globalThis.lynx = {
-    performance,
-  };
-  globalThis.requestAnimationFrame = setTimeout;
-  globalThis.cancelAnimationFrame = clearTimeout;
-  globalThis._ReportError = vi.fn();
-
-  globalThis.__SNAPSHOT__ = (snapshot) => {
-    return snapshot.type;
-  };
+export function installPerformanceGlobals() {
+  if (!globalThis.lynx) {
+    globalThis.lynx = {};
+  }
+  globalThis.lynx.performance = performance;
 
   console.profile = vi.fn();
   console.profileEnd = vi.fn();
-  console.alog = vi.fn();
+}
+
+export function resetPerformanceMocks() {
+  // Access performance via globalThis.lynx which is set in globals.js
+  const performance = globalThis.lynx.performance;
+  if (performance && performance.profileStart && performance.profileEnd) {
+    performance.profileStart.mockClear();
+    performance.profileEnd.mockClear();
+  }
+}
+
+export function checkPerformanceLeaks() {
+  // check profile call times equal end call times
+  expect(console.profile.mock.calls.length).toBe(
+    console.profileEnd.mock.calls.length,
+  );
+
+  const performance = globalThis.lynx.performance;
+  if (performance && performance.profileStart && performance.profileEnd) {
+    expect(performance.profileStart.mock.calls.length).toBe(
+      performance.profileEnd.mock.calls.length,
+    );
+  }
 }

@@ -4,11 +4,12 @@
 
 import { afterEach, beforeEach, expect } from 'vitest';
 
-import { injectGlobals } from './debug/globals.js';
+import { injectGlobals } from './mock/globals.js';
 import { registerTemplates } from './debug/registry.ts';
 import { installMockNativePapi } from './mock/mockNativePapi.ts';
 import { installThreadContexts } from './mock/mockNativePapi/context.ts';
 import { onMtsDestruction } from '../../../src/element-template/native/mts-destroy.ts';
+import { checkPerformanceLeaks, resetPerformanceMocks } from './mock/performance.js';
 
 globalThis.__REGISTER_ELEMENT_TEMPLATES__ = registerTemplates;
 
@@ -50,12 +51,7 @@ beforeEach(() => {
   installMockNativePapi();
   installThreadContexts();
 
-  // Access performance via globalThis.lynx which is set in globals.js
-  const performance = globalThis.lynx.performance;
-  if (performance && performance.profileStart && performance.profileEnd) {
-    performance.profileStart.mockClear();
-    performance.profileEnd.mockClear();
-  }
+  resetPerformanceMocks();
 });
 
 afterEach((context) => {
@@ -70,16 +66,7 @@ afterEach((context) => {
   }
 
   // check profile call times equal end call times
-  expect(console.profile.mock.calls.length).toBe(
-    console.profileEnd.mock.calls.length,
-  );
-
-  const performance = globalThis.lynx.performance;
-  if (performance && performance.profileStart && performance.profileEnd) {
-    expect(performance.profileStart.mock.calls.length).toBe(
-      performance.profileEnd.mock.calls.length,
-    );
-  }
+  checkPerformanceLeaks();
 
   const reportError = globalThis.lynx?.reportError;
   const globalErrors = globalThis.__LYNX_REPORT_ERROR_CALLS || [];
