@@ -2,6 +2,7 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.js';
+import { markElementTemplateHydrated, resetElementTemplateCommitState } from './commit-hook.js';
 import { hydrateIntoContext } from './hydrate.js';
 import { BackgroundElementTemplateInstance } from './instance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
@@ -30,6 +31,8 @@ export function installElementTemplateHydrationListener(): void {
       after = after.nextSibling;
     }
 
+    markElementTemplateHydrated();
+
     if (GlobalCommitContext.patches.length > 0) {
       lynx.getCoreContext().dispatchEvent({
         type: ElementTemplateLifecycleConstant.update,
@@ -50,4 +53,5 @@ export function resetElementTemplateHydrationListener(): void {
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, listener);
   }
   listener = undefined;
+  resetElementTemplateCommitState();
 }

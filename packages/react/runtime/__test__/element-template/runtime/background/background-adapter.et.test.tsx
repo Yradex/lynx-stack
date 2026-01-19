@@ -37,7 +37,7 @@ describe('Background Element Template Adapter', () => {
     it('supports setAttribute (attrs)', () => {
       const el = new BackgroundElementTemplateInstance('view');
       el.setAttribute('attrs', { 0: { id: 'test' } });
-      expect(el.attrs[0]).toEqual({ id: 'test' });
+      expect(el._attrs[0]).toEqual({ id: 'test' });
     });
 
     it('supports hierarchy operations', () => {

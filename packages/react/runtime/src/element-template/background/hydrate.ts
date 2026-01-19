@@ -107,8 +107,8 @@ function hydrateImpl(
   }
 
   const beforeAttrs = before[3] ?? {};
-  const bgAttrs = after.attrs;
-  after.attrs = beforeAttrs;
+  const bgAttrs = after._attrs;
+  after._attrs = beforeAttrs;
   after.setAttribute('attrs', bgAttrs);
 
   const beforeSlots = before[2] ?? {};

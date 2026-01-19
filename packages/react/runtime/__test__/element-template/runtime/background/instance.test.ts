@@ -297,19 +297,19 @@ describe('BackgroundElementTemplateText', () => {
     const textNode = new BackgroundElementTemplateText('');
     const attrs = { 0: { color: 'red' } };
     textNode.setAttribute('attrs', attrs);
-    expect(textNode.attrs[0]).toEqual({ color: 'red' });
+    expect(textNode._attrs[0]).toEqual({ color: 'red' });
   });
 });
 
 describe('BackgroundElementTemplateInstance Shadow State', () => {
-  it('should accept attrs assignment as object and normalize', () => {
+  it('should accept _attrs assignment as object', () => {
     const instance = new BackgroundElementTemplateInstance('view');
-    instance.attrs = { 0: { id: 'a' } };
+    instance._attrs = { 0: { id: 'a' } };
 
-    expect(instance.attrs[0]).toEqual({ id: 'a' });
+    expect(instance._attrs[0]).toEqual({ id: 'a' });
 
-    instance.attrs = { 0: { id: 'b' } };
-    expect(instance.attrs[0]).toEqual({ id: 'b' });
+    instance._attrs = { 0: { id: 'b' } };
+    expect(instance._attrs[0]).toEqual({ id: 'b' });
   });
 
   it('should update attrs map when setAttribute("attrs", ...) is called', () => {
@@ -320,9 +320,9 @@ describe('BackgroundElementTemplateInstance Shadow State', () => {
     };
     instance.setAttribute('attrs', attrs);
 
-    expect(Object.keys(instance.attrs)).toHaveLength(2);
-    expect(instance.attrs[0]).toEqual({ id: 'a' });
-    expect(instance.attrs[1]).toEqual({ class: 'foo' });
+    expect(Object.keys(instance._attrs)).toHaveLength(2);
+    expect(instance._attrs[0]).toEqual({ id: 'a' });
+    expect(instance._attrs[1]).toEqual({ class: 'foo' });
   });
 });
 

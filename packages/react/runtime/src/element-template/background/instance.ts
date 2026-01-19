@@ -34,15 +34,7 @@ export class BackgroundElementTemplateInstance {
 
   // Shadow State for Hydration
   // 1. Attrs State: mapped by partId
-  private _attrs: AttrsByPartId = {};
-
-  get attrs(): AttrsByPartId {
-    return this._attrs;
-  }
-
-  set attrs(value: AttrsByPartId) {
-    this._attrs = value;
-  }
+  public _attrs: AttrsByPartId = {};
 
   // 2. Slot State: aggregate children by slotId
   get slotChildren(): Map<number, BackgroundElementTemplateInstance[]> {

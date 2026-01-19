@@ -1,8 +1,4 @@
-import { hydrate as hydrateBackground } from '../../../../../src/element-template/background/hydrate.js';
-import {
-  GlobalCommitContext,
-  resetGlobalCommitContext,
-} from '../../../../../src/element-template/background/commit-context.js';
+import { resetGlobalCommitContext } from '../../../../../src/element-template/background/commit-context.js';
 import {
   installElementTemplateHydrationListener,
   resetElementTemplateHydrationListener,
@@ -87,17 +83,6 @@ export function run() {
 
     resetGlobalCommitContext();
     root.render(<App label='after' />);
-
-    const patches = [...GlobalCommitContext.patches];
-    const flushOptions = { ...GlobalCommitContext.flushOptions };
-    resetGlobalCommitContext();
-
-    if (patches.length > 0) {
-      lynx.getCoreContext().dispatchEvent({
-        type: ElementTemplateLifecycleConstant.update,
-        data: { patches, flushOptions },
-      });
-    }
 
     envManager.switchToMainThread();
     const afterPageJsx = serializeToJSX(__page);

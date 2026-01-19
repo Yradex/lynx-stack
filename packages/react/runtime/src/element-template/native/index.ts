@@ -8,6 +8,7 @@ import { injectCalledByNative } from './main-thread-api.js';
 import { installOnMtsDestruction } from './mts-destroy.js';
 import { installElementTemplatePatchListener } from './patch-listener.js';
 import { registerSlot } from '../../renderToOpcodes/index.js';
+import { installElementTemplateCommitHook } from '../background/commit-hook.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
 import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../background/instance.js';
@@ -29,6 +30,7 @@ function init(): void {
     setupBackgroundElementTemplateDocument();
     installElementTemplateHydrationListener();
     lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;
+    installElementTemplateCommitHook();
   }
 
   setupLynxEnv();
