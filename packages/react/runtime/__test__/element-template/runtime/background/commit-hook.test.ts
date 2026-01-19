@@ -7,6 +7,10 @@ import {
   markElementTemplateHydrated,
   resetElementTemplateCommitState,
 } from '../../../../src/element-template/background/commit-hook.js';
+import {
+  installElementTemplateHydrationListener,
+  resetElementTemplateHydrationListener,
+} from '../../../../src/element-template/background/hydration-listener.js';
 import { GlobalCommitContext } from '../../../../src/element-template/background/commit-context.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
@@ -34,6 +38,7 @@ describe('ElementTemplate commit hook', () => {
     envManager.switchToMainThread();
     lynx.getJSContext().removeEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
     envManager.switchToBackground();
+    resetElementTemplateHydrationListener();
     resetElementTemplateCommitState();
   });
 
@@ -61,6 +66,33 @@ describe('ElementTemplate commit hook', () => {
 
     envManager.switchToMainThread();
     expect(updateEvents).toHaveLength(0);
+  });
+
+  it('does not leak pre-hydration patches into later commits', () => {
+    installElementTemplateHydrationListener();
+
+    GlobalCommitContext.patches = [0, 1, 'raw-text', 'before'];
+    GlobalCommitContext.flushOptions = { reason: 'before' };
+
+    envManager.switchToMainThread();
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: [],
+    });
+    envManager.switchToBackground();
+
+    GlobalCommitContext.patches.push(0, 1, 'raw-text', 'after');
+    GlobalCommitContext.flushOptions = { reason: 'after' };
+
+    options.__c?.({} as unknown as object, []);
+
+    envManager.switchToMainThread();
+    expect(updateEvents).toHaveLength(1);
+    expect(updateEvents[0]).toEqual({
+      patches: [0, 1, 'raw-text', 'after'],
+      flushOptions: { reason: 'after' },
+    });
+    envManager.switchToBackground();
   });
 
   it('is idempotent', () => {
