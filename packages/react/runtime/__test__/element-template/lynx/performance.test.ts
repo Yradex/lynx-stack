@@ -16,32 +16,32 @@ import { ElementTemplateEnvManager } from '../test-utils/debug/envManager.js';
 
 const envManager = new ElementTemplateEnvManager();
 
-describe('ElementTemplate performance timing', () => {
-  let nativeMarkTiming: ReturnType<typeof vi.fn>;
-  let originalLynx: unknown;
+let nativeMarkTiming: ReturnType<typeof vi.fn>;
+let originalLynx: unknown;
 
-  beforeEach(() => {
-    envManager.resetEnv('background');
+beforeEach(() => {
+  envManager.resetEnv('background');
 
-    nativeMarkTiming = vi.fn();
-    originalLynx = globalThis.lynx;
-    globalThis.lynx = {
-      ...(originalLynx as object),
-      getNativeApp: () => ({ markTiming: nativeMarkTiming }),
-    } as typeof lynx;
+  nativeMarkTiming = vi.fn();
+  originalLynx = globalThis.lynx;
+  globalThis.lynx = {
+    ...(originalLynx as object),
+    getNativeApp: () => ({ markTiming: nativeMarkTiming }),
+  } as typeof lynx;
 
-    globalThis.lynx.performance.__functionCallHistory = [];
-    globalThis.lynx.performance._markTiming.mockClear();
-    globalThis.lynx.performance._onPipelineStart.mockClear();
-    globalThis.lynx.performance._bindPipelineIdWithTimingFlag.mockClear();
-  });
+  globalThis.lynx.performance.__functionCallHistory = [];
+  globalThis.lynx.performance._markTiming.mockClear();
+  globalThis.lynx.performance._onPipelineStart.mockClear();
+  globalThis.lynx.performance._bindPipelineIdWithTimingFlag.mockClear();
+});
 
-  afterEach(() => {
-    setPipeline(undefined);
-    GlobalCommitContext.patches = [];
-    globalThis.lynx = originalLynx as typeof lynx;
-  });
+afterEach(() => {
+  setPipeline(undefined);
+  GlobalCommitContext.patches = [];
+  globalThis.lynx = originalLynx as typeof lynx;
+});
 
+describe('ElementTemplate performance timing (current api)', () => {
   it('beginPipeline wires pipeline options and markTiming respects needTimestamps', () => {
     beginPipeline(true, PipelineOrigins.reactLynxHydrate, PerformanceTimingFlags.reactLynxHydrate);
 
@@ -79,30 +79,6 @@ describe('ElementTemplate performance timing', () => {
     );
   });
 
-  it('markTimingLegacy follows update timing flag flow', () => {
-    markTimingLegacy('updateSetStateTrigger', 'flag');
-    expect(nativeMarkTiming).toHaveBeenCalledWith('flag', 'updateSetStateTrigger');
-
-    markTimingLegacy('updateDiffVdomStart');
-    markTimingLegacy('updateDiffVdomEnd');
-
-    expect(nativeMarkTiming.mock.calls).toEqual([
-      ['flag', 'updateSetStateTrigger'],
-      ['flag', 'updateDiffVdomStart'],
-      ['flag', 'updateDiffVdomEnd'],
-    ]);
-  });
-
-  it('markTimingLegacy ignores diff end without trigger', () => {
-    markTimingLegacy('updateDiffVdomEnd');
-    expect(nativeMarkTiming).not.toHaveBeenCalled();
-  });
-
-  it('markTimingLegacy ignores diff start without trigger', () => {
-    markTimingLegacy('updateDiffVdomStart');
-    expect(nativeMarkTiming).not.toHaveBeenCalled();
-  });
-
   it('initTimingAPI hooks diff timing when updates are detected', () => {
     initTimingAPI();
 
@@ -127,5 +103,31 @@ describe('ElementTemplate performance timing', () => {
       ['flag', 'updateSetStateTrigger'],
       ['flag', 'updateDiffVdomStart'],
     ]);
+  });
+});
+
+describe('ElementTemplate performance timing (legacy api)', () => {
+  it('markTimingLegacy follows update timing flag flow', () => {
+    markTimingLegacy('updateSetStateTrigger', 'flag');
+    expect(nativeMarkTiming).toHaveBeenCalledWith('flag', 'updateSetStateTrigger');
+
+    markTimingLegacy('updateDiffVdomStart');
+    markTimingLegacy('updateDiffVdomEnd');
+
+    expect(nativeMarkTiming.mock.calls).toEqual([
+      ['flag', 'updateSetStateTrigger'],
+      ['flag', 'updateDiffVdomStart'],
+      ['flag', 'updateDiffVdomEnd'],
+    ]);
+  });
+
+  it('markTimingLegacy ignores diff end without trigger', () => {
+    markTimingLegacy('updateDiffVdomEnd');
+    expect(nativeMarkTiming).not.toHaveBeenCalled();
+  });
+
+  it('markTimingLegacy ignores diff start without trigger', () => {
+    markTimingLegacy('updateDiffVdomStart');
+    expect(nativeMarkTiming).not.toHaveBeenCalled();
   });
 });
