@@ -17,14 +17,11 @@ import { ElementTemplateEnvManager } from '../test-utils/debug/envManager.js';
 const envManager = new ElementTemplateEnvManager();
 
 describe('ElementTemplate performance timing', () => {
-  const originalSystemInfo = globalThis.SystemInfo as unknown;
   let nativeMarkTiming: ReturnType<typeof vi.fn>;
   let originalLynx: unknown;
 
   beforeEach(() => {
     envManager.resetEnv('background');
-
-    globalThis.SystemInfo = { lynxSdkVersion: '3.1' } as typeof SystemInfo;
 
     nativeMarkTiming = vi.fn();
     originalLynx = globalThis.lynx;
@@ -42,7 +39,6 @@ describe('ElementTemplate performance timing', () => {
   afterEach(() => {
     setPipeline(undefined);
     GlobalCommitContext.patches = [];
-    globalThis.SystemInfo = originalSystemInfo as typeof SystemInfo;
     globalThis.lynx = originalLynx as typeof lynx;
   });
 
@@ -68,16 +64,6 @@ describe('ElementTemplate performance timing', () => {
     expect(globalThis.lynx.performance._markTiming.mock.calls).toEqual([
       ['pipelineID', 'diffVdomStart'],
     ]);
-  });
-
-  it('beginPipeline uses legacy signature on older SDKs', () => {
-    globalThis.SystemInfo = { lynxSdkVersion: '3.0' } as typeof SystemInfo;
-
-    beginPipeline(true, PipelineOrigins.reactLynxHydrate);
-
-    const onStartCalls = globalThis.lynx.performance._onPipelineStart.mock.calls;
-    expect(onStartCalls).toHaveLength(1);
-    expect(onStartCalls[0]).toEqual(['pipelineID']);
   });
 
   it('markTiming only emits when needTimestamps is true or forced', () => {

@@ -5,7 +5,7 @@ import { options } from 'preact';
 import type { VNode } from 'preact';
 
 import { RENDER_COMPONENT, ROOT } from '../../renderToOpcodes/constants.js';
-import { hook, isSdkVersionGt } from '../../utils.js';
+import { hook } from '../../utils.js';
 import { GlobalCommitContext } from '../background/commit-context.js';
 
 const PerformanceTimingKeys = [
@@ -92,11 +92,7 @@ function beginPipeline(needTimestamps: boolean, pipelineOrigin: PipelineOrigin, 
         break;
     }
 
-    if (isSdkVersionGt(3, 0)) {
-      lynx.performance?._onPipelineStart?.(globalPipelineOptions.pipelineID, globalPipelineOptions);
-    } else {
-      lynx.performance?._onPipelineStart?.(globalPipelineOptions.pipelineID);
-    }
+    lynx.performance?._onPipelineStart?.(globalPipelineOptions.pipelineID, globalPipelineOptions);
     if (timingFlag) {
       lynx.performance?._bindPipelineIdWithTimingFlag?.(globalPipelineOptions.pipelineID, timingFlag);
     }
