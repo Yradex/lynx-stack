@@ -5,7 +5,7 @@ import { root } from '../../../../src/element-template/index.js';
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 import { formatPatchStream } from '../../test-utils/debug/updateRunner.js';
-import { setupUpdateFixtureContext, teardownUpdateFixtureContext } from './_shared.js';
+import { setupUpdateFixtureContext, teardownUpdateFixtureContext } from '../../fixtures/patch/_shared.js';
 
 declare const renderPage: () => void;
 
