@@ -70,6 +70,16 @@ describe('ElementTemplate performance timing', () => {
     ]);
   });
 
+  it('beginPipeline uses legacy signature on older SDKs', () => {
+    globalThis.SystemInfo = { lynxSdkVersion: '3.0' } as typeof SystemInfo;
+
+    beginPipeline(true, PipelineOrigins.reactLynxHydrate);
+
+    const onStartCalls = globalThis.lynx.performance._onPipelineStart.mock.calls;
+    expect(onStartCalls).toHaveLength(1);
+    expect(onStartCalls[0]).toEqual(['pipelineID']);
+  });
+
   it('markTiming only emits when needTimestamps is true or forced', () => {
     beginPipeline(false, PipelineOrigins.updateTriggeredByBts);
 
@@ -97,6 +107,16 @@ describe('ElementTemplate performance timing', () => {
     ]);
   });
 
+  it('markTimingLegacy ignores diff end without trigger', () => {
+    markTimingLegacy('updateDiffVdomEnd');
+    expect(nativeMarkTiming).not.toHaveBeenCalled();
+  });
+
+  it('markTimingLegacy ignores diff start without trigger', () => {
+    markTimingLegacy('updateDiffVdomStart');
+    expect(nativeMarkTiming).not.toHaveBeenCalled();
+  });
+
   it('initTimingAPI hooks diff timing when updates are detected', () => {
     initTimingAPI();
 
@@ -107,5 +127,19 @@ describe('ElementTemplate performance timing', () => {
       'pipelineID',
       'diffVdomStart',
     );
+  });
+
+  it('initTimingAPI triggers legacy diff start on ROOT hook', () => {
+    initTimingAPI();
+
+    markTimingLegacy('updateSetStateTrigger', 'flag');
+    GlobalCommitContext.patches = [0, 1, 'raw-text', 'payload'];
+
+    options.__?.({} as unknown as object, null);
+
+    expect(nativeMarkTiming.mock.calls).toEqual([
+      ['flag', 'updateSetStateTrigger'],
+      ['flag', 'updateDiffVdomStart'],
+    ]);
   });
 });
