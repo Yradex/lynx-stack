@@ -14,8 +14,12 @@ import {
   installElementTemplateHydrationListener,
   resetElementTemplateHydrationListener,
 } from '../../../../src/element-template/background/hydration-listener.js';
+import { installElementTemplateCommitHook } from '../../../../src/element-template/background/commit-hook.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
-import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
+import type {
+  ElementTemplateCommitContext,
+  SerializedETInstance,
+} from '../../../../src/element-template/protocol/types.js';
 import { root } from '../../../../src/element-template/client/root.js';
 import { __root as internalRoot } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
@@ -38,6 +42,15 @@ export interface PatchContext {
   onHydrate: (event: { data: unknown }) => void;
   root: RootNode;
   nativeLog: unknown[];
+  cleanupNative: () => void;
+}
+
+export interface UpdateFixtureContext {
+  envManager: ElementTemplateEnvManager;
+  hydrationData: SerializedETInstance[];
+  updateEvents: ElementTemplateCommitContext[];
+  onHydrate: (event: { data: unknown }) => void;
+  onUpdate: (event: { data: unknown }) => void;
   cleanupNative: () => void;
 }
 
@@ -82,6 +95,50 @@ export function setupPatchContext(): PatchContext {
   };
 }
 
+export function setupUpdateFixtureContext(): UpdateFixtureContext {
+  vi.clearAllMocks();
+  ElementTemplateRegistry.clear();
+  resetTemplateId();
+
+  const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
+  const envManager = new ElementTemplateEnvManager();
+  const hydrationData: SerializedETInstance[] = [];
+  const updateEvents: ElementTemplateCommitContext[] = [];
+
+  envManager.resetEnv('background');
+  envManager.setUseElementTemplate(true);
+
+  envManager.switchToBackground();
+  installElementTemplateHydrationListener();
+  installElementTemplateCommitHook();
+  const onHydrate = (event: { data: unknown }) => {
+    const data = event.data;
+    if (Array.isArray(data)) {
+      for (const item of data) {
+        hydrationData.push(item as SerializedETInstance);
+      }
+    }
+  };
+  lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
+
+  envManager.switchToMainThread();
+  installElementTemplatePatchListener();
+  const onUpdate = (event: { data: unknown }) => {
+    updateEvents.push(event.data as ElementTemplateCommitContext);
+  };
+  lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
+  envManager.switchToBackground();
+
+  return {
+    envManager,
+    hydrationData,
+    updateEvents,
+    onHydrate,
+    onUpdate,
+    cleanupNative: installed.cleanup,
+  };
+}
+
 export function teardownPatchContext(context: PatchContext): void {
   try {
     context.cleanupNative();
@@ -91,6 +148,23 @@ export function teardownPatchContext(context: PatchContext): void {
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, context.onHydrate);
 
     context.envManager.switchToMainThread();
+    resetElementTemplatePatchListener();
+
+    context.envManager.setUseElementTemplate(false);
+    (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
+  }
+}
+
+export function teardownUpdateFixtureContext(context: UpdateFixtureContext): void {
+  try {
+    context.cleanupNative();
+  } finally {
+    context.envManager.switchToBackground();
+    resetElementTemplateHydrationListener();
+    lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, context.onHydrate);
+
+    context.envManager.switchToMainThread();
+    lynx.getJSContext().removeEventListener(ElementTemplateLifecycleConstant.update, context.onUpdate);
     resetElementTemplatePatchListener();
 
     context.envManager.setUseElementTemplate(false);
