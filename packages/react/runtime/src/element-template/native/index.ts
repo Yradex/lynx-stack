@@ -13,6 +13,7 @@ import { setupBackgroundElementTemplateDocument } from '../background/document.j
 import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../background/instance.js';
 import { setupLynxEnv } from '../lynx/env.js';
+import { initTimingAPI } from '../lynx/performance.js';
 import { Slot } from '../runtime/components/slot.js';
 import { setRoot } from '../runtime/page/root-instance.js';
 
@@ -31,6 +32,9 @@ function init(): void {
     installElementTemplateHydrationListener();
     lynxCoreInject.tt.callDestroyLifetimeFun = callDestroyLifetimeFun;
     installElementTemplateCommitHook();
+    if (process.env['NODE_ENV'] !== 'test') {
+      initTimingAPI();
+    }
   }
 
   setupLynxEnv();
