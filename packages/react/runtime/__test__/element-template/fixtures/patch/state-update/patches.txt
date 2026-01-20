@@ -1,0 +1,19 @@
+Array [
+  Object {
+    "id": -1,
+    "opcodes": Array [
+      Object {
+        "attributes": Object {
+          "attrs": Object {
+            "0": Object {
+              "id": "after",
+            },
+          },
+        },
+        "id": 0,
+        "type": "setAttributes",
+      },
+    ],
+    "type": "patch",
+  },
+]

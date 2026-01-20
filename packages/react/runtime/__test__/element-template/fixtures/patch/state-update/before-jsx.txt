@@ -1,0 +1,3 @@
+"<page>
+  <view part-id=\"0\" attrs={{\"0\":{\"id\":\"before\"}}} />
+</page>"

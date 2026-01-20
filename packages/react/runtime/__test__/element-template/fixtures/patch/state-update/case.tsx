@@ -1,4 +1,5 @@
-import { useEffect, useState } from '@lynx-js/react';
+import { useState } from '@lynx-js/react';
+import { options } from 'preact';
 
 import { resetGlobalCommitContext } from '../../../../../src/element-template/background/commit-context.js';
 import {
@@ -23,6 +24,7 @@ import { ElementTemplateRegistry } from '../../../../../src/element-template/run
 import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
 import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 import { formatPatchStream } from '../../../test-utils/debug/updateRunner.js';
+import { installElementTemplateCommitHook } from '../../../../../src/element-template/background/commit-hook.js';
 
 declare const renderPage: () => void;
 
@@ -55,6 +57,7 @@ export async function run() {
   envManager.switchToBackground();
   lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
   installElementTemplateHydrationListener();
+  installElementTemplateCommitHook();
 
   envManager.switchToMainThread();
   lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
@@ -62,39 +65,53 @@ export async function run() {
 
   envManager.switchToBackground();
 
+  // Capture scheduled renders so we can flush them while still on background thread.
+  const scheduledRenders: Array<() => void> = [];
+  const previousDebounce = options.debounceRendering;
+  options.debounceRendering = (cb) => {
+    scheduledRenders.push(cb);
+  };
+
   try {
-    function App({ trigger }: { trigger: boolean }) {
+    let triggerUpdate: (() => void) | undefined;
+
+    function App() {
       const [label, setLabel] = useState('before');
 
-      useEffect(() => {
-        if (trigger) {
-          setLabel('after');
-        }
-      }, [trigger]);
+      if (__BACKGROUND__) {
+        triggerUpdate = () => setLabel('after');
+      }
 
       return <view attrs={{ 0: { id: label } }} />;
     }
 
-    root.render(<App trigger={false} />);
+    root.render(<App />);
+    // Use a fresh vnode for main-thread render to avoid clobbering background hook state.
+    const backgroundJsx = (__root as { __jsx?: unknown }).__jsx;
+    (__root as { __jsx?: unknown }).__jsx = <App />;
     envManager.switchToMainThread();
     renderPage();
     const beforePageJsx = serializeToJSX(__page);
-    updateEvents.length = 0;
 
     envManager.switchToBackground();
+    (__root as { __jsx?: unknown }).__jsx = backgroundJsx;
 
     if (hydrationData.length === 0) {
       throw new Error('Missing hydration payload.');
     }
 
+    envManager.switchToMainThread();
+    updateEvents.length = 0;
+    envManager.switchToBackground();
+
     resetGlobalCommitContext();
-    root.render(<App trigger={true} />);
-    await Promise.resolve();
+    triggerUpdate!();
+    while (scheduledRenders.length > 0) {
+      const flush = scheduledRenders.shift();
+      flush?.();
+    }
 
     envManager.switchToMainThread();
-    await Promise.resolve();
-    await Promise.resolve();
-
     const afterPageJsx = serializeToJSX(__page);
     const updatePayload = updateEvents[updateEvents.length - 1];
     const eventPatches = updatePayload?.patches ?? [];
@@ -107,6 +124,7 @@ export async function run() {
       },
     };
   } finally {
+    options.debounceRendering = previousDebounce;
     envManager.switchToBackground();
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
     resetElementTemplateHydrationListener();
