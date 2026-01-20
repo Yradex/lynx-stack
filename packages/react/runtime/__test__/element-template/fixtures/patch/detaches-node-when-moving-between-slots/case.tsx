@@ -12,8 +12,10 @@ declare const renderPage: () => void;
 export function run() {
   const context = setupPatchContext();
   try {
-    root.render(<view />);
+    const jsx = <view />;
+    root.render(jsx);
     context.envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
 
     registerTemplates([

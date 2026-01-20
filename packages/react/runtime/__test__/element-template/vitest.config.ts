@@ -75,7 +75,7 @@ const config: UserConfigExport = defineConfig({
         '../../../worklet-runtime/lib/bindings/index.js',
       ),
       '@lynx-js/react/runtime-components': path.resolve(__dirname, '../../../components/src/index.ts'),
-      '@lynx-js/react/internal': path.resolve(__dirname, '../../src/internal.ts'),
+      '@lynx-js/react/internal': path.resolve(__dirname, '../../src/element-template/internal.ts'),
       '@lynx-js/react/jsx-dev-runtime': path.resolve(__dirname, '../../jsx-dev-runtime/index.js'),
       '@lynx-js/react/jsx-runtime': path.resolve(__dirname, '../../jsx-runtime/index.js'),
       '@lynx-js/react/lepus': path.resolve(__dirname, '../../lepus/index.js'),

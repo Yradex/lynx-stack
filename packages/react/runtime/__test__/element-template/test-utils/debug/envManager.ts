@@ -31,27 +31,12 @@ export class ElementTemplateEnvManager {
 
   constructor(private target: EnvTarget = globalThis as unknown as EnvTarget) {}
 
-  switchToMainThread(): void {
+  switchToMainThread(fn?: () => void): void {
     if (this.target.__BACKGROUND__) {
       this.backgroundRoot = __root as BackgroundElementTemplateInstance;
     }
 
     this.mainRoot ??= {};
-
-    if (this.backgroundRoot && '__jsx' in this.backgroundRoot) {
-      const mainRoot = this.mainRoot as RootWithTemplates;
-      const backgroundRoot = this.backgroundRoot as unknown as RootWithTemplates;
-      if (backgroundRoot.__jsx === undefined) {
-        delete mainRoot.__jsx;
-      } else {
-        mainRoot.__jsx = backgroundRoot.__jsx;
-      }
-      if (backgroundRoot.__opcodes === undefined) {
-        delete mainRoot.__opcodes;
-      } else {
-        mainRoot.__opcodes = backgroundRoot.__opcodes;
-      }
-    }
 
     setRoot(this.mainRoot);
     this.target.__LEPUS__ = true;
@@ -59,10 +44,12 @@ export class ElementTemplateEnvManager {
     this.target.__MAIN_THREAD__ = true;
     this.target.__BACKGROUND__ = false;
 
+    fn?.();
+
     flushJSContextEvents();
   }
 
-  switchToBackground(): void {
+  switchToBackground(fn?: () => void): void {
     if (this.target.__MAIN_THREAD__) {
       this.mainRoot = __root;
     }
@@ -71,27 +58,14 @@ export class ElementTemplateEnvManager {
       this.backgroundRoot = new BackgroundElementTemplateInstance('root');
     }
 
-    if (this.mainRoot && '__jsx' in this.mainRoot) {
-      const mainRoot = this.mainRoot as RootWithTemplates;
-      const backgroundRoot = this.backgroundRoot as unknown as RootWithTemplates;
-      if (mainRoot.__jsx === undefined) {
-        delete backgroundRoot.__jsx;
-      } else {
-        backgroundRoot.__jsx = mainRoot.__jsx;
-      }
-      if (mainRoot.__opcodes === undefined) {
-        delete backgroundRoot.__opcodes;
-      } else {
-        backgroundRoot.__opcodes = mainRoot.__opcodes;
-      }
-    }
-
     setRoot(this.backgroundRoot);
     this.target.__LEPUS__ = false;
     this.target.__JS__ = true;
     this.target.__MAIN_THREAD__ = false;
     this.target.__BACKGROUND__ = true;
     setupBackgroundElementTemplateDocument();
+
+    fn?.();
 
     flushCoreContextEvents();
   }

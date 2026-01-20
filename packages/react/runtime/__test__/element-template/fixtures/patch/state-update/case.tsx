@@ -85,16 +85,14 @@ export async function run() {
       return <view attrs={{ 0: { id: label } }} />;
     }
 
-    root.render(<App />);
-    // Use a fresh vnode for main-thread render to avoid clobbering background hook state.
-    const backgroundJsx = (__root as { __jsx?: unknown }).__jsx;
-    (__root as { __jsx?: unknown }).__jsx = <App />;
     envManager.switchToMainThread();
+    root.render(<App />);
     renderPage();
     const beforePageJsx = serializeToJSX(__page);
 
-    envManager.switchToBackground();
-    (__root as { __jsx?: unknown }).__jsx = backgroundJsx;
+    envManager.switchToBackground(() => {
+      root.render(<App />);
+    });
 
     if (hydrationData.length === 0) {
       throw new Error('Missing hydration payload.');

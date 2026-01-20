@@ -71,6 +71,7 @@ export function run() {
 
     root.render(<App label='before' />);
     envManager.switchToMainThread();
+    root.render(<App label='before' />);
     renderPage();
     const beforePageJsx = serializeToJSX(__page);
     updateEvents.length = 0;

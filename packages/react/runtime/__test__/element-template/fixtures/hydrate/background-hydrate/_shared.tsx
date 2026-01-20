@@ -78,6 +78,7 @@ function teardown(context: CaseContext): void {
 function renderAndCollect(App: () => JSX.Element, context: CaseContext) {
   root.render(<App />);
   envManager.switchToMainThread();
+  root.render(<App />);
   renderPage();
   envManager.switchToBackground();
 

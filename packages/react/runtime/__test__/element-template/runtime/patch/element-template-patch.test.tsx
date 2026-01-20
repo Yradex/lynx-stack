@@ -82,8 +82,10 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   function renderAndCollect(App: () => JSX.Element) {
-    root.render(<App />);
+    const jsx = <App />;
+    root.render(jsx);
     envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
     envManager.switchToBackground();
 
@@ -146,8 +148,10 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   it('reports illegal handleId 0 on create', () => {
-    root.render(<view />);
+    const jsx = <view />;
+    root.render(jsx);
     envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
 
     applyElementTemplatePatches([0, 0, 'raw-text', 'x']);
@@ -158,8 +162,10 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   it('reports missing patch target', () => {
-    root.render(<view />);
+    const jsx = <view />;
+    root.render(jsx);
     envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
 
     applyElementTemplatePatches([999, [4, 0, { a: 1 }]]);
@@ -170,8 +176,10 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   it('reports missing handle when resolving references', () => {
-    root.render(<view />);
+    const jsx = <view />;
+    root.render(jsx);
     envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
 
     applyElementTemplatePatches([-1, [2, 0, null, 999]]);
@@ -182,8 +190,10 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   it('creates raw-text with empty text when payload is not string', () => {
-    root.render(<view />);
+    const jsx = <view />;
+    root.render(jsx);
     envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
 
     applyElementTemplatePatches([0, 1, 'raw-text', []]);
@@ -196,8 +206,10 @@ describe('ElementTemplate patch stream (apply)', () => {
   });
 
   it('creates template with empty init opcodes when payload is not array', () => {
-    root.render(<view />);
+    const jsx = <view />;
+    root.render(jsx);
     envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
 
     const templateKey = (__page as unknown as PageWithChildren).children?.[0]?.templateId;

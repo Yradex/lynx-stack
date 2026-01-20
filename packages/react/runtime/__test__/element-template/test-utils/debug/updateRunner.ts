@@ -102,6 +102,7 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
   try {
     root.render(options.render());
     envManager.switchToMainThread();
+    root.render(options.render());
     renderPage();
     const beforePageJsx = serializeToJSX(__page);
     envManager.switchToBackground();

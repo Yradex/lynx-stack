@@ -67,9 +67,11 @@ export function runCaseByName(name: string): unknown {
   }
   const context = setup();
   try {
-    runner(context);
+    const jsx = runner(context);
     context.envManager.switchToMainThread();
+    root.render(jsx);
     renderPage();
+    root.render(jsx);
     context.envManager.switchToBackground();
     return [...context.hydrationData];
   } finally {
@@ -86,7 +88,7 @@ defineCase('simple-element', () => {
       </view>
     );
   }
-  root.render(<App />);
+  return <App />;
 });
 
 defineCase('nested-instances', () => {
@@ -97,7 +99,7 @@ defineCase('nested-instances', () => {
       </view>
     );
   }
-  root.render(<App />);
+  return <App />;
 });
 
 defineCase('text-children', () => {
@@ -109,7 +111,7 @@ defineCase('text-children', () => {
       </view>
     );
   }
-  root.render(<App />);
+  return <App />;
 });
 
 defineCase('multiple-root-instances', () => {
@@ -121,7 +123,7 @@ defineCase('multiple-root-instances', () => {
       </>
     );
   }
-  root.render(<App />);
+  return <App />;
 });
 
 defineCase('sub-components', () => {
@@ -141,7 +143,7 @@ defineCase('sub-components', () => {
     );
   }
 
-  root.render(<App />);
+  return <App />;
 });
 
 defineCase('jsx-map-dynamic-list', () => {
@@ -156,5 +158,5 @@ defineCase('jsx-map-dynamic-list', () => {
       </view>
     );
   }
-  root.render(<App />);
+  return <App />;
 });
