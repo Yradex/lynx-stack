@@ -6,10 +6,9 @@ import type { ComponentClass, VNode } from 'preact';
 
 import type { TraceOption } from '@lynx-js/types';
 
-import { globalPatchOptions } from '../../lifecycle/patch/commit.js';
-import { __globalSnapshotPatch } from '../../lifecycle/patch/snapshotPatch.js';
 import { COMMIT, COMPONENT, DIFF, DIFF2, DIFFED, DIRTY, NEXT_STATE, RENDER } from '../../renderToOpcodes/constants.js';
 import { getDisplayName, hook } from '../../utils.js';
+import { GlobalCommitContext } from '../background/commit-context.js';
 
 export function initProfileHook(): void {
   // early-exit if required profiling APIs are unavailable
@@ -30,6 +29,8 @@ export function initProfileHook(): void {
   const profileEnd = p.profileEnd.bind(p);
   const profileMark = p.profileMark.bind(p);
   const profileFlowId = p.profileFlowId.bind(p);
+
+  const flowIds: number[] = [];
 
   // for each setState call, we will add a profiling trace and
   // attach a flowId to the component instance.
@@ -85,13 +86,12 @@ export function initProfileHook(): void {
         const profileOptions: TraceOption = {};
 
         if (__BACKGROUND__) {
-          const c: PatchedComponent = oldVNode[COMPONENT]!;
+          const c = oldVNode?.[COMPONENT] as PatchedComponent | undefined;
           if (c) {
             const flowId = c[sFlowID];
             delete c[sFlowID];
             if (flowId) {
-              globalPatchOptions.flowIds ??= [];
-              globalPatchOptions.flowIds.push(flowId);
+              flowIds.push(flowId);
               profileOptions.flowId = flowId;
             }
           }
@@ -114,11 +114,14 @@ export function initProfileHook(): void {
 
     if (__BACKGROUND__) {
       hook(options, COMMIT, (old, vnode, commitQueue) => {
+        const commitFlowIds = flowIds.length > 0 ? [...flowIds] : undefined;
+        flowIds.length = 0;
+
         profileStart('ReactLynx::commit', {
-          ...globalPatchOptions.flowIds
+          ...commitFlowIds
             ? {
-              flowId: globalPatchOptions.flowIds[0],
-              flowIds: globalPatchOptions.flowIds,
+              flowId: commitFlowIds[0],
+              flowIds: commitFlowIds,
             }
             : {},
         });
@@ -150,15 +153,15 @@ export function initProfileHook(): void {
     type PatchedVNode = VNode & { [sPatchLength]?: number };
 
     hook(options, DIFF, (old, vnode: PatchedVNode) => {
-      if (typeof vnode.type === 'function' && __globalSnapshotPatch) {
-        vnode[sPatchLength] = __globalSnapshotPatch.length;
+      if (typeof vnode.type === 'function') {
+        vnode[sPatchLength] = GlobalCommitContext.patches.length;
       }
       old?.(vnode);
     });
 
     hook(options, DIFFED, (old, vnode: PatchedVNode) => {
-      if (typeof vnode.type === 'function' && __globalSnapshotPatch) {
-        if (vnode[sPatchLength] === __globalSnapshotPatch.length) {
+      if (typeof vnode.type === 'function') {
+        if (vnode[sPatchLength] === GlobalCommitContext.patches.length) {
           // "NoPatch" is a conventional name in Lynx
           profileMark('ReactLynx::diffFinishNoPatch', {
             args: {
