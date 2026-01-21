@@ -6,10 +6,10 @@ import type { ComponentClass, VNode } from 'preact';
 
 import type { TraceOption } from '@lynx-js/types';
 
-import { globalPatchOptions } from '../lifecycle/patch/commit.js';
-import { __globalSnapshotPatch } from '../lifecycle/patch/snapshotPatch.js';
-import { COMMIT, COMPONENT, DIFF, DIFF2, DIFFED, DIRTY, NEXT_STATE, RENDER } from '../renderToOpcodes/constants.js';
-import { getDisplayName, hook } from '../utils.js';
+import { globalPatchOptions } from '../../lifecycle/patch/commit.js';
+import { __globalSnapshotPatch } from '../../lifecycle/patch/snapshotPatch.js';
+import { COMMIT, COMPONENT, DIFF, DIFF2, DIFFED, DIRTY, NEXT_STATE, RENDER } from '../../renderToOpcodes/constants.js';
+import { getDisplayName, hook } from '../../utils.js';
 
 export function initProfileHook(): void {
   // early-exit if required profiling APIs are unavailable
