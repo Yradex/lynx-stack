@@ -31,6 +31,7 @@ export function installElementTemplatePatchListener(): void {
     if (shouldProfilePatch) {
       lynx.performance.profileStart('ReactLynx::patch', {
         flowId: flowIds[0],
+        // @ts-expect-error flowIds is not defined in the type, for now
         flowIds,
       });
     }

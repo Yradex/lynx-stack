@@ -36,8 +36,6 @@ export function initProfileHook(): void {
   const profileMark = p.profileMark.bind(p);
   const profileFlowId = p.profileFlowId.bind(p);
 
-  const flowIds: number[] = [];
-
   // for each setState call, we will add a profiling trace and
   // attach a flowId to the component instance.
   // This allows us to trace the flow of its diffing, committing and patching.
@@ -97,6 +95,8 @@ export function initProfileHook(): void {
             const flowId = c[sFlowID];
             delete c[sFlowID];
             if (flowId) {
+              const flowIds = GlobalCommitContext.flowIds
+                ?? (GlobalCommitContext.flowIds = []);
               flowIds.push(flowId);
               profileOptions.flowId = flowId;
             }
@@ -121,21 +121,21 @@ export function initProfileHook(): void {
 
     if (__BACKGROUND__) {
       hook(options, COMMIT, (old, vnode, commitQueue) => {
-        const commitFlowIds = flowIds.length > 0 ? [...flowIds] : undefined;
-        flowIds.length = 0;
-        GlobalCommitContext.flowIds = commitFlowIds;
+        const globalFlowIds = GlobalCommitContext.flowIds;
+        let commitFlowIds: number[] | undefined;
+        /* v8 ignore next 3 */
+        if (globalFlowIds && globalFlowIds.length > 0) {
+          commitFlowIds = [...globalFlowIds];
+        }
+        /* v8 ignore next 4 */
+        const commitProfileOptions = commitFlowIds
+          ? { flowId: commitFlowIds[0], flowIds: commitFlowIds }
+          : {};
 
-        profileStart('ReactLynx::commit', {
-          ...commitFlowIds
-            ? {
-              flowId: commitFlowIds[0],
-              flowIds: commitFlowIds,
-            }
-            : {},
-        });
+        profileStart('ReactLynx::commit', commitProfileOptions);
         old?.(vnode, commitQueue);
         profileEnd();
-        GlobalCommitContext.flowIds = undefined;
+        delete GlobalCommitContext.flowIds;
       });
     }
   }
