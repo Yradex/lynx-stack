@@ -13,6 +13,7 @@ import {
 } from '../../../../src/element-template/background/hydration-listener.js';
 import { GlobalCommitContext } from '../../../../src/element-template/background/commit-context.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
+import { PipelineOrigins } from '../../../../src/element-template/lynx/performance.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
 
 describe('ElementTemplate commit hook', () => {
@@ -88,9 +89,18 @@ describe('ElementTemplate commit hook', () => {
 
     envManager.switchToMainThread();
     expect(updateEvents).toHaveLength(1);
-    expect(updateEvents[0]).toEqual({
+    expect(updateEvents[0]).toMatchObject({
       patches: [0, 1, 'raw-text', 'after'],
-      flushOptions: { reason: 'after' },
+      flushOptions: {
+        reason: 'after',
+        pipelineOptions: {
+          pipelineID: 'pipelineID',
+          needTimestamps: true,
+          pipelineOrigin: PipelineOrigins.reactLynxHydrate,
+          dsl: 'reactLynx',
+          stage: 'hydrate',
+        },
+      },
     });
     envManager.switchToBackground();
   });

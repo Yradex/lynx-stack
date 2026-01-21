@@ -7,6 +7,8 @@ import { options } from 'preact';
 import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.js';
 import { COMMIT } from '../../renderToOpcodes/constants.js';
 import { hook } from '../../utils.js';
+import { profileEnd, profileStart } from '../../debug/utils.js';
+import { globalPipelineOptions, markTiming, markTimingLegacy, setPipeline } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
 
 let installed = false;
@@ -29,6 +31,24 @@ export function installElementTemplateCommitHook(): void {
 
   hook(options, COMMIT, (originalCommit, vnode, commitQueue) => {
     if (__BACKGROUND__ && hasHydrated && GlobalCommitContext.patches.length > 0) {
+      markTimingLegacy('updateDiffVdomEnd');
+      markTiming('diffVdomEnd');
+
+      if (__PROFILE__) {
+        profileStart('ReactLynx::commitChanges');
+      }
+      markTiming('packChangesStart');
+      if (globalPipelineOptions) {
+        GlobalCommitContext.flushOptions.pipelineOptions = globalPipelineOptions;
+      }
+      markTiming('packChangesEnd');
+      if (globalPipelineOptions) {
+        setPipeline(undefined);
+      }
+      if (__PROFILE__) {
+        profileEnd();
+      }
+
       lynx.getCoreContext().dispatchEvent({
         type: ElementTemplateLifecycleConstant.update,
         data: {
