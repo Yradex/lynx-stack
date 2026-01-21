@@ -5,15 +5,10 @@ import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.
 import { markElementTemplateHydrated, resetElementTemplateCommitState } from './commit-hook.js';
 import { hydrateIntoContext } from './hydrate.js';
 import { BackgroundElementTemplateInstance } from './instance.js';
-import {
-  beginPipeline,
-  markTiming,
-  PerformanceTimingFlags,
-  PipelineOrigins,
-} from '../lynx/performance.js';
+import { profileEnd, profileStart } from '../../debug/utils.js';
+import { PerformanceTimingFlags, PipelineOrigins, beginPipeline, markTiming } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
 import type { SerializedETInstance } from '../protocol/types.js';
-import { profileEnd, profileStart } from '../../debug/utils.js';
 import { __root } from '../runtime/page/root-instance.js';
 
 let listener:
@@ -59,6 +54,7 @@ export function installElementTemplateHydrationListener(): void {
         data: {
           patches: GlobalCommitContext.patches,
           flushOptions: GlobalCommitContext.flushOptions,
+          flowIds: GlobalCommitContext.flowIds,
         },
       });
       resetGlobalCommitContext();

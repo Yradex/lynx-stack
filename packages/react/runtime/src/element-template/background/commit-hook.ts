@@ -5,9 +5,9 @@
 import { options } from 'preact';
 
 import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.js';
+import { profileEnd, profileStart } from '../../debug/utils.js';
 import { COMMIT } from '../../renderToOpcodes/constants.js';
 import { hook } from '../../utils.js';
-import { profileEnd, profileStart } from '../../debug/utils.js';
 import { globalPipelineOptions, markTiming, markTimingLegacy, setPipeline } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
 
@@ -54,6 +54,7 @@ export function installElementTemplateCommitHook(): void {
         data: {
           patches: GlobalCommitContext.patches,
           flushOptions: GlobalCommitContext.flushOptions,
+          flowIds: GlobalCommitContext.flowIds,
         },
       });
       resetGlobalCommitContext();

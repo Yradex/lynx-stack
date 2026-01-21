@@ -2,11 +2,11 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { markTiming, setPipeline } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
 import type { ElementTemplateCommitContext, ElementTemplateFlushOptions } from '../protocol/types.js';
-import { markTiming, setPipeline } from '../lynx/performance.js';
-import { applyElementTemplatePatches } from '../runtime/patch.js';
 import { __page } from '../runtime/page/page.js';
+import { applyElementTemplatePatches } from '../runtime/patch.js';
 
 let listener:
   | ((event: { data: unknown }) => void)
@@ -18,9 +18,22 @@ export function installElementTemplatePatchListener(): void {
   listener = (event: { data: unknown }) => {
     const { data } = event;
     const payload = data as ElementTemplateCommitContext;
-    const flushOptions = (payload?.flushOptions ?? {}) as ElementTemplateFlushOptions;
+    const flushOptions = payload?.flushOptions ?? {};
     const pipelineOptions = flushOptions.pipelineOptions;
     setPipeline(pipelineOptions);
+    const flowIds = Array.isArray(payload?.flowIds) && payload.flowIds.length > 0
+      ? payload.flowIds
+      : undefined;
+    const shouldProfilePatch = !!flowIds
+      && typeof lynx.performance?.profileStart === 'function'
+      && typeof lynx.performance?.profileEnd === 'function';
+
+    if (shouldProfilePatch) {
+      lynx.performance.profileStart('ReactLynx::patch', {
+        flowId: flowIds[0],
+        flowIds,
+      });
+    }
 
     if (Array.isArray(payload?.patches)) {
       markTiming('mtsRenderStart');
@@ -36,6 +49,10 @@ export function installElementTemplatePatchListener(): void {
     }
 
     __FlushElementTree(__page, flushOptions);
+
+    if (shouldProfilePatch) {
+      lynx.performance.profileEnd();
+    }
   };
 
   lynx.getJSContext().addEventListener(

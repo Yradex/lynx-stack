@@ -123,6 +123,7 @@ export function initProfileHook(): void {
       hook(options, COMMIT, (old, vnode, commitQueue) => {
         const commitFlowIds = flowIds.length > 0 ? [...flowIds] : undefined;
         flowIds.length = 0;
+        GlobalCommitContext.flowIds = commitFlowIds;
 
         profileStart('ReactLynx::commit', {
           ...commitFlowIds
@@ -134,6 +135,7 @@ export function initProfileHook(): void {
         });
         old?.(vnode, commitQueue);
         profileEnd();
+        GlobalCommitContext.flowIds = undefined;
       });
     }
   }

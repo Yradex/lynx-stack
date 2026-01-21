@@ -6,9 +6,11 @@ import type { ElementTemplateCommitContext } from '../protocol/types.js';
 export const GlobalCommitContext: ElementTemplateCommitContext = {
   patches: [],
   flushOptions: {},
+  flowIds: undefined,
 };
 
 export function resetGlobalCommitContext(): void {
   GlobalCommitContext.patches = [];
   GlobalCommitContext.flushOptions = {};
+  GlobalCommitContext.flowIds = undefined;
 }

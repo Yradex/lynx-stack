@@ -147,6 +147,39 @@ describe('ElementTemplate patch stream (apply)', () => {
     expect(mockFlushElementTree.mock.calls.length).toBeGreaterThan(0);
   });
 
+  it('profiles patch update flowIds on main thread without passing them to __FlushElementTree', () => {
+    function App() {
+      const id = __BACKGROUND__ ? 'bg' : 'main';
+      return <view id={id} />;
+    }
+
+    const { before, after } = renderAndCollect(App);
+    const stream = hydrateBackground(before, after);
+    expect(stream.length).toBeGreaterThan(0);
+
+    envManager.switchToMainThread();
+    installElementTemplatePatchListener();
+    const performance = lynx.performance;
+    performance.profileStart.mockClear();
+    performance.profileEnd.mockClear();
+    mockFlushElementTree.mockClear();
+
+    envManager.switchToBackground();
+    lynx.getCoreContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.update,
+      data: { patches: stream, flushOptions: {}, flowIds: [101, 202] },
+    });
+    envManager.switchToMainThread();
+
+    expect(performance.profileStart).toHaveBeenCalledWith('ReactLynx::patch', {
+      flowId: 101,
+      flowIds: [101, 202],
+    });
+    expect(performance.profileEnd).toHaveBeenCalledTimes(1);
+    const lastFlushOptions = mockFlushElementTree.mock.calls.at(-1)?.[1] as { flowIds?: unknown };
+    expect(lastFlushOptions.flowIds).toBeUndefined();
+  });
+
   it('reports illegal handleId 0 on create', () => {
     const jsx = <view />;
     root.render(jsx);

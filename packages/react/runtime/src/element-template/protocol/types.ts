@@ -32,4 +32,5 @@ export interface ElementTemplateFlushOptions {
 export interface ElementTemplateCommitContext {
   patches: ElementTemplatePatchStream;
   flushOptions: ElementTemplateFlushOptions;
+  flowIds?: number[];
 }
