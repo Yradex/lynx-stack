@@ -12,6 +12,7 @@ import { installElementTemplateCommitHook } from '../background/commit-hook.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
 import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../background/instance.js';
+import { initProfileHook } from '../debug/profile.js';
 import { setupLynxEnv } from '../lynx/env.js';
 import { initTimingAPI } from '../lynx/performance.js';
 import { Slot } from '../runtime/components/slot.js';
@@ -24,6 +25,9 @@ function init(): void {
     injectCalledByNative();
     installElementTemplatePatchListener();
     installOnMtsDestruction();
+    if (__PROFILE__) {
+      initProfileHook();
+    }
   }
 
   if (__BACKGROUND__) {
@@ -34,6 +38,9 @@ function init(): void {
     installElementTemplateCommitHook();
     if (process.env['NODE_ENV'] !== 'test') {
       initTimingAPI();
+      if (lynx.performance?.isProfileRecording?.()) {
+        initProfileHook();
+      }
     }
   }
 
