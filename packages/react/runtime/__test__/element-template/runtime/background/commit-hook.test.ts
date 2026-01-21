@@ -46,7 +46,7 @@ describe('ElementTemplate commit hook', () => {
   it('dispatches update after commit when hydrated', () => {
     markElementTemplateHydrated();
     GlobalCommitContext.patches = [0, 1, 'raw-text', 'hello'];
-    GlobalCommitContext.flushOptions = { reason: 'test' };
+    GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 7 };
 
     options.__c?.({} as unknown as object, []);
 
@@ -54,7 +54,7 @@ describe('ElementTemplate commit hook', () => {
     expect(updateEvents).toHaveLength(1);
     expect(updateEvents[0]).toEqual({
       patches: [0, 1, 'raw-text', 'hello'],
-      flushOptions: { reason: 'test' },
+      flushOptions: { nativeUpdateDataOrder: 7 },
     });
     envManager.switchToBackground();
     expect(GlobalCommitContext.patches).toEqual([]);
@@ -73,7 +73,7 @@ describe('ElementTemplate commit hook', () => {
     installElementTemplateHydrationListener();
 
     GlobalCommitContext.patches = [0, 1, 'raw-text', 'before'];
-    GlobalCommitContext.flushOptions = { reason: 'before' };
+    GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 1 };
 
     envManager.switchToMainThread();
     lynx.getJSContext().dispatchEvent({
@@ -83,7 +83,7 @@ describe('ElementTemplate commit hook', () => {
     envManager.switchToBackground();
 
     GlobalCommitContext.patches.push(0, 1, 'raw-text', 'after');
-    GlobalCommitContext.flushOptions = { reason: 'after' };
+    GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 2 };
 
     options.__c?.({} as unknown as object, []);
 
@@ -92,7 +92,7 @@ describe('ElementTemplate commit hook', () => {
     expect(updateEvents[0]).toMatchObject({
       patches: [0, 1, 'raw-text', 'after'],
       flushOptions: {
-        reason: 'after',
+        nativeUpdateDataOrder: 2,
         pipelineOptions: {
           pipelineID: 'pipelineID',
           needTimestamps: true,

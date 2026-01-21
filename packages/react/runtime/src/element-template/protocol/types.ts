@@ -11,7 +11,25 @@ export type SerializedETInstance = [
 
 export type ElementTemplatePatchStream = (number | string | null | unknown[])[];
 
+export interface ElementTemplateFlushOptions {
+  triggerLayout?: boolean;
+  operationID?: any;
+  __lynx_timing_flag?: string;
+  nativeUpdateDataOrder?: number;
+  elementID?: number;
+  listID?: number;
+  listReuseNotification?: {
+    listElement: FiberElement;
+    itemKey: string;
+  };
+  pipelineOptions?: PipelineOptions;
+  elementIDs?: number[];
+  operationIDs?: any[];
+  asyncFlush?: boolean;
+  triggerDataUpdated?: boolean;
+}
+
 export interface ElementTemplateCommitContext {
   patches: ElementTemplatePatchStream;
-  flushOptions: Record<string, unknown>;
+  flushOptions: ElementTemplateFlushOptions;
 }

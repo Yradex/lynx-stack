@@ -3,9 +3,10 @@
 // LICENSE file in the root directory of this source tree.
 
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
-import type { ElementTemplateCommitContext } from '../protocol/types.js';
+import type { ElementTemplateCommitContext, ElementTemplateFlushOptions } from '../protocol/types.js';
 import { markTiming, setPipeline } from '../lynx/performance.js';
 import { applyElementTemplatePatches } from '../runtime/patch.js';
+import { __page } from '../runtime/page/page.js';
 
 let listener:
   | ((event: { data: unknown }) => void)
@@ -17,8 +18,8 @@ export function installElementTemplatePatchListener(): void {
   listener = (event: { data: unknown }) => {
     const { data } = event;
     const payload = data as ElementTemplateCommitContext;
-    const flushOptions = payload?.flushOptions ?? {};
-    const pipelineOptions = (flushOptions as { pipelineOptions?: PipelineOptions }).pipelineOptions;
+    const flushOptions = (payload?.flushOptions ?? {}) as ElementTemplateFlushOptions;
+    const pipelineOptions = flushOptions.pipelineOptions;
     setPipeline(pipelineOptions);
 
     if (Array.isArray(payload?.patches)) {
@@ -34,7 +35,7 @@ export function installElementTemplatePatchListener(): void {
       }
     }
 
-    __FlushElementTree(undefined, flushOptions);
+    __FlushElementTree(__page, flushOptions);
   };
 
   lynx.getJSContext().addEventListener(

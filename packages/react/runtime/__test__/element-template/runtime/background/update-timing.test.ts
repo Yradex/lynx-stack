@@ -66,14 +66,14 @@ describe('ElementTemplate update timing (background commit)', () => {
     markTimingLegacy('updateSetStateTrigger', 'flag');
 
     GlobalCommitContext.patches = [0, 1, 'raw-text', 'payload'];
-    GlobalCommitContext.flushOptions = { reason: 'test' };
+    GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 9 };
 
     options.__c?.({} as unknown as object, []);
 
     envManager.switchToMainThread();
     expect(updateEvents).toHaveLength(1);
     expect(updateEvents[0]?.flushOptions).toMatchObject({
-      reason: 'test',
+      nativeUpdateDataOrder: 9,
       pipelineOptions: {
         pipelineID: 'pipelineID',
         needTimestamps: true,
