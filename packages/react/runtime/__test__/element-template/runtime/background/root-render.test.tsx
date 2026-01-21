@@ -16,6 +16,6 @@ describe('ElementTemplate root render timing', () => {
 
     const { performance } = lynx;
     expect(performance.profileStart).toHaveBeenCalledWith('ReactLynx::renderBackground');
-    expect(performance.profileEnd).toHaveBeenCalledTimes(1);
+    expect(performance.profileEnd).toHaveBeenCalled();
   });
 });

@@ -10,7 +10,13 @@ import { COMMIT, COMPONENT, DIFF, DIFF2, DIFFED, DIRTY, NEXT_STATE, RENDER } fro
 import { getDisplayName, hook } from '../../utils.js';
 import { GlobalCommitContext } from '../background/commit-context.js';
 
+let installed = false;
+
 export function initProfileHook(): void {
+  if (installed) {
+    return;
+  }
+  installed = true;
   // early-exit if required profiling APIs are unavailable
   let p;
   /* v8 ignore start */
@@ -102,6 +108,7 @@ export function initProfileHook(): void {
           profileOptions,
         );
       }
+      /* v8 ignore next */
       old?.(vnode, oldVNode);
     });
 
