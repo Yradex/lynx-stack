@@ -6,6 +6,10 @@ import {
 } from '../../../../src/element-template/background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
 import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
+import {
+  PerformanceTimingFlags,
+  PipelineOrigins,
+} from '../../../../src/element-template/lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
@@ -113,5 +117,49 @@ describe('ElementTemplate hydration listener', () => {
     envManager.switchToBackground();
     expect(backgroundElementTemplateInstanceManager.get(oldId)).toBe(after);
     expect(backgroundElementTemplateInstanceManager.get(-1)).toBeUndefined();
+  });
+
+  it('marks hydrate performance timings on background thread', () => {
+    envManager.switchToBackground();
+    installElementTemplateHydrationListener();
+
+    const backgroundRoot = __root as BackgroundElementTemplateInstance;
+    const after = new BackgroundElementTemplateInstance('_et_test');
+    backgroundRoot.appendChild(after);
+
+    envManager.switchToMainThread();
+    const instances: SerializedETInstance[] = [[-1, '_et_test', {}, {}]];
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: instances,
+    });
+
+    envManager.switchToBackground();
+
+    const { performance } = lynx;
+    expect(performance.profileStart).toHaveBeenCalledWith('ReactLynx::hydrate');
+    expect(performance.profileEnd).toHaveBeenCalledTimes(1);
+
+    const onStartCalls = performance._onPipelineStart.mock.calls;
+    expect(onStartCalls).toHaveLength(1);
+    expect(onStartCalls[0]?.[0]).toBe('pipelineID');
+    expect(onStartCalls[0]?.[1]).toMatchObject({
+      pipelineID: 'pipelineID',
+      needTimestamps: true,
+      pipelineOrigin: PipelineOrigins.reactLynxHydrate,
+      dsl: 'reactLynx',
+      stage: 'hydrate',
+    });
+
+    const bindCalls = performance._bindPipelineIdWithTimingFlag.mock.calls;
+    expect(bindCalls).toHaveLength(1);
+    expect(bindCalls[0]).toEqual(['pipelineID', PerformanceTimingFlags.reactLynxHydrate]);
+
+    expect(performance._markTiming.mock.calls).toEqual([
+      ['pipelineID', 'hydrateParseSnapshotStart'],
+      ['pipelineID', 'hydrateParseSnapshotEnd'],
+      ['pipelineID', 'diffVdomStart'],
+      ['pipelineID', 'diffVdomEnd'],
+    ]);
   });
 });

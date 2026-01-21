@@ -5,8 +5,15 @@ import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.
 import { markElementTemplateHydrated, resetElementTemplateCommitState } from './commit-hook.js';
 import { hydrateIntoContext } from './hydrate.js';
 import { BackgroundElementTemplateInstance } from './instance.js';
+import {
+  beginPipeline,
+  markTiming,
+  PerformanceTimingFlags,
+  PipelineOrigins,
+} from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
 import type { SerializedETInstance } from '../protocol/types.js';
+import { profileEnd, profileStart } from '../../debug/utils.js';
 import { __root } from '../runtime/page/root-instance.js';
 
 let listener:
@@ -18,7 +25,15 @@ export function installElementTemplateHydrationListener(): void {
 
   listener = (event: { data: unknown }) => {
     const { data } = event;
+    if (__PROFILE__) {
+      profileStart('ReactLynx::hydrate');
+    }
+    beginPipeline(true, PipelineOrigins.reactLynxHydrate, PerformanceTimingFlags.reactLynxHydrate);
+    markTiming('hydrateParseSnapshotStart');
     const instances = data as SerializedETInstance[];
+    markTiming('hydrateParseSnapshotEnd');
+    markTiming('diffVdomStart');
+
     const root = __root as BackgroundElementTemplateInstance;
 
     resetGlobalCommitContext();
@@ -30,6 +45,11 @@ export function installElementTemplateHydrationListener(): void {
       hydrateIntoContext(before, after);
       after = after.nextSibling;
     }
+
+    if (__PROFILE__) {
+      profileEnd();
+    }
+    markTiming('diffVdomEnd');
 
     markElementTemplateHydrated();
 

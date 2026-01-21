@@ -9,7 +9,7 @@ import { render } from 'preact';
 import type { ReactNode } from 'react';
 
 // import { factory, withInitDataInState } from '../../compat/initData.js';
-// import { profileEnd, profileStart } from '../../debug/utils.js';
+import { profileEnd, profileStart } from '../../debug/utils.js';
 // import { useLynxGlobalEventListener } from '../../hooks/useLynxGlobalEventListener.js';
 import { __root } from '../runtime/page/root-instance.js';
 
@@ -58,7 +58,13 @@ export const root: Root = {
   render: (jsx: ReactNode): void => {
     __root.__jsx = jsx;
     if (__BACKGROUND__) {
+      if (__PROFILE__) {
+        profileStart('ReactLynx::renderBackground');
+      }
       render(jsx as ComponentChild, __root as unknown as ContainerNode);
+      if (__PROFILE__) {
+        profileEnd();
+      }
     }
   },
   /* v8 ignore next 3 */
