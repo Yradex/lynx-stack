@@ -122,16 +122,11 @@ export function initProfileHook(): void {
     if (__BACKGROUND__) {
       hook(options, COMMIT, (old, vnode, commitQueue) => {
         const globalFlowIds = GlobalCommitContext.flowIds;
-        let commitFlowIds: number[] | undefined;
-        /* v8 ignore next 3 */
-        if (globalFlowIds && globalFlowIds.length > 0) {
-          commitFlowIds = [...globalFlowIds];
-        }
-        /* v8 ignore next 4 */
-        const commitProfileOptions = commitFlowIds
-          ? { flowId: commitFlowIds[0], flowIds: commitFlowIds }
+        const commitProfileOptions = globalFlowIds && globalFlowIds.length > 0
+          ? { flowId: globalFlowIds[0], flowIds: [...globalFlowIds] }
           : {};
 
+        // @ts-expect-error flowIds is not defined in the type, for now
         profileStart('ReactLynx::commit', commitProfileOptions);
         old?.(vnode, commitQueue);
         profileEnd();
