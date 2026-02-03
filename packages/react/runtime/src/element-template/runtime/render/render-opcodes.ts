@@ -13,6 +13,9 @@ function shouldProfileRenderOpcodesBreakdown(): boolean {
   return __PROFILE__ && (globalThis as Record<string, unknown>)['__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__'] === true;
 }
 
+const EMPTY_INIT_OPCODES: any[] = [];
+const EMPTY_SLOT_CHILDREN = Object.freeze(Object.create(null)) as Record<number, SerializedETInstance[]>;
+
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
   templateKey: string | null;
@@ -21,10 +24,12 @@ interface Frame {
   attrs: Record<number, Record<string, any>> | undefined;
 
   // Collected Slot children: Map<slotId, SerializedETInstance[]>
-  slotChildren: Record<number, SerializedETInstance[]>;
+  // Lazily allocated on first write.
+  slotChildren: Record<number, SerializedETInstance[]> | undefined;
 
   // Collected Slot children refs: Map<slotId, ElementRef[]>
-  slotChildrenRef: Record<number, ElementRef[]>;
+  // Lazily allocated on first write.
+  slotChildrenRef: Record<number, ElementRef[]> | undefined;
 
   // Current active slot id, -1 means none
   activeSlotId: number;
@@ -42,8 +47,8 @@ export function renderOpcodesIntoElementTemplate(
     {
       templateKey: null,
       attrs: undefined,
-      slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
-      slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
+      slotChildren: undefined,
+      slotChildrenRef: undefined,
       activeSlotId: -1,
     },
   ];
@@ -56,8 +61,8 @@ export function renderOpcodesIntoElementTemplate(
         stack.push({
           templateKey: vnode.type,
           attrs: undefined,
-          slotChildren: Object.create(null) as Record<number, SerializedETInstance[]>,
-          slotChildrenRef: Object.create(null) as Record<number, ElementRef[]>,
+          slotChildren: undefined,
+          slotChildrenRef: undefined,
           activeSlotId: -1,
         });
         i += 2;
@@ -92,19 +97,23 @@ export function renderOpcodesIntoElementTemplate(
         if (profileBreakdown) {
           profileStart('ReactLynx::renderOpcodes::buildInitOpcodes');
         }
-        const initOpcodes: any[] = [];
+        let initOpcodes: any[] | undefined;
 
         if (frame.attrs) {
+          initOpcodes = [];
           for (const partIdString in frame.attrs) {
             initOpcodes.push(4, Number(partIdString), frame.attrs[partIdString as unknown as number]);
           }
         }
 
-        for (const slotIdString in frame.slotChildrenRef) {
-          const slotId = Number(slotIdString);
-          const childrenRefs = frame.slotChildrenRef[slotIdString as unknown as number]!;
-          for (let childIndex = 0; childIndex < childrenRefs.length; childIndex += 1) {
-            initOpcodes.push(2, slotId, null, childrenRefs[childIndex]);
+        if (frame.slotChildrenRef) {
+          initOpcodes ??= [];
+          for (const slotIdString in frame.slotChildrenRef) {
+            const slotId = Number(slotIdString);
+            const childrenRefs = frame.slotChildrenRef[slotIdString as unknown as number]!;
+            for (let childIndex = 0; childIndex < childrenRefs.length; childIndex += 1) {
+              initOpcodes.push(2, slotId, null, childrenRefs[childIndex]);
+            }
           }
         }
 
@@ -119,7 +128,7 @@ export function renderOpcodesIntoElementTemplate(
         const elementRef = __ElementFromBinary(
           templateKey,
           null,
-          initOpcodes,
+          initOpcodes ?? EMPTY_INIT_OPCODES,
           null,
         );
 
@@ -137,7 +146,7 @@ export function renderOpcodesIntoElementTemplate(
         const serializedInstance: SerializedETInstance = [
           id,
           templateKey,
-          frame.slotChildren,
+          frame.slotChildren ?? EMPTY_SLOT_CHILDREN,
           // Only include attrs if not empty for optimization?
           // For now, keep it simple.
           frame.attrs,
@@ -152,19 +161,13 @@ export function renderOpcodesIntoElementTemplate(
             rootInstances.push(serializedInstance);
           } else {
             const currentSlot = parentFrame.activeSlotId;
-            const refList = parentFrame.slotChildrenRef[currentSlot];
-            if (refList) {
-              refList.push(elementRef);
-            } else {
-              parentFrame.slotChildrenRef[currentSlot] = [elementRef];
-            }
+            const slotChildrenRef = parentFrame.slotChildrenRef
+              ?? (parentFrame.slotChildrenRef = Object.create(null) as Record<number, ElementRef[]>);
+            (slotChildrenRef[currentSlot] ??= []).push(elementRef);
 
-            const serializedList = parentFrame.slotChildren[currentSlot];
-            if (serializedList) {
-              serializedList.push(serializedInstance);
-            } else {
-              parentFrame.slotChildren[currentSlot] = [serializedInstance];
-            }
+            const slotChildren = parentFrame.slotChildren
+              ?? (parentFrame.slotChildren = Object.create(null) as Record<number, SerializedETInstance[]>);
+            (slotChildren[currentSlot] ??= []).push(serializedInstance);
           }
         }
 
@@ -212,19 +215,13 @@ export function renderOpcodesIntoElementTemplate(
           } else {
             // Inside template
             const currentSlot = frame.activeSlotId;
-            const refList = frame.slotChildrenRef[currentSlot];
-            if (refList) {
-              refList.push(textRef);
-            } else {
-              frame.slotChildrenRef[currentSlot] = [textRef];
-            }
+            const slotChildrenRef = frame.slotChildrenRef
+              ?? (frame.slotChildrenRef = Object.create(null) as Record<number, ElementRef[]>);
+            (slotChildrenRef[currentSlot] ??= []).push(textRef);
 
-            const serializedList = frame.slotChildren[currentSlot];
-            if (serializedList) {
-              serializedList.push(serializedText);
-            } else {
-              frame.slotChildren[currentSlot] = [serializedText];
-            }
+            const slotChildren = frame.slotChildren
+              ?? (frame.slotChildren = Object.create(null) as Record<number, SerializedETInstance[]>);
+            (slotChildren[currentSlot] ??= []).push(serializedText);
           }
         }
         i += 2;

@@ -109,12 +109,12 @@ describePerf('ET perf (local): renderPage() only', () => {
       resetTemplateId();
       (globalThis as { __USE_ELEMENT_TEMPLATE__?: boolean }).__USE_ELEMENT_TEMPLATE__ = true;
 
+      // Toggle fine-grained spans inside renderOpcodes loop.
+      const prevBreakdownFlag = (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__;
+      (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__ = detailedProfile;
+
       try {
         const spans = createSpanRecorder();
-
-        // Toggle fine-grained spans inside renderOpcodes loop.
-        const prevBreakdownFlag = (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__;
-        (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__ = detailedProfile;
 
         // renderMainThread.ts uses profileStart/profileEnd from src/debug/utils.ts,
         // which binds lynx.performance.profileStart/profileEnd at module-eval time.
