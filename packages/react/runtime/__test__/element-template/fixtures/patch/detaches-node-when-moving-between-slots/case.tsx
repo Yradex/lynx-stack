@@ -35,7 +35,7 @@ export function run() {
     applyElementTemplatePatches([0, 20, '_et_test_detach', []]);
     const page = __page as unknown as { children?: unknown[] };
     page.children ??= [];
-    page.children.push(ElementTemplateRegistry.get(20)!.nativeRef);
+    page.children.push(ElementTemplateRegistry.get(20)!);
 
     applyElementTemplatePatches([
       0,

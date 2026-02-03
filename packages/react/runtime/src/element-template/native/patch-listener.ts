@@ -4,7 +4,7 @@
 
 import { markTiming, setPipeline } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
-import type { ElementTemplateCommitContext, ElementTemplateFlushOptions } from '../protocol/types.js';
+import type { ElementTemplateCommitContext } from '../protocol/types.js';
 import { __page } from '../runtime/page/page.js';
 import { applyElementTemplatePatches } from '../runtime/patch.js';
 

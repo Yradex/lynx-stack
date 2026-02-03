@@ -26,7 +26,7 @@ export function run() {
 
     renderOpcodesIntoElementTemplate(opcodes, root);
 
-    const registryNode = ElementTemplateRegistry.get(-2)?.nativeRef;
+    const registryNode = ElementTemplateRegistry.get(-2);
     const rootChild = root.children?.[0];
 
     return {

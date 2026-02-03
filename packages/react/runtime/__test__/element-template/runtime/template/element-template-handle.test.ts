@@ -5,9 +5,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import {
-  createElementTemplateHandle,
-  destroyElementTemplateHandle,
-  patchElementTemplateHandle,
+  createElementTemplateId,
+  destroyElementTemplateId,
+  patchElementTemplateById,
 } from '../../../../src/element-template/runtime/template/handle.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 
@@ -28,29 +28,35 @@ describe('ElementTemplateHandle', () => {
   });
 
   it('should create and register a handle', () => {
-    const handle = createElementTemplateHandle(mockNativeRef as any);
+    const id = createElementTemplateId(mockNativeRef as any);
 
-    expect(handle).toEqual({ id: -1, nativeRef: mockNativeRef });
-    expect(ElementTemplateRegistry.get(-1)).toBe(handle);
+    expect(id).toBe(-1);
+    expect(ElementTemplateRegistry.get(-1)).toBe(mockNativeRef);
   });
 
   it('should patch a handle by calling native API', () => {
-    const handle = createElementTemplateHandle(mockNativeRef as any);
+    const id = createElementTemplateId(mockNativeRef as any);
     const opcodes = ['some', 'opcodes'];
 
-    patchElementTemplateHandle(handle, opcodes);
+    patchElementTemplateById(id, opcodes);
 
     expect(mockPatchElementTemplate).toHaveBeenCalledWith(mockNativeRef, opcodes, null);
   });
 
+  it('should throw when patching a missing handle id', () => {
+    expect(() => {
+      patchElementTemplateById(-999, ['op']);
+    }).toThrowError('ElementTemplate handle -999 not found.');
+  });
+
   it('should destroy and unregister a handle', () => {
-    const handle = createElementTemplateHandle(mockNativeRef as any);
+    const id = createElementTemplateId(mockNativeRef as any);
 
-    expect(ElementTemplateRegistry.has(handle.id)).toBe(true);
+    expect(ElementTemplateRegistry.has(id)).toBe(true);
 
-    destroyElementTemplateHandle(handle);
+    destroyElementTemplateId(id);
 
-    expect(ElementTemplateRegistry.has(handle.id)).toBe(false);
+    expect(ElementTemplateRegistry.has(id)).toBe(false);
     // expect(mockReleaseElement).toHaveBeenCalledWith(mockNativeRef);
   });
 });

@@ -2,9 +2,16 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
 import type { SerializedETInstance } from '../../protocol/types.js';
-import { createElementTemplateHandle } from '../template/handle.js';
+import { createElementTemplateId } from '../template/handle.js';
+
+function shouldProfileRenderOpcodesBreakdown(): boolean {
+  // Fine-grained spans inside the opcode loop are expensive (per-instance).
+  // Keep them off by default; enable explicitly for local profiling.
+  return __PROFILE__ && (globalThis as Record<string, unknown>)['__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__'] === true;
+}
 
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
@@ -57,6 +64,8 @@ export function renderOpcodesIntoElementTemplate(
         break;
       }
       case __OpEnd: {
+        const profileBreakdown = shouldProfileRenderOpcodesBreakdown();
+
         const frame = stack.pop();
         if (!frame) {
           throw new Error('Instruction mismatch: Stack underflow at __OpEnd');
@@ -80,6 +89,9 @@ export function renderOpcodesIntoElementTemplate(
         // Construct Init Opcodes
         // 1. setAttributes: [4, partId, attributes]
         // 2. insertBefore: [2, slotId, null, childRef]
+        if (profileBreakdown) {
+          profileStart('ReactLynx::renderOpcodes::buildInitOpcodes');
+        }
         const initOpcodes: any[] = [];
 
         if (frame.attrs) {
@@ -96,7 +108,14 @@ export function renderOpcodesIntoElementTemplate(
           }
         }
 
+        if (profileBreakdown) {
+          profileEnd();
+        }
+
         // Create Element Template Instance
+        if (profileBreakdown) {
+          profileStart('ReactLynx::renderOpcodes::__ElementFromBinary');
+        }
         const elementRef = __ElementFromBinary(
           templateKey,
           null,
@@ -104,12 +123,19 @@ export function renderOpcodesIntoElementTemplate(
           null,
         );
 
+        if (profileBreakdown) {
+          profileEnd();
+        }
+
         // Register Handle
-        const handle = createElementTemplateHandle(elementRef);
+        if (profileBreakdown) {
+          profileStart('ReactLynx::renderOpcodes::createHandle');
+        }
+        const id = createElementTemplateId(elementRef);
 
         // Collect Hydration Info
         const serializedInstance: SerializedETInstance = [
-          handle.id,
+          id,
           templateKey,
           frame.slotChildren,
           // Only include attrs if not empty for optimization?
@@ -142,6 +168,10 @@ export function renderOpcodesIntoElementTemplate(
           }
         }
 
+        if (profileBreakdown) {
+          profileEnd();
+        }
+
         i += 1;
         break;
       }
@@ -168,9 +198,9 @@ export function renderOpcodesIntoElementTemplate(
         const frame = stack[stack.length - 1];
         if (frame) {
           const textRef = __CreateRawText(text);
-          const textHandle = createElementTemplateHandle(textRef);
+          const textId = createElementTemplateId(textRef);
           const serializedText: SerializedETInstance = [
-            textHandle.id,
+            textId,
             'raw-text',
             {},
             { 0: { text } },

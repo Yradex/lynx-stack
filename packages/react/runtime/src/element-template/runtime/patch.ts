@@ -37,18 +37,18 @@ export function applyElementTemplatePatches(stream: ElementTemplatePatchStream):
       }
 
       if (nativeRef) {
-        ElementTemplateRegistry.set(handleId, { id: handleId, nativeRef });
+        ElementTemplateRegistry.set(handleId, nativeRef);
       }
     } else {
       const targetId = header;
       const opcodes = stream[i++] as unknown[];
-      const handle = ElementTemplateRegistry.get(targetId);
-      if (!handle) {
+      const nativeRef = ElementTemplateRegistry.get(targetId);
+      if (!nativeRef) {
         lynx.reportError(new Error(`ElementTemplate patch target ${targetId} not found.`));
         continue;
       }
       resolveOpcodes(opcodes);
-      __PatchElementTemplate(handle.nativeRef, opcodes, null);
+      __PatchElementTemplate(nativeRef, opcodes, null);
     }
   }
 }
@@ -86,10 +86,10 @@ function resolveOpcodes(opcodes: unknown[]): void {
 }
 
 function resolveHandle(id: number): ElementRef | null {
-  const handle = ElementTemplateRegistry.get(id);
-  if (!handle) {
+  const nativeRef = ElementTemplateRegistry.get(id);
+  if (!nativeRef) {
     lynx.reportError(new Error(`ElementTemplate patch handle ${id} not found.`));
     return null;
   }
-  return handle.nativeRef;
+  return nativeRef;
 }

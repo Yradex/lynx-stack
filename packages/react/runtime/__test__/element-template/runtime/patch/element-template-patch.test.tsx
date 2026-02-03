@@ -16,6 +16,7 @@ import type { SerializedETInstance } from '../../../../src/element-template/prot
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { applyElementTemplatePatches } from '../../../../src/element-template/runtime/patch.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
 import { lastMock } from '../../test-utils/mock/mockNativePapi.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
@@ -220,6 +221,44 @@ describe('ElementTemplate patch stream (apply)', () => {
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(reportError.mock.calls).toHaveLength(1);
     resetReportedErrors();
+  });
+
+  it('resolves insertBefore/removeChild references from registry', () => {
+    envManager.switchToMainThread();
+    ElementTemplateRegistry.clear();
+
+    const targetRef = { __isNativeRef: true, id: 'target' } as unknown as ElementRef;
+    const beforeRef = { __isNativeRef: true, id: 'before' } as unknown as ElementRef;
+    const childRef = { __isNativeRef: true, id: 'child' } as unknown as ElementRef;
+    ElementTemplateRegistry.set(1, targetRef);
+    ElementTemplateRegistry.set(10, beforeRef);
+    ElementTemplateRegistry.set(11, childRef);
+
+    const stream = [
+      // Patch target id=1 with opcodes that reference other handle ids.
+      1,
+      [
+        // insertBefore(slotId=0, before=10, child=11)
+        2,
+        0,
+        10,
+        11,
+        // removeChild(slotId=0, child=11)
+        3,
+        0,
+        11,
+      ],
+    ] as unknown as Parameters<typeof applyElementTemplatePatches>[0];
+
+    applyElementTemplatePatches(stream);
+
+    // The resolver should have replaced numeric ids with native refs.
+    const patchedOpcodes = (lastMock!.mockPatchElementTemplate as unknown as ReportErrorMock).mock.calls[0]
+      ?.[1] as unknown[];
+    expect(Array.isArray(patchedOpcodes)).toBe(true);
+    expect(patchedOpcodes[2]).toBe(beforeRef);
+    expect(patchedOpcodes[3]).toBe(childRef);
+    expect(patchedOpcodes[6]).toBe(childRef);
   });
 
   it('creates raw-text with empty text when payload is not string', () => {
