@@ -300,9 +300,31 @@ function _renderToString(
     return;
   }
 
-  let children;
-
   opcodes.push(__OpBegin, vnode);
+  // Fast path for ET host nodes. Compiler-generated ET nodes only carry
+  // `children` and optional dynamic `attrs`.
+  if (
+    __USE_ELEMENT_TEMPLATE__
+    && typeof type === 'string'
+  ) {
+    const attrs = props.attrs;
+    if (attrs != null && attrs !== false && typeof attrs !== 'function') {
+      opcodes.push(__OpAttr, 'attrs', attrs);
+    }
+
+    const etChildren = props.children;
+    if (etChildren != null && etChildren !== false && etChildren !== true) {
+      _renderToString(etChildren, context, false, selectValue, vnode, opcodes, opcodes.length);
+    }
+
+    if (afterDiff) afterDiff(vnode);
+    vnode[PARENT] = undefined;
+    if (ummountHook) ummountHook(vnode);
+    opcodes.push(__OpEnd);
+    return;
+  }
+
+  let children;
 
   for (const name in props) {
     const v = props[name];
