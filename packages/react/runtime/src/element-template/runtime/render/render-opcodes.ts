@@ -33,6 +33,10 @@ interface Frame {
 
   // Current active slot id, -1 means none
   activeSlotId: number;
+
+  // Cached arrays for current active slot to avoid repeated map lookups.
+  activeSlotChildren: SerializedETInstance[] | undefined;
+  activeSlotChildrenRef: ElementRef[] | undefined;
 }
 
 interface RootNode {}
@@ -50,6 +54,8 @@ export function renderOpcodesIntoElementTemplate(
       slotChildren: undefined,
       slotChildrenRef: undefined,
       activeSlotId: -1,
+      activeSlotChildren: undefined,
+      activeSlotChildrenRef: undefined,
     },
   ];
 
@@ -64,6 +70,8 @@ export function renderOpcodesIntoElementTemplate(
           slotChildren: undefined,
           slotChildrenRef: undefined,
           activeSlotId: -1,
+          activeSlotChildren: undefined,
+          activeSlotChildrenRef: undefined,
         });
         i += 2;
         break;
@@ -160,14 +168,8 @@ export function renderOpcodesIntoElementTemplate(
             __AppendElement(root, elementRef as FiberElement);
             rootInstances.push(serializedInstance);
           } else {
-            const currentSlot = parentFrame.activeSlotId;
-            const slotChildrenRef = parentFrame.slotChildrenRef
-              ?? (parentFrame.slotChildrenRef = Object.create(null) as Record<number, ElementRef[]>);
-            (slotChildrenRef[currentSlot] ??= []).push(elementRef);
-
-            const slotChildren = parentFrame.slotChildren
-              ?? (parentFrame.slotChildren = Object.create(null) as Record<number, SerializedETInstance[]>);
-            (slotChildren[currentSlot] ??= []).push(serializedInstance);
+            parentFrame.activeSlotChildrenRef!.push(elementRef);
+            parentFrame.activeSlotChildren!.push(serializedInstance);
           }
         }
 
@@ -191,8 +193,15 @@ export function renderOpcodesIntoElementTemplate(
       }
       case __OpSlot: {
         const slotId = opcodes[i + 1] as number;
-        const frame = stack[stack.length - 1];
-        frame!.activeSlotId = slotId;
+        const frame = stack[stack.length - 1]!;
+        frame.activeSlotId = slotId;
+        const slotChildrenRef = frame.slotChildrenRef
+          ?? (frame.slotChildrenRef = Object.create(null) as Record<number, ElementRef[]>);
+        frame.activeSlotChildrenRef = slotChildrenRef[slotId] = [];
+
+        const slotChildren = frame.slotChildren
+          ?? (frame.slotChildren = Object.create(null) as Record<number, SerializedETInstance[]>);
+        frame.activeSlotChildren = slotChildren[slotId] = [];
         i += 2;
         break;
       }
@@ -214,14 +223,8 @@ export function renderOpcodesIntoElementTemplate(
             __AppendElement(root, textRef);
           } else {
             // Inside template
-            const currentSlot = frame.activeSlotId;
-            const slotChildrenRef = frame.slotChildrenRef
-              ?? (frame.slotChildrenRef = Object.create(null) as Record<number, ElementRef[]>);
-            (slotChildrenRef[currentSlot] ??= []).push(textRef);
-
-            const slotChildren = frame.slotChildren
-              ?? (frame.slotChildren = Object.create(null) as Record<number, SerializedETInstance[]>);
-            (slotChildren[currentSlot] ??= []).push(serializedText);
+            frame.activeSlotChildrenRef!.push(textRef);
+            frame.activeSlotChildren!.push(serializedText);
           }
         }
         i += 2;
