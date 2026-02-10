@@ -15,42 +15,30 @@ import { __root } from '../page/root-instance.js';
 
 function renderMainThread(): void {
   let opcodes;
-  if (__PROFILE__) {
-    profileStart('ReactLynx::renderMainThread');
-  }
+  profileStart('ReactLynx::renderMainThread');
   try {
     opcodes = renderToString(__root.__jsx, undefined);
   } catch (e) {
     lynx.reportError(e as Error);
     opcodes = [];
   } finally {
-    if (__PROFILE__) {
-      profileEnd();
-    }
+    profileEnd();
   }
 
-  if (__PROFILE__) {
-    profileStart('ReactLynx::renderOpcodes');
-  }
+  profileStart('ReactLynx::renderOpcodes');
   let instances = [];
   try {
     instances = renderOpcodesIntoElementTemplate(opcodes, __page);
   } finally {
-    if (__PROFILE__) {
-      profileEnd();
-    }
+    profileEnd();
   }
 
-  if (__PROFILE__) {
-    profileStart('ReactLynx::packSerializedETInstance');
-  }
+  profileStart('ReactLynx::packSerializedETInstance');
   lynx.getJSContext().dispatchEvent({
     type: ElementTemplateLifecycleConstant.hydrate,
     data: instances,
   });
-  if (__PROFILE__) {
-    profileEnd();
-  }
+  profileEnd();
 }
 
 export { renderMainThread };
