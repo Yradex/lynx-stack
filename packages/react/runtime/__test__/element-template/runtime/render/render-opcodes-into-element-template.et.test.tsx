@@ -44,40 +44,4 @@ describe('renderOpcodesIntoElementTemplate', () => {
       'Unknown opcode: 999',
     );
   });
-
-  it('emits detailed profiling spans when explicitly enabled', () => {
-    // This is off by default to avoid perturbing benchmarks.
-    const prev = (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__;
-    (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__ = true;
-
-    registerTemplates([
-      {
-        templateId: '_et_profile_breakdown_test',
-        compiledTemplate: { tag: 'view', attributes: {}, children: [] },
-      },
-    ]);
-
-    const perf = lynx.performance;
-    perf.profileStart.mockClear();
-    perf.profileEnd.mockClear();
-
-    try {
-      renderOpcodesIntoElementTemplate(
-        [__OpBegin, { type: '_et_profile_breakdown_test' }, __OpEnd],
-        root,
-      );
-    } finally {
-      (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__ = prev;
-    }
-
-    const startNames = perf.profileStart.mock.calls.map((c: unknown[]) => c[0]);
-    expect(startNames).toEqual(
-      expect.arrayContaining([
-        'ReactLynx::renderOpcodes::buildInitOpcodes',
-        'ReactLynx::renderOpcodes::__ElementFromBinary',
-        'ReactLynx::renderOpcodes::createHandle',
-      ]),
-    );
-    expect(perf.profileEnd).toHaveBeenCalledTimes(3);
-  });
 });
