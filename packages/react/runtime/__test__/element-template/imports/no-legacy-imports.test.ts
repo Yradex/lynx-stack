@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const runtimeRoot = fs.realpathSync(path.resolve(__dirname, '..', '..'));
+const runtimeRoot = fs.realpathSync(path.resolve(__dirname, '..', '..', '..'));
 const runtimeSrc = fs.realpathSync(path.resolve(runtimeRoot, 'src'));
 
 const entryFiles = [

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { format as prettyFormat } from 'pretty-format';
 import { expect, it } from 'vitest';
@@ -19,6 +20,16 @@ export interface RunFixtureOptions {
   run: (context: FixtureContext) => Promise<void> | void;
   filter?: string[];
   allowEmpty?: boolean;
+}
+
+interface CaseFixtureModule {
+  run: (context: { fixtureDir: string; fixtureName: string }) => Promise<unknown> | unknown;
+  reportErrorCount?: number;
+}
+
+interface CaseFixtureResult {
+  output?: unknown;
+  files?: Record<string, unknown>;
 }
 
 export function isUpdateMode(): boolean {
@@ -87,6 +98,58 @@ export function runFixtureTests({
   }
 }
 
+export function runCaseModuleFixtureTests(options: {
+  fixturesRoot: string;
+  allowEmpty?: boolean;
+}): void {
+  const { fixturesRoot, allowEmpty = false } = options;
+
+  runFixtureTests({
+    fixturesRoot,
+    allowEmpty,
+    async run({ fixtureDir, fixtureName, update }) {
+      const casePath = fs.existsSync(path.join(fixtureDir, 'case.ts'))
+        ? path.join(fixtureDir, 'case.ts')
+        : path.join(fixtureDir, 'case.tsx');
+
+      if (!fs.existsSync(casePath)) {
+        throw new Error(`Missing case file for fixture "${fixtureName}".`);
+      }
+
+      const caseModule = (await import(pathToFileURL(casePath).href)) as CaseFixtureModule;
+      const reportErrorCount = caseModule.reportErrorCount ?? 0;
+      const result = await caseModule.run({ fixtureDir, fixtureName });
+      const normalized = normalizeCaseFixtureResult(result);
+
+      expectReportErrorCount(reportErrorCount);
+      if (normalized.files) {
+        for (const [fileName, value] of Object.entries(normalized.files)) {
+          assertOrUpdateTextFile({
+            path: path.join(fixtureDir, fileName),
+            actual: formatFixtureOutput(value),
+            update,
+            fixtureName,
+            label: fileName,
+          });
+        }
+      }
+
+      const hasOutputFile = normalized.files
+        ? Object.prototype.hasOwnProperty.call(normalized.files, 'output.txt')
+        : false;
+      if (normalized.output !== undefined && !hasOutputFile) {
+        assertOrUpdateTextFile({
+          path: path.join(fixtureDir, 'output.txt'),
+          actual: formatFixtureOutput(normalized.output),
+          update,
+          fixtureName,
+          label: 'output',
+        });
+      }
+    },
+  });
+}
+
 export function assertOrUpdateTextFile(options: {
   path: string;
   actual: string;
@@ -152,6 +215,22 @@ export function expectReportErrorCount(expectedCount: number): void {
   const actual = candidates.length > 0 ? Math.max(...candidates) : 0;
 
   expect(actual).toBe(expectedCount);
+}
+
+function normalizeCaseFixtureResult(result: unknown): CaseFixtureResult {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    return { output: result };
+  }
+
+  const candidate = result as CaseFixtureResult;
+  if ('output' in candidate || 'files' in candidate) {
+    return {
+      output: candidate.output,
+      files: candidate.files,
+    };
+  }
+
+  return { output: result };
 }
 
 function listFixtureDirs(fixturesRoot: string): string[] {

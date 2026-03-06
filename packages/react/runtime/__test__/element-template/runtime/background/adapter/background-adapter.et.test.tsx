@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setupBackgroundElementTemplateDocument } from '../../../../src/element-template/background/document.js';
-import type { BackgroundElementTemplateDocument } from '../../../../src/element-template/background/document.js';
-import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
-import { Slot } from '../../../../src/element-template/runtime/components/slot.js';
+import { setupBackgroundElementTemplateDocument } from '../../../../../src/element-template/background/document.js';
+import type { BackgroundElementTemplateDocument } from '../../../../../src/element-template/background/document.js';
+import { BackgroundElementTemplateInstance } from '../../../../../src/element-template/background/instance.js';
+import { Slot } from '../../../../../src/element-template/runtime/components/slot.js';
 
 describe('Background Element Template Adapter', () => {
   let doc: BackgroundElementTemplateDocument;
