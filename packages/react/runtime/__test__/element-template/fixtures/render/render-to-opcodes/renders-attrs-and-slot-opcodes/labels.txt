@@ -1,3 +1,0 @@
-Object {
-  "vnode:root": "_et_*",
-}

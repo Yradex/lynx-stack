@@ -3,52 +3,40 @@
 // LICENSE file in the root directory of this source tree.
 
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
-import type { SerializedETInstance } from '../../protocol/types.js';
-import { createElementTemplateId } from '../template/handle.js';
-
-const EMPTY_INIT_OPCODES: any[] = [];
-const EMPTY_SLOT_CHILDREN = Object.freeze(Object.create(null)) as Record<number, SerializedETInstance[]>;
 
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
   templateKey: string | null;
 
-  // Collected dynamic attributes: Map<partId, attributes>
-  attrs: Record<number, Record<string, any>> | undefined;
+  // Collected dynamic attributes passed from transform lowering.
+  attributeSlots: unknown[] | undefined;
 
-  // Collected Slot children: Map<slotId, SerializedETInstance[]>
-  // Lazily allocated on first write.
-  slotChildren: Record<number, SerializedETInstance[]> | undefined;
-
-  // Collected Slot children refs: Map<slotId, ElementRef[]>
-  // Lazily allocated on first write.
-  slotChildrenRef: Record<number, ElementRef[]> | undefined;
+  // Collected dynamic children keyed by elementSlotIndex.
+  elementSlots: ElementRef[][] | undefined;
 
   // Current active slot id, -1 means none
   activeSlotId: number;
 
-  // Cached arrays for current active slot to avoid repeated map lookups.
-  activeSlotChildren: SerializedETInstance[] | undefined;
-  activeSlotChildrenRef: ElementRef[] | undefined;
+  // Cached array for current active slot to avoid repeated lookups.
+  activeElementSlot: ElementRef[] | undefined;
 }
 
-interface RootNode {}
+export interface MainThreadCreateResult {
+  rootRefs: ElementRef[];
+}
 
 export function renderOpcodesIntoElementTemplate(
   opcodes: unknown[],
-  root: RootNode,
-): SerializedETInstance[] {
-  const rootInstances: SerializedETInstance[] = [];
+): MainThreadCreateResult {
+  const rootRefs: ElementRef[] = [];
   const stack: Frame[] = [
     // Initialize Root Frame
     {
       templateKey: null,
-      attrs: undefined,
-      slotChildren: undefined,
-      slotChildrenRef: undefined,
+      attributeSlots: undefined,
+      elementSlots: undefined,
       activeSlotId: -1,
-      activeSlotChildren: undefined,
-      activeSlotChildrenRef: undefined,
+      activeElementSlot: undefined,
     },
   ];
 
@@ -59,12 +47,10 @@ export function renderOpcodesIntoElementTemplate(
         const vnode = opcodes[i + 1] as { type: string };
         stack.push({
           templateKey: vnode.type,
-          attrs: undefined,
-          slotChildren: undefined,
-          slotChildrenRef: undefined,
+          attributeSlots: undefined,
+          elementSlots: undefined,
           activeSlotId: -1,
-          activeSlotChildren: undefined,
-          activeSlotChildrenRef: undefined,
+          activeElementSlot: undefined,
         });
         i += 2;
         break;
@@ -90,60 +76,24 @@ export function renderOpcodesIntoElementTemplate(
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
-        // Construct Init Opcodes
-        // 1. setAttributes: [4, partId, attributes]
-        // 2. insertBefore: [2, slotId, null, childRef]
-        let initOpcodes: any[] | undefined;
-
-        if (frame.attrs) {
-          initOpcodes = [];
-          for (const partIdString in frame.attrs) {
-            initOpcodes.push(4, Number(partIdString), frame.attrs[partIdString as unknown as number]);
-          }
-        }
-
-        if (frame.slotChildrenRef) {
-          initOpcodes ??= [];
-          for (const slotIdString in frame.slotChildrenRef) {
-            const slotId = Number(slotIdString);
-            const childrenRefs = frame.slotChildrenRef[slotIdString as unknown as number]!;
-            for (let childIndex = 0; childIndex < childrenRefs.length; childIndex += 1) {
-              initOpcodes.push(2, slotId, null, childrenRefs[childIndex]);
-            }
-          }
-        }
-
-        // Create Element Template Instance
-        const elementRef = __ElementFromBinary(
+        const elementRef = __CreateElementTemplate(
           templateKey,
           null,
-          initOpcodes ?? EMPTY_INIT_OPCODES,
+          frame.attributeSlots ?? null,
+          frame.elementSlots ?? null,
           null,
         );
-
-        // Register Handle
-        const id = createElementTemplateId(elementRef);
-
-        // Collect Hydration Info
-        const serializedInstance: SerializedETInstance = [
-          id,
-          templateKey,
-          frame.slotChildren ?? EMPTY_SLOT_CHILDREN,
-          // Only include attrs if not empty for optimization?
-          // For now, keep it simple.
-          frame.attrs,
-        ];
 
         // Append to parent
         const parentFrame = stack[stack.length - 1];
         if (parentFrame) {
           if (parentFrame.templateKey === null) {
-            // Parent is root frame
-            __AppendElement(root, elementRef as FiberElement);
-            rootInstances.push(serializedInstance);
+            rootRefs.push(elementRef);
           } else {
-            parentFrame.activeSlotChildrenRef!.push(elementRef);
-            parentFrame.activeSlotChildren!.push(serializedInstance);
+            if (!parentFrame.activeElementSlot) {
+              throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
+            }
+            parentFrame.activeElementSlot.push(elementRef);
           }
         }
 
@@ -152,12 +102,11 @@ export function renderOpcodesIntoElementTemplate(
       }
       case __OpAttr: {
         const name = opcodes[i + 1] as string;
-        const value = opcodes[i + 2] as Record<string, any>;
+        const value = opcodes[i + 2] as unknown[];
         const frame = stack[stack.length - 1];
-        if (frame && name === 'attrs') {
-          frame.attrs = value;
+        if (frame && name === 'attributeSlots') {
+          frame.attributeSlots = value;
         }
-        // Ignore other attributes for now (static ones handled by template)
         i += 3;
         break;
       }
@@ -165,13 +114,8 @@ export function renderOpcodesIntoElementTemplate(
         const slotId = opcodes[i + 1] as number;
         const frame = stack[stack.length - 1]!;
         frame.activeSlotId = slotId;
-        const slotChildrenRef = frame.slotChildrenRef
-          ?? (frame.slotChildrenRef = Object.create(null) as Record<number, ElementRef[]>);
-        frame.activeSlotChildrenRef = slotChildrenRef[slotId] = [];
-
-        const slotChildren = frame.slotChildren
-          ?? (frame.slotChildren = Object.create(null) as Record<number, SerializedETInstance[]>);
-        frame.activeSlotChildren = slotChildren[slotId] = [];
+        const elementSlots = frame.elementSlots ?? (frame.elementSlots = []);
+        frame.activeElementSlot = elementSlots[slotId] = [];
         i += 2;
         break;
       }
@@ -180,21 +124,14 @@ export function renderOpcodesIntoElementTemplate(
         const frame = stack[stack.length - 1];
         if (frame) {
           const textRef = __CreateRawText(text);
-          const textId = createElementTemplateId(textRef);
-          const serializedText: SerializedETInstance = [
-            textId,
-            'raw-text',
-            {},
-            { 0: { text } },
-          ];
 
           if (frame.templateKey === null) {
-            // Root text
-            __AppendElement(root, textRef);
+            rootRefs.push(textRef);
           } else {
-            // Inside template
-            frame.activeSlotChildrenRef!.push(textRef);
-            frame.activeSlotChildren!.push(serializedText);
+            if (!frame.activeElementSlot) {
+              throw new Error(`Template '${frame.templateKey}' received a text child outside of any element slot.`);
+            }
+            frame.activeElementSlot.push(textRef);
           }
         }
         i += 2;
@@ -207,5 +144,5 @@ export function renderOpcodesIntoElementTemplate(
         throw new Error(`Unknown opcode: ${opcode as string | number}`);
     }
   }
-  return rootInstances;
+  return { rootRefs };
 }

@@ -2,33 +2,47 @@
   {
     "templateId": "_et_7a8c6_test_2",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "text",
-      "attributes": {
-        "text": "Slot Content 1"
-      }
+      "attributes": [
+        {
+          "kind": "attribute",
+          "key": "text",
+          "binding": "static",
+          "value": "Slot Content 1"
+        }
+      ],
+      "children": []
     },
     "sourceFile": "index.tsx"
   },
   {
     "templateId": "_et_7a8c6_test_3",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "text",
-      "attributes": {
-        "text": "Slot Content 2"
-      }
+      "attributes": [
+        {
+          "kind": "attribute",
+          "key": "text",
+          "binding": "static",
+          "value": "Slot Content 2"
+        }
+      ],
+      "children": []
     },
     "sourceFile": "index.tsx"
   },
   {
     "templateId": "_et_7a8c6_test_1",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "view",
+      "attributes": [],
       "children": [
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 0
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 0
         }
       ]
     },
@@ -37,13 +51,13 @@
   {
     "templateId": "_et_7a8c6_test_4",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "view",
+      "attributes": [],
       "children": [
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 0
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 0
         }
       ]
     },

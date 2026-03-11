@@ -1,47 +1,19 @@
 Object {
-  "registryNode": Object {
-    "attributes": Object {
-      "part-id": 0,
-    },
-    "children": Array [
-      Object {
-        "attributes": Object {
-          "id": "test",
-          "part-id": 0,
-        },
-        "tag": "slot",
-      },
-      Object {
-        "attributes": Object {
-          "part-id": 1,
-        },
-        "children": Array [
-          Object {
-            "text": "Hello",
-            "type": "rawText",
-          },
-        ],
-        "tag": "slot",
-      },
-    ],
-    "tag": "_et_foo",
-    "templateId": "_et_foo",
-  },
   "rootChild": Object {
     "attributes": Object {
-      "part-id": 0,
+      "id": "test",
     },
     "children": Array [
       Object {
         "attributes": Object {
-          "id": "test",
-          "part-id": 0,
+          "slot-id": 0,
         },
+        "children": Array [],
         "tag": "slot",
       },
       Object {
         "attributes": Object {
-          "part-id": 1,
+          "slot-id": 1,
         },
         "children": Array [
           Object {
@@ -52,8 +24,7 @@ Object {
         "tag": "slot",
       },
     ],
-    "tag": "_et_foo",
+    "tag": "view",
     "templateId": "_et_foo",
   },
-  "rootChildMatchesRegistry": true,
 }

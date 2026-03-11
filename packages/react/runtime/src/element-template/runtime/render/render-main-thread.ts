@@ -9,7 +9,6 @@
 import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
 import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { render as renderToString } from '../../../renderToOpcodes/index.js';
-import { ElementTemplateLifecycleConstant } from '../../protocol/lifecycle-constant.js';
 import { __page } from '../page/page.js';
 import { __root } from '../page/root-instance.js';
 
@@ -26,19 +25,14 @@ function renderMainThread(): void {
   }
 
   profileStart('ReactLynx::renderOpcodes');
-  let instances = [];
   try {
-    instances = renderOpcodesIntoElementTemplate(opcodes, __page);
+    const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+    for (const rootRef of rootRefs) {
+      __AppendElement(__page, rootRef as FiberElement);
+    }
   } finally {
     profileEnd();
   }
-
-  profileStart('ReactLynx::packSerializedETInstance');
-  lynx.getJSContext().dispatchEvent({
-    type: ElementTemplateLifecycleConstant.hydrate,
-    data: instances,
-  });
-  profileEnd();
 }
 
 export { renderMainThread };

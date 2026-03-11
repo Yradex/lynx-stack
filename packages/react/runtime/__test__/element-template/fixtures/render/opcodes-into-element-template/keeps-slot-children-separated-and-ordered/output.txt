@@ -1,12 +1,10 @@
 Object {
   "rootChild": Object {
-    "attributes": Object {
-      "part-id": 0,
-    },
+    "attributes": Object {},
     "children": Array [
       Object {
         "attributes": Object {
-          "part-id": 0,
+          "slot-id": 0,
         },
         "children": Array [
           Object {
@@ -18,7 +16,7 @@ Object {
       },
       Object {
         "attributes": Object {
-          "part-id": 1,
+          "slot-id": 1,
         },
         "children": Array [
           Object {
@@ -29,7 +27,7 @@ Object {
         "tag": "slot",
       },
     ],
-    "tag": "_et_foo",
+    "tag": "view",
     "templateId": "_et_foo",
   },
 }

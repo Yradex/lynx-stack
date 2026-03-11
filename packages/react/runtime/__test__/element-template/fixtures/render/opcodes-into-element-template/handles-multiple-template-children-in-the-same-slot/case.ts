@@ -16,13 +16,15 @@ export function run() {
       __OpEnd,
     ];
 
-    renderOpcodesIntoElementTemplate(opcodes, root);
+    const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+    rootRefs.forEach(rootRef => __AppendElement(root as FiberElement, rootRef));
 
     const slotChildren = root.children?.[0]?.children?.[0]?.children ?? [];
     return {
       output: {
         slotChildrenCount: slotChildren.length,
         slotChildrenTags: slotChildren.map((child: { tag?: string }) => child.tag ?? null),
+        slotChildrenTemplateIds: slotChildren.map((child: { templateId?: string }) => child.templateId ?? null),
       },
       files: {
         'native-log.txt': nativeLog,

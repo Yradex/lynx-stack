@@ -1,9 +1,10 @@
 Array [
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_foo",
     null,
-    Array [],
+    null,
+    null,
     null,
   ],
   Array [

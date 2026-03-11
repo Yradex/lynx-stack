@@ -1333,7 +1333,7 @@ where
           }
 
           out.push(self.element_template_element_node(
-            "rawText",
+            "raw-text",
             vec![self.element_template_static_attribute_descriptor(
               "text",
               self.element_template_string_expr(s.as_ref()),

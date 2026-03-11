@@ -1,5 +1,4 @@
 import {
-  ElementTemplateRegistry,
   __OpAttr,
   __OpBegin,
   __OpEnd,
@@ -19,8 +18,8 @@ export function run() {
       __OpBegin,
       { type: '_et_inner', props: {} },
       __OpAttr,
-      'attrs',
-      { 0: { id: 'inner' } },
+      'attributeSlots',
+      ['inner'],
       __OpSlot,
       0,
       __OpText,
@@ -29,15 +28,12 @@ export function run() {
       __OpEnd,
     ];
 
-    renderOpcodesIntoElementTemplate(opcodes, root);
+    const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+    rootRefs.forEach(rootRef => __AppendElement(root as FiberElement, rootRef));
 
     return {
       output: {
         rootChild: root.children?.[0],
-        registryHas: {
-          '-1': ElementTemplateRegistry.has(-1),
-          '-2': ElementTemplateRegistry.has(-2),
-        },
       },
       files: {
         'native-log.txt': nativeLog,

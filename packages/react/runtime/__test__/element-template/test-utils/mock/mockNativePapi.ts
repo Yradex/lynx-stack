@@ -10,6 +10,7 @@ import {
   clone,
   formatNode,
   formatOpcodes,
+  instantiateCompiledTemplate,
   isRecordForMock,
   isUnknownArrayForMock,
 } from './mockNativePapi/templateTree.js';
@@ -78,6 +79,27 @@ export function installMockNativePapi(
     return { type: 'rawText', text }; // Matches existing structure
   });
 
+  const mockCreateElementTemplate = vi.fn().mockImplementation((
+    templateKey: string,
+    bundleUrl: string | null | undefined,
+    attributeSlots: unknown[] | null | undefined,
+    elementSlots: unknown[][] | null | undefined,
+    options: unknown,
+  ) => {
+    nativeLog.push(['__CreateElementTemplate', templateKey, bundleUrl, attributeSlots, elementSlots, options]);
+
+    if (!templateRepo.has(templateKey)) {
+      throw new Error(
+        `ElementTemplate: Template '${templateKey}' not found in registry. Please register it using __REGISTER_ELEMENT_TEMPLATES__ before rendering.`,
+      );
+    }
+
+    const template = templateRepo.get(templateKey) as unknown;
+    const element = instantiateCompiledTemplate(template, attributeSlots, elementSlots);
+    element.templateId = templateKey;
+    return element;
+  });
+
   const mockReportError = vi.fn().mockImplementation((error: Error) => {
     const g = globalThis as unknown as { __LYNX_REPORT_ERROR_CALLS?: Error[] };
     g.__LYNX_REPORT_ERROR_CALLS ??= [];
@@ -118,6 +140,7 @@ export function installMockNativePapi(
   });
 
   vi.stubGlobal('__ElementFromBinary', mockElementFromBinary);
+  vi.stubGlobal('__CreateElementTemplate', mockCreateElementTemplate);
   vi.stubGlobal('__CreateRawText', mockCreateRawText);
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);

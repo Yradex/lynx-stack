@@ -4,7 +4,8 @@ export function run() {
   return runCase(({ root, nativeLog }) => {
     const opcodes = [__OpText, 'root'];
 
-    renderOpcodesIntoElementTemplate(opcodes, root);
+    const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+    rootRefs.forEach(rootRef => __AppendElement(root as FiberElement, rootRef));
 
     return {
       output: {

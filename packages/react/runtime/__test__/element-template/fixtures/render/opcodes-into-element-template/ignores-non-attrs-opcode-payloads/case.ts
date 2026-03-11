@@ -11,7 +11,8 @@ export function run() {
       __OpEnd,
     ];
 
-    renderOpcodesIntoElementTemplate(opcodes, root);
+    const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+    rootRefs.forEach(rootRef => __AppendElement(root as FiberElement, rootRef));
 
     return {
       output: {

@@ -302,14 +302,14 @@ function _renderToString(
 
   opcodes.push(__OpBegin, vnode);
   // Fast path for ET host nodes. Compiler-generated ET nodes only carry
-  // `children` and optional dynamic `attrs`.
+  // `children` and optional dynamic `attributeSlots`.
   if (
     __USE_ELEMENT_TEMPLATE__
     && typeof type === 'string'
   ) {
-    const attrs = props.attrs;
-    if (attrs != null && attrs !== false && typeof attrs !== 'function') {
-      opcodes.push(__OpAttr, 'attrs', attrs);
+    const attributeSlots = props.attributeSlots;
+    if (attributeSlots != null && attributeSlots !== false && typeof attributeSlots !== 'function') {
+      opcodes.push(__OpAttr, 'attributeSlots', attributeSlots);
     }
 
     const etChildren = props.children;

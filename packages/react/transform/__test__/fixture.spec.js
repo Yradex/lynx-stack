@@ -230,7 +230,7 @@ export class A extends Component {
           children: [
             {
               kind: 'element',
-              tag: 'rawText',
+              tag: 'raw-text',
               attributes: [
                 {
                   kind: 'attribute',

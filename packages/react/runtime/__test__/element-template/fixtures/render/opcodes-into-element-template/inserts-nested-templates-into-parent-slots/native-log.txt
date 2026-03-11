@@ -4,53 +4,51 @@ Array [
     "X",
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_inner",
     null,
     Array [
-      Object {
-        "attributes": Object {
-          "id": "inner",
-        },
-        "id": 0,
-        "type": "setAttributes",
-      },
-      Object {
-        "id": 0,
-        "node": Object {
+      "inner",
+    ],
+    Array [
+      Array [
+        Object {
           "text": "X",
           "type": "rawText",
         },
-        "type": "insertBefore",
-      },
+      ],
     ],
     null,
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_outer",
     null,
+    null,
     Array [
-      Object {
-        "id": 0,
-        "node": Object {
+      Array [
+        Object {
           "attributes": Object {
-            "id": "inner",
-            "part-id": 0,
+            "title": "inner",
           },
           "children": Array [
             Object {
               "attributes": Object {
-                "part-id": 1,
+                "slot-id": 0,
               },
+              "children": Array [
+                Object {
+                  "text": "X",
+                  "type": "rawText",
+                },
+              ],
               "tag": "slot",
             },
           ],
-          "tag": "_et_inner",
+          "tag": "view",
           "templateId": "_et_inner",
         },
-        "type": "insertBefore",
-      },
+      ],
     ],
     null,
   ],

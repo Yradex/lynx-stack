@@ -18,6 +18,28 @@ export interface CompiledTemplateNode {
   text?: string;
 }
 
+interface CompiledAttributeDescriptor {
+  kind: 'attribute' | 'spread';
+  binding: 'static' | 'slot';
+  key?: string;
+  value?: unknown;
+  attrSlotIndex?: number;
+}
+
+interface CompiledElementNode {
+  kind: 'element';
+  tag: string;
+  attributes?: CompiledAttributeDescriptor[];
+  children?: CompiledTemplateChild[];
+}
+
+interface CompiledElementSlotNode {
+  kind: 'elementSlot';
+  elementSlotIndex: number;
+}
+
+type CompiledTemplateChild = CompiledElementNode | CompiledElementSlotNode;
+
 function getPartId(node: Record<string, unknown>): number | undefined {
   const attrs = node['attributes'];
   if (isRecord(attrs)) {
@@ -180,6 +202,94 @@ export function applyOpcodesToTemplateInstance(root: CompiledTemplateNode, opcod
 
     i += 1;
   }
+}
+
+function isCompiledElementNode(node: unknown): node is CompiledElementNode {
+  return isRecord(node) && node['kind'] === 'element' && typeof node['tag'] === 'string';
+}
+
+function isCompiledElementSlotNode(node: unknown): node is CompiledElementSlotNode {
+  return isRecord(node) && node['kind'] === 'elementSlot' && typeof node['elementSlotIndex'] === 'number';
+}
+
+function applyCompiledAttributes(
+  node: CompiledElementNode,
+  attributeSlots: unknown[] | null | undefined,
+): Record<string, unknown> {
+  const attributes: Record<string, unknown> = {};
+
+  for (const descriptor of node.attributes ?? []) {
+    if (descriptor.kind === 'attribute') {
+      if (descriptor.binding === 'static') {
+        if (descriptor.key) {
+          attributes[descriptor.key] = descriptor.value;
+        }
+        continue;
+      }
+
+      if (descriptor.key) {
+        const slotValue = attributeSlots?.[descriptor.attrSlotIndex ?? -1];
+        if (slotValue !== null && slotValue !== undefined) {
+          attributes[descriptor.key] = slotValue;
+        }
+      }
+      continue;
+    }
+
+    const spreadValue = attributeSlots?.[descriptor.attrSlotIndex ?? -1];
+    if (isRecord(spreadValue)) {
+      Object.assign(attributes, spreadValue);
+    }
+  }
+
+  return attributes;
+}
+
+function instantiateCompiledTemplateChild(
+  child: CompiledTemplateChild,
+  attributeSlots: unknown[] | null | undefined,
+  elementSlots: unknown[][] | null | undefined,
+): unknown {
+  if (isCompiledElementSlotNode(child)) {
+    return {
+      tag: 'slot',
+      attributes: { 'slot-id': child.elementSlotIndex },
+      children: [...(elementSlots?.[child.elementSlotIndex] ?? [])],
+    };
+  }
+
+  return instantiateCompiledTemplateNode(child, attributeSlots, elementSlots);
+}
+
+export function instantiateCompiledTemplateNode(
+  node: CompiledElementNode,
+  attributeSlots: unknown[] | null | undefined,
+  elementSlots: unknown[][] | null | undefined,
+): CompiledTemplateNode {
+  const instantiatedChildren: unknown[] = [];
+  for (const child of node.children ?? []) {
+    instantiatedChildren.push(
+      instantiateCompiledTemplateChild(child, attributeSlots, elementSlots),
+    );
+  }
+
+  return {
+    tag: node.tag,
+    attributes: applyCompiledAttributes(node, attributeSlots),
+    children: instantiatedChildren,
+  };
+}
+
+export function instantiateCompiledTemplate(
+  template: unknown,
+  attributeSlots: unknown[] | null | undefined,
+  elementSlots: unknown[][] | null | undefined,
+): CompiledTemplateNode {
+  if (!isCompiledElementNode(template)) {
+    throw new Error('ElementTemplate: __CreateElementTemplate expects the new compiled template schema.');
+  }
+
+  return instantiateCompiledTemplateNode(template, attributeSlots, elementSlots);
 }
 
 export function formatOpcodes(ops: unknown): unknown {

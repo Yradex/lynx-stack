@@ -2,13 +2,13 @@
   {
     "templateId": "_et_7a8c6_test_2",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "text",
+      "attributes": [],
       "children": [
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 0
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 0
         }
       ]
     },
@@ -17,13 +17,13 @@
   {
     "templateId": "_et_7a8c6_test_3",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "text",
+      "attributes": [],
       "children": [
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 0
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 0
         }
       ]
     },
@@ -32,69 +32,91 @@
   {
     "templateId": "_et_7a8c6_test_1",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "view",
+      "attributes": [],
       "children": [
         {
+          "kind": "element",
           "tag": "view",
-          "attributes": {
-            "id": "1"
-          },
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "id",
+              "binding": "static",
+              "value": "1"
+            }
+          ],
           "children": [
             {
-              "tag": "slot",
-              "attributes": {
-                "part-id": 0
-              }
+              "kind": "elementSlot",
+              "elementSlotIndex": 0
             }
           ]
         },
         {
+          "kind": "element",
           "tag": "view",
-          "attributes": {
-            "id": "2"
-          },
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "id",
+              "binding": "static",
+              "value": "2"
+            }
+          ],
           "children": [
             {
-              "tag": "slot",
-              "attributes": {
-                "part-id": 1
-              }
+              "kind": "elementSlot",
+              "elementSlotIndex": 1
             }
           ]
         },
         {
+          "kind": "element",
           "tag": "view",
-          "attributes": {
-            "id": "3"
-          },
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "id",
+              "binding": "static",
+              "value": "3"
+            }
+          ],
           "children": [
             {
+              "kind": "element",
               "tag": "text",
+              "attributes": [],
               "children": [
                 {
-                  "tag": "slot",
-                  "attributes": {
-                    "part-id": 2
-                  }
+                  "kind": "elementSlot",
+                  "elementSlotIndex": 2
                 }
               ]
             }
           ]
         },
         {
+          "kind": "element",
           "tag": "view",
-          "attributes": {
-            "id": "4"
-          },
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "id",
+              "binding": "static",
+              "value": "4"
+            }
+          ],
           "children": [
             {
+              "kind": "element",
               "tag": "text",
+              "attributes": [],
               "children": [
                 {
-                  "tag": "slot",
-                  "attributes": {
-                    "part-id": 3
-                  }
+                  "kind": "elementSlot",
+                  "elementSlotIndex": 3
                 }
               ]
             }

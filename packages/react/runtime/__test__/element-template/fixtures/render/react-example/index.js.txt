@@ -17,33 +17,25 @@ export function App() {
         setAlterLogo((prevAlterLogo)=>!prevAlterLogo);
     }, []);
     return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
-        attrs: {
-            0: {
-                "bindtap": 1
-            },
-            2: {
-                "src": arrow
-            }
-        },
+        attributeSlots: [
+            1,
+            arrow
+        ],
         children: [
             /*#__PURE__*/ _jsx(Slot, {
-                id: 1,
+                id: 0,
                 children: alterLogo ? /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
-                    attrs: {
-                        0: {
-                            "src": reactLynxLogo
-                        }
-                    }
+                    attributeSlots: [
+                        reactLynxLogo
+                    ]
                 }) : /*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
-                    attrs: {
-                        0: {
-                            "src": lynxLogo
-                        }
-                    }
+                    attributeSlots: [
+                        lynxLogo
+                    ]
                 })
             }),
             /*#__PURE__*/ _jsx(Slot, {
-                id: 3,
+                id: 1,
                 children: ' src/App.tsx '
             })
         ]

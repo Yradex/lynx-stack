@@ -16,18 +16,17 @@
     "A"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_2",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "A"
         }
-      }
+      ]
     ],
     null
   ],
@@ -36,18 +35,17 @@
     "B"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_2",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "B"
         }
-      }
+      ]
     ],
     null
   ],
@@ -56,18 +54,17 @@
     "C"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_2",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "C"
         }
-      }
+      ]
     ],
     null
   ],
@@ -88,18 +85,17 @@
     "A"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_3",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "A"
         }
-      }
+      ]
     ],
     null
   ],
@@ -108,18 +104,17 @@
     "B"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_3",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "B"
         }
-      }
+      ]
     ],
     null
   ],
@@ -128,60 +123,49 @@
     "C"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_3",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "C"
         }
-      }
+      ]
     ],
     null
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_1",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "A"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+        },
+        {
           "type": "rawText",
           "text": "B"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+        },
+        {
           "type": "rawText",
           "text": "C"
         }
-      },
-      {
-        "type": "insertBefore",
-        "id": 1,
-        "node": {
+      ],
+      [
+        {
           "tag": "text",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -192,18 +176,15 @@
             }
           ],
           "templateId": "_et_7a8c6_test_2"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 1,
-        "node": {
+        },
+        {
           "tag": "text",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -214,18 +195,15 @@
             }
           ],
           "templateId": "_et_7a8c6_test_2"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 1,
-        "node": {
+        },
+        {
           "tag": "text",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -237,41 +215,30 @@
           ],
           "templateId": "_et_7a8c6_test_2"
         }
-      },
-      {
-        "type": "insertBefore",
-        "id": 2,
-        "node": {
+      ],
+      [
+        {
           "type": "rawText",
           "text": "A"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 2,
-        "node": {
+        },
+        {
           "type": "rawText",
           "text": "B"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 2,
-        "node": {
+        },
+        {
           "type": "rawText",
           "text": "C"
         }
-      },
-      {
-        "type": "insertBefore",
-        "id": 3,
-        "node": {
+      ],
+      [
+        {
           "tag": "text",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -282,18 +249,15 @@
             }
           ],
           "templateId": "_et_7a8c6_test_3"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 3,
-        "node": {
+        },
+        {
           "tag": "text",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -304,18 +268,15 @@
             }
           ],
           "templateId": "_et_7a8c6_test_3"
-        }
-      },
-      {
-        "type": "insertBefore",
-        "id": 3,
-        "node": {
+        },
+        {
           "tag": "text",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -327,7 +288,7 @@
           ],
           "templateId": "_et_7a8c6_test_3"
         }
-      }
+      ]
     ],
     null
   ],

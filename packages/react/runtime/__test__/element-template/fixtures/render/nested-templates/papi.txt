@@ -4,36 +4,35 @@
     "X"
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_1",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "type": "rawText",
           "text": "X"
         }
-      }
+      ]
     ],
     null
   ],
   [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_7a8c6_test_2",
     null,
+    null,
     [
-      {
-        "type": "insertBefore",
-        "id": 0,
-        "node": {
+      [
+        {
           "tag": "view",
+          "attributes": {},
           "children": [
             {
               "tag": "slot",
               "attributes": {
-                "part-id": 0
+                "slot-id": 0
               },
               "children": [
                 {
@@ -45,7 +44,7 @@
           ],
           "templateId": "_et_7a8c6_test_1"
         }
-      }
+      ]
     ],
     null
   ],

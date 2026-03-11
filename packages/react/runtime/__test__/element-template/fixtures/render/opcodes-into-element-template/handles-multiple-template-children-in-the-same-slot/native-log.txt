@@ -1,43 +1,40 @@
 Array [
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_child_a",
     null,
-    Array [],
+    null,
+    null,
     null,
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_child_b",
     null,
-    Array [],
+    null,
+    null,
     null,
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_parent",
     null,
+    null,
     Array [
-      Object {
-        "id": 0,
-        "node": Object {
+      Array [
+        Object {
           "attributes": Object {},
           "children": Array [],
-          "tag": "_et_child_a",
+          "tag": "view",
           "templateId": "_et_child_a",
         },
-        "type": "insertBefore",
-      },
-      Object {
-        "id": 0,
-        "node": Object {
+        Object {
           "attributes": Object {},
           "children": Array [],
-          "tag": "_et_child_b",
+          "tag": "view",
           "templateId": "_et_child_b",
         },
-        "type": "insertBefore",
-      },
+      ],
     ],
     null,
   ],

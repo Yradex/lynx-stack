@@ -2,37 +2,47 @@
   {
     "templateId": "_et_7a8c6_test_1",
     "compiledTemplate": {
+      "kind": "element",
       "tag": "view",
+      "attributes": [],
       "children": [
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 0
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 0
         },
         {
+          "kind": "element",
           "tag": "text",
-          "attributes": {
-            "text": "Hello"
-          }
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "text",
+              "binding": "static",
+              "value": "Hello"
+            }
+          ],
+          "children": []
         },
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 1
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 1
         },
         {
+          "kind": "element",
           "tag": "text",
-          "attributes": {
-            "text": "World"
-          }
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "text",
+              "binding": "static",
+              "value": "World"
+            }
+          ],
+          "children": []
         },
         {
-          "tag": "slot",
-          "attributes": {
-            "part-id": 2
-          }
+          "kind": "elementSlot",
+          "elementSlotIndex": 2
         }
       ]
     },

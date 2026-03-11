@@ -1,37 +1,38 @@
 Object {
-  "registryHas": Object {
-    "-1": true,
-    "-2": true,
-  },
   "rootChild": Object {
     "attributes": Object {},
     "children": Array [
       Object {
         "attributes": Object {
-          "part-id": 0,
+          "slot-id": 0,
         },
         "children": Array [
           Object {
             "attributes": Object {
-              "id": "inner",
-              "part-id": 0,
+              "title": "inner",
             },
             "children": Array [
               Object {
                 "attributes": Object {
-                  "part-id": 1,
+                  "slot-id": 0,
                 },
+                "children": Array [
+                  Object {
+                    "text": "X",
+                    "type": "rawText",
+                  },
+                ],
                 "tag": "slot",
               },
             ],
-            "tag": "_et_inner",
+            "tag": "view",
             "templateId": "_et_inner",
           },
         ],
         "tag": "slot",
       },
     ],
-    "tag": "_et_outer",
+    "tag": "view",
     "templateId": "_et_outer",
   },
 }

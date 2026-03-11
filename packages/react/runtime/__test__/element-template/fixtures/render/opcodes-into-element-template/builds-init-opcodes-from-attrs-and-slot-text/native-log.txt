@@ -4,25 +4,20 @@ Array [
     "Hello",
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_foo",
     null,
     Array [
-      Object {
-        "attributes": Object {
-          "id": "test",
-        },
-        "id": 0,
-        "type": "setAttributes",
-      },
-      Object {
-        "id": 1,
-        "node": Object {
+      "test",
+    ],
+    Array [
+      ,
+      Array [
+        Object {
           "text": "Hello",
           "type": "rawText",
         },
-        "type": "insertBefore",
-      },
+      ],
     ],
     null,
   ],

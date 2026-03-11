@@ -1,0 +1,14 @@
+Array [
+  0,
+  "vnode:root",
+  2,
+  "attributeSlots",
+  Array [
+    "test",
+  ],
+  4,
+  1,
+  3,
+  "Hello",
+  1,
+]

@@ -8,26 +8,21 @@ Array [
     "B",
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_parent",
     null,
+    null,
     Array [
-      Object {
-        "id": 0,
-        "node": Object {
+      Array [
+        Object {
           "text": "A",
           "type": "rawText",
         },
-        "type": "insertBefore",
-      },
-      Object {
-        "id": 0,
-        "node": Object {
+        Object {
           "text": "B",
           "type": "rawText",
         },
-        "type": "insertBefore",
-      },
+      ],
     ],
     null,
   ],

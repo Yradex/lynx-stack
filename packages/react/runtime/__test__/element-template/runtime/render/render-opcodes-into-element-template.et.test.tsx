@@ -16,7 +16,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
   });
 
   it('throws when popping the root frame', () => {
-    expect(() => renderOpcodesIntoElementTemplate([__OpEnd], root)).toThrow(
+    expect(() => renderOpcodesIntoElementTemplate([__OpEnd])).toThrow(
       'Popped root frame',
     );
   });
@@ -32,7 +32,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
       return originalPop.apply(this);
     });
 
-    expect(() => renderOpcodesIntoElementTemplate([__OpEnd], root)).toThrow(
+    expect(() => renderOpcodesIntoElementTemplate([__OpEnd])).toThrow(
       'Stack underflow',
     );
 
@@ -40,7 +40,7 @@ describe('renderOpcodesIntoElementTemplate', () => {
   });
 
   it('throws on unknown opcodes', () => {
-    expect(() => renderOpcodesIntoElementTemplate([999], root)).toThrow(
+    expect(() => renderOpcodesIntoElementTemplate([999])).toThrow(
       'Unknown opcode: 999',
     );
   });

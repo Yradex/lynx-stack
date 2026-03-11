@@ -208,7 +208,10 @@ describe('Fixture Integration Tests', () => {
           // 5. Render
           const vnode = { type: App, props: {}, key: null, ref: null };
           const opcodes = renderToString(vnode, null);
-          renderOpcodesIntoElementTemplate(opcodes, root);
+          const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+          for (const rootRef of rootRefs) {
+            __AppendElement(root as FiberElement, rootRef);
+          }
 
           const actualJSX = serializeToJSX(root.children[0]);
           const actualPapi = JSON.stringify(nativeLog, null, 2);
