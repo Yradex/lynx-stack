@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::{
   cell::RefCell,
-  collections::{BTreeMap, HashMap, HashSet},
+  collections::{HashMap, HashSet},
 };
 
 use once_cell::sync::Lazy;
@@ -296,7 +296,8 @@ where
   dynamic_parts: Vec<DynamicPart>,
   dynamic_part_visitor: &'a mut V,
   key: Option<JSXAttrValue>,
-  id_counter: i32,
+  attr_slot_counter: i32,
+  element_slot_counter: i32,
   enable_element_template: bool,
 }
 
@@ -323,8 +324,49 @@ where
       dynamic_parts: vec![],
       dynamic_part_visitor,
       key: None,
-      id_counter: 0,
+      attr_slot_counter: 0,
+      element_slot_counter: 0,
       enable_element_template,
+    }
+  }
+
+  fn next_attr_slot_index(&mut self) -> i32 {
+    let idx = self.attr_slot_counter;
+    self.attr_slot_counter += 1;
+    idx
+  }
+
+  fn next_element_slot_index(&mut self) -> i32 {
+    let idx = self.element_slot_counter;
+    self.element_slot_counter += 1;
+    idx
+  }
+
+  fn push_dynamic_attr(&mut self, value: Expr, attr_name: AttrName) {
+    let index = if self.enable_element_template {
+      self.next_attr_slot_index()
+    } else {
+      self.element_index
+    };
+    self
+      .dynamic_parts
+      .push(DynamicPart::Attr(value, index, attr_name));
+  }
+
+  fn push_dynamic_spread(&mut self, value: Expr) {
+    let index = if self.enable_element_template {
+      self.next_attr_slot_index()
+    } else {
+      self.element_index
+    };
+    self.dynamic_parts.push(DynamicPart::Spread(value, index));
+  }
+
+  fn next_children_slot_index(&mut self) -> i32 {
+    if self.enable_element_template {
+      self.next_element_slot_index()
+    } else {
+      self.element_index
     }
   }
 
@@ -417,13 +459,7 @@ where
     if jsx_is_internal_slot(n) {
       if self.dynamic_part_count > 1 || self.enable_element_template {
         n.visit_mut_children_with(self.dynamic_part_visitor);
-        let id = if self.enable_element_template {
-          let id = self.id_counter;
-          self.id_counter += 1;
-          id
-        } else {
-          self.element_index
-        };
+        let id = self.next_children_slot_index();
 
         if self.enable_element_template {
           let wrapper = jsx_unwrap_internal_slot(n.take());
@@ -439,22 +475,7 @@ where
             id,
           ));
         }
-        let mut wrapper = WRAPPER_NODE_2.clone();
-        if self.enable_element_template {
-          wrapper
-            .opening
-            .attrs
-            .push(JSXAttrOrSpread::JSXAttr(JSXAttr {
-              span: DUMMY_SP,
-              name: JSXAttrName::Ident(IdentName::new("__lynx_part_id".into(), DUMMY_SP)),
-              value: Some(JSXAttrValue::Str(Str {
-                span: DUMMY_SP,
-                value: id.to_string().into(),
-                raw: None,
-              })),
-            }));
-        }
-        *n = wrapper;
+        *n = WRAPPER_NODE_2.clone();
       } else {
         *n = jsx_unwrap_internal_slot(n.take());
       }
@@ -554,7 +575,7 @@ where
             true
           });
           if !list_item_platform_info.is_empty() {
-            self.dynamic_parts.push(DynamicPart::Attr(
+            self.push_dynamic_attr(
               Expr::Object(ObjectLit {
                 span: DUMMY_SP,
                 props: list_item_platform_info
@@ -562,9 +583,8 @@ where
                   .map(jsx_attr_to_prop)
                   .collect(),
               }),
-              self.element_index,
               AttrName::ListItemPlatformInfo,
-            ));
+            );
           }
         }
       }
@@ -598,10 +618,7 @@ where
           })
           .into(),
         );
-        self.dynamic_parts.push(DynamicPart::Spread(
-          Expr::Object(spread_obj),
-          self.element_index,
-        ));
+        self.push_dynamic_spread(Expr::Object(spread_obj));
       } else {
         let el = Expr::Ident(el.clone());
 
@@ -654,11 +671,7 @@ where
                               self.static_stmts.push(RefCell::new(stmt));
                             }
                             _ => {
-                              self.dynamic_parts.push(DynamicPart::Attr(
-                                *expr.clone(),
-                                self.element_index,
-                                attr_name.clone(),
-                              ));
+                              self.push_dynamic_attr(*expr.clone(), attr_name.clone());
                             }
                           }
                         }
@@ -695,11 +708,7 @@ where
                           expr: JSXExpr::Expr(expr),
                           ..
                         })) => {
-                          self.dynamic_parts.push(DynamicPart::Attr(
-                            *expr.clone(),
-                            self.element_index,
-                            attr_name.clone(),
-                          ));
+                          self.push_dynamic_attr(*expr.clone(), attr_name.clone());
                         }
                         Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
                           expr: JSXExpr::JSXEmptyExpr(_),
@@ -710,18 +719,13 @@ where
                       };
                     }
                     AttrName::Event(..) | AttrName::Ref => {
-                      self.dynamic_parts.push(DynamicPart::Attr(
-                        *jsx_attr_value((*value).clone()),
-                        self.element_index,
-                        attr_name.clone(),
-                      ));
+                      self.push_dynamic_attr(*jsx_attr_value((*value).clone()), attr_name.clone());
                     }
                     AttrName::TimingFlag => {
-                      self.dynamic_parts.push(DynamicPart::Attr(
+                      self.push_dynamic_attr(
                         *quote_expr!("{__ltf: $flag}", flag: Expr = *jsx_attr_value((*value).clone())),
-                        self.element_index,
                         attr_name.clone(),
-                      ));
+                      );
                     }
                     AttrName::Style => {
                       let mut static_style_val = None;
@@ -778,11 +782,7 @@ where
                             expr: JSXExpr::Expr(expr),
                             ..
                           })) => {
-                            self.dynamic_parts.push(DynamicPart::Attr(
-                              *expr.clone(),
-                              self.element_index,
-                              attr_name.clone(),
-                            ));
+                            self.push_dynamic_attr(*expr.clone(), attr_name.clone());
                           }
                           Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
                             expr: JSXExpr::JSXEmptyExpr(_),
@@ -818,11 +818,7 @@ where
                             self.static_stmts.push(RefCell::new(stmt));
                           }
                           _ => {
-                            self.dynamic_parts.push(DynamicPart::Attr(
-                              *expr.clone(),
-                              self.element_index,
-                              attr_name.clone(),
-                            ));
+                            self.push_dynamic_attr(*expr.clone(), attr_name.clone());
                           }
                         },
                         Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
@@ -849,11 +845,7 @@ where
                           expr: JSXExpr::Expr(expr),
                           ..
                         })) => {
-                          self.dynamic_parts.push(DynamicPart::Attr(
-                            *expr.clone(),
-                            self.element_index,
-                            attr_name,
-                          ));
+                          self.push_dynamic_attr(*expr.clone(), attr_name);
                         }
                         Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
                           expr: JSXExpr::JSXEmptyExpr(_),
@@ -876,18 +868,10 @@ where
                   let attr_name: AttrName = AttrName::from_ns(ns.clone().into(), name.clone().into());
                   match attr_name {
                     AttrName::WorkletEvent(..) | AttrName::WorkletRef(..) => {
-                      self.dynamic_parts.push(DynamicPart::Attr(
-                        *jsx_attr_value((*value).clone()),
-                        self.element_index,
-                        attr_name.clone(),
-                      ));
+                      self.push_dynamic_attr(*jsx_attr_value((*value).clone()), attr_name.clone());
                     }
                     AttrName::Gesture(..) => {
-                      self.dynamic_parts.push(DynamicPart::Attr(
-                        *jsx_attr_value((*value).clone()),
-                        self.element_index,
-                        attr_name.clone(),
-                      ));
+                      self.push_dynamic_attr(*jsx_attr_value((*value).clone()), attr_name.clone());
                     }
                     _ => todo!(),
                   }
@@ -895,42 +879,6 @@ where
               };
             }
           });
-      }
-
-      // Check if this element has any dynamic parts (Attr or Spread)
-      let element_has_dynamic_parts = self.dynamic_parts.iter().any(|part| match part {
-        DynamicPart::Attr(_, index, _) => *index == self.element_index,
-        DynamicPart::Spread(_, index) => *index == self.element_index,
-        _ => false,
-      });
-
-      if element_has_dynamic_parts && self.enable_element_template {
-        let part_id = self.id_counter;
-        self.id_counter += 1;
-
-        self.dynamic_parts.iter_mut().for_each(|part| match part {
-          DynamicPart::Attr(_, index, _) => {
-            if *index == self.element_index {
-              *index = part_id;
-            }
-          }
-          DynamicPart::Spread(_, index) => {
-            if *index == self.element_index {
-              *index = part_id;
-            }
-          }
-          _ => {}
-        });
-
-        n.opening.attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
-          span: DUMMY_SP,
-          name: JSXAttrName::Ident(IdentName::new("__lynx_part_id".into(), DUMMY_SP)),
-          value: Some(JSXAttrValue::Str(Str {
-            span: DUMMY_SP,
-            value: part_id.to_string().into(),
-            raw: None,
-          })),
-        }));
       }
 
       if let Some(parent_el) = &self.parent_element {
@@ -983,14 +931,15 @@ where
         if self.dynamic_part_count <= 1 {
           n.visit_mut_children_with(self.dynamic_part_visitor);
           let children_expr = jsx_children_to_expr(n.children.take());
+          let element_slot_index = self.next_children_slot_index();
           if is_list {
             self
               .dynamic_parts
-              .push(DynamicPart::ListChildren(children_expr, self.element_index));
+              .push(DynamicPart::ListChildren(children_expr, element_slot_index));
           } else {
             self
               .dynamic_parts
-              .push(DynamicPart::Children(children_expr, self.element_index));
+              .push(DynamicPart::Children(children_expr, element_slot_index));
           }
         } else {
           // static_stmt.replace_with(|_| {
@@ -1071,9 +1020,10 @@ where
       n.visit_mut_children_with(self.dynamic_part_visitor);
 
       if self.parent_element.is_some() {
+        let element_slot_index = self.next_children_slot_index();
         self.dynamic_parts.push(DynamicPart::Children(
           Expr::JSXElement(Box::new(n.take())),
-          self.element_index,
+          element_slot_index,
         ));
 
         // self.element_index += 1;
@@ -1658,9 +1608,6 @@ where
     let mut snapshot_attrs: Vec<JSXAttrOrSpread> = vec![];
     let mut snapshot_values_has_attr = false;
 
-    // Use a BTreeMap to group attributes by part-id (sorted by index)
-    let mut attrs_accumulator: BTreeMap<i32, Vec<PropOrSpread>> = BTreeMap::new();
-
     if let Some(key) = key {
       snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
         span: DUMMY_SP,
@@ -1729,39 +1676,8 @@ where
 
           if experimental_enable_element_template {
             match dynamic_part {
-              DynamicPart::Attr(value, element_index, attr_name) => {
-                let prop_key = match attr_name {
-                  AttrName::Attr(ref name) => PropName::Str(Str {
-                    span: DUMMY_SP,
-                    value: name.as_str().into(),
-                    raw: None,
-                  }),
-                  AttrName::Dataset(ref name) => PropName::Str(Str {
-                    span: DUMMY_SP,
-                    value: format!("data-{}", name).into(),
-                    raw: None,
-                  }),
-                  AttrName::Event(ref name, ref event_name) => {
-                    let prefix = name.strip_suffix("Event").unwrap_or(name);
-                    PropName::Str(Str {
-                      span: DUMMY_SP,
-                      value: format!("{}{}", prefix, event_name).into(),
-                      raw: None,
-                    })
-                  }
-                  AttrName::Ref => PropName::Ident(IdentName::new("ref".into(), DUMMY_SP)),
-                  AttrName::Class => PropName::Ident(IdentName::new("class".into(), DUMMY_SP)),
-                  AttrName::Style => PropName::Ident(IdentName::new("style".into(), DUMMY_SP)),
-                  AttrName::ID => PropName::Ident(IdentName::new("id".into(), DUMMY_SP)),
-                  _ => PropName::Str(Str {
-                    span: DUMMY_SP,
-                    // generic fallback, though other types might need specific handling
-                    value: "".into(),
-                    raw: None,
-                  }),
-                };
-
-                let prop_value = if let AttrName::Event(_, _) = attr_name {
+              DynamicPart::Attr(value, _, attr_name) => {
+                let slot_value = if let AttrName::Event(_, _) = attr_name {
                   if target == TransformTarget::LEPUS {
                     quote!("1" as Expr)
                   } else {
@@ -1780,31 +1696,17 @@ where
                 } else {
                   value
                 };
-
-                // Ensure we handle keys correctly for AttrName variants that map to string keys
-                let prop_key = match prop_key {
-                  PropName::Ident(ident) => PropName::Ident(ident),
-                  PropName::Str(str_val) => PropName::Str(str_val),
-                  _ => PropName::Ident(IdentName::new("unknown".into(), DUMMY_SP)),
-                };
-
-                attrs_accumulator
-                  .entry(element_index)
-                  .or_insert_with(Vec::new)
-                  .push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                    key: prop_key,
-                    value: Box::new(prop_value),
-                  }))));
+                snapshot_values.push(Some(ExprOrSpread {
+                  spread: None,
+                  expr: Box::new(slot_value),
+                }));
                 snapshot_values_has_attr = true;
               }
-              DynamicPart::Spread(value, element_index) => {
-                attrs_accumulator
-                  .entry(element_index)
-                  .or_insert_with(Vec::new)
-                  .push(PropOrSpread::Spread(SpreadElement {
-                    dot3_token: DUMMY_SP,
-                    expr: Box::new(value),
-                  }));
+              DynamicPart::Spread(value, _) => {
+                snapshot_values.push(Some(ExprOrSpread {
+                  spread: None,
+                  expr: Box::new(value),
+                }));
                 snapshot_values_has_attr = true;
               }
               _ => {}
@@ -2042,33 +1944,14 @@ where
         attrs: {
           if snapshot_values_has_attr {
             if self.cfg.experimental_enable_element_template {
-              let mut props = vec![];
-              for (element_index, attrs) in attrs_accumulator {
-                // Determine whether the key requires quotes.
-                // Numbers can be used directly as keys in object literals, behaving like strings.
-                let key = PropName::Num(Number {
-                  span: DUMMY_SP,
-                  value: element_index as f64,
-                  raw: None, // Let the printer handle formatting if needed, or provide string if strictly required
-                });
-
-                props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                  key,
-                  value: Box::new(Expr::Object(ObjectLit {
-                    span: DUMMY_SP,
-                    props: attrs,
-                  })),
-                }))));
-              }
-
               snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
                 span: DUMMY_SP,
-                name: JSXAttrName::Ident(IdentName::new("attrs".into(), DUMMY_SP)),
+                name: JSXAttrName::Ident(IdentName::new("attributeSlots".into(), DUMMY_SP)),
                 value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
                   span: DUMMY_SP,
-                  expr: JSXExpr::Expr(Box::new(Expr::Object(ObjectLit {
+                  expr: JSXExpr::Expr(Box::new(Expr::Array(ArrayLit {
                     span: DUMMY_SP,
-                    props,
+                    elems: snapshot_values,
                   }))),
                 })),
               }));

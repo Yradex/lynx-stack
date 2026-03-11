@@ -264,7 +264,7 @@ test!(
     TransformMode::Test,
     None,
   )),
-  should_generate_part_ids_for_dynamic_attributes,
+  should_generate_attribute_slots_for_dynamic_attributes,
   // Input codes
   r#"
     <view class="static" id={dynamicId}>

@@ -16,10 +16,8 @@ function App() {
             title: 'main'
         }
     };
-    return <_et_da39a_test_1 attrs={{
-        0: {
-            "data-a": attrs,
-            "b": attrs
-        }
-    }}/>;
+    return <_et_da39a_test_1 attributeSlots={[
+        attrs,
+        attrs
+    ]}/>;
 }
