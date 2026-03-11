@@ -6,23 +6,48 @@ expression: actual_jsons
   {
     "template_id": "_et_da39a_test_1",
     "template": {
+      "kind": "element",
       "tag": "view",
-      "attributes": {
-        "class": "container",
-        "part-id": 0.0
-      },
-      "children": [
+      "attributes": [
         {
-          "tag": "text",
-          "attributes": {
-            "text": "Static"
-          }
+          "kind": "attribute",
+          "key": "class",
+          "binding": "static",
+          "value": "container"
         },
         {
+          "kind": "attribute",
+          "key": "id",
+          "binding": "slot",
+          "attrSlotIndex": 0.0
+        }
+      ],
+      "children": [
+        {
+          "kind": "element",
+          "tag": "text",
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "text",
+              "binding": "static",
+              "value": "Static"
+            }
+          ],
+          "children": []
+        },
+        {
+          "kind": "element",
           "tag": "image",
-          "attributes": {
-            "part-id": 1.0
-          }
+          "attributes": [
+            {
+              "kind": "attribute",
+              "key": "src",
+              "binding": "slot",
+              "attrSlotIndex": 1.0
+            }
+          ],
+          "children": []
         }
       ]
     }

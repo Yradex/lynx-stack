@@ -1291,139 +1291,132 @@ where
     }
   }
 
+  fn element_template_string_expr(&self, value: &str) -> Expr {
+    Expr::Lit(Lit::Str(Str {
+      span: DUMMY_SP,
+      raw: None,
+      value: value.into(),
+    }))
+  }
+
+  fn element_template_array_expr(&self, items: Vec<Expr>) -> Expr {
+    Expr::Array(ArrayLit {
+      span: DUMMY_SP,
+      elems: items
+        .into_iter()
+        .map(|expr| {
+          Some(ExprOrSpread {
+            spread: None,
+            expr: Box::new(expr),
+          })
+        })
+        .collect(),
+    })
+  }
+
+  fn element_template_static_attribute_descriptor(&self, key: &str, value: Expr) -> Expr {
+    quote!(
+      r#"{ kind: "attribute", key: $key, binding: "static", value: $value }"# as Expr,
+      key: Expr = self.element_template_string_expr(key),
+      value: Expr = value,
+    )
+  }
+
+  fn element_template_attribute_slot_descriptor(&self, key: &str, attr_slot_index: i32) -> Expr {
+    quote!(
+      r#"{ kind: "attribute", key: $key, binding: "slot", attrSlotIndex: $attr_slot_index }"# as Expr,
+      key: Expr = self.element_template_string_expr(key),
+      attr_slot_index: Expr = i32_to_expr(&attr_slot_index),
+    )
+  }
+
+  fn element_template_spread_slot_descriptor(&self, attr_slot_index: i32) -> Expr {
+    quote!(
+      r#"{ kind: "spread", binding: "slot", attrSlotIndex: $attr_slot_index }"# as Expr,
+      attr_slot_index: Expr = i32_to_expr(&attr_slot_index),
+    )
+  }
+
+  fn element_template_element_slot(&self, element_slot_index: i32) -> Expr {
+    quote!(
+      r#"{ kind: "elementSlot", elementSlotIndex: $element_slot_index }"# as Expr,
+      element_slot_index: Expr = i32_to_expr(&element_slot_index),
+    )
+  }
+
+  fn element_template_element_node(
+    &self,
+    tag: &str,
+    attributes: Vec<Expr>,
+    children: Vec<Expr>,
+  ) -> Expr {
+    quote!(
+      r#"{ kind: "element", tag: $tag, attributes: $attributes, children: $children }"# as Expr,
+      tag: Expr = self.element_template_string_expr(tag),
+      attributes: Expr = self.element_template_array_expr(attributes),
+      children: Expr = self.element_template_array_expr(children),
+    )
+  }
+
+  fn element_template_attribute_key<'a>(&self, key: &'a str) -> &'a str {
+    if key == "className" {
+      "class"
+    } else {
+      key
+    }
+  }
+
   fn element_template_from_jsx_children(
     &self,
     children: &[JSXElementChild],
-    slot_index: &mut i32,
-  ) -> Vec<ExprOrSpread> {
-    let mut out: Vec<ExprOrSpread> = vec![];
+    attr_slot_index: &mut i32,
+    element_slot_index: &mut i32,
+  ) -> Vec<Expr> {
+    let mut out: Vec<Expr> = vec![];
 
     for child in children {
       match child {
         JSXElementChild::JSXText(txt) => {
           let s = jsx_text_to_str(&txt.value);
-          let tag_value = s.clone();
           if s.trim().is_empty() {
             continue;
           }
 
-          let expr = Expr::Object(ObjectLit {
-            span: DUMMY_SP,
-            props: vec![
-              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
-                value: Box::new(Expr::Lit(Lit::Str(Str {
-                  span: DUMMY_SP,
-                  raw: None,
-                  value: "text".into(),
-                }))),
-              }))),
-              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
-                value: Box::new(Expr::Object(ObjectLit {
-                  span: DUMMY_SP,
-                  props: vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                    key: PropName::Ident(IdentName::new("text".into(), DUMMY_SP)),
-                    value: Box::new(Expr::Lit(Lit::Str(Str {
-                      span: DUMMY_SP,
-                      raw: None,
-                      value: tag_value.into(),
-                    }))),
-                  })))],
-                })),
-              }))),
-            ],
-          });
-          out.push(ExprOrSpread {
-            spread: None,
-            expr: Box::new(expr),
-          });
+          out.push(self.element_template_element_node(
+            "rawText",
+            vec![self.element_template_static_attribute_descriptor(
+              "text",
+              self.element_template_string_expr(s.as_ref()),
+            )],
+            vec![],
+          ));
         }
         JSXElementChild::JSXElement(el) => {
-          out.push(ExprOrSpread {
-            spread: None,
-            expr: Box::new(self.element_template_from_jsx_element(el, slot_index)),
-          });
+          out.push(self.element_template_from_jsx_element(el, attr_slot_index, element_slot_index));
         }
         JSXElementChild::JSXFragment(frag) => {
-          out.extend(self.element_template_from_jsx_children(&frag.children, slot_index));
+          out.extend(self.element_template_from_jsx_children(
+            &frag.children,
+            attr_slot_index,
+            element_slot_index,
+          ));
         }
         JSXElementChild::JSXExprContainer(JSXExprContainer {
           expr: JSXExpr::Expr(_),
           ..
         }) => {
-          let idx = *slot_index;
-          *slot_index += 1;
-          let expr = Expr::Object(ObjectLit {
-            span: DUMMY_SP,
-            props: vec![
-              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
-                value: Box::new(Expr::Lit(Lit::Str("slot".into()))),
-              }))),
-              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
-                value: Box::new(Expr::Object(ObjectLit {
-                  span: DUMMY_SP,
-                  props: vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                    key: PropName::Str(Str {
-                      span: DUMMY_SP,
-                      raw: Some("\"part-id\"".into()),
-                      value: "part-id".into(),
-                    }),
-                    value: Box::new(Expr::Lit(Lit::Num(Number {
-                      span: DUMMY_SP,
-                      value: idx as f64,
-                      raw: None,
-                    }))),
-                  })))],
-                })),
-              }))),
-            ],
-          });
-          out.push(ExprOrSpread {
-            spread: None,
-            expr: Box::new(expr),
-          });
+          let idx = *element_slot_index;
+          *element_slot_index += 1;
+          out.push(self.element_template_element_slot(idx));
         }
         JSXElementChild::JSXExprContainer(JSXExprContainer {
           expr: JSXExpr::JSXEmptyExpr(_),
           ..
         }) => {}
         JSXElementChild::JSXSpreadChild(_) => {
-          let idx = *slot_index;
-          *slot_index += 1;
-          let expr = Expr::Object(ObjectLit {
-            span: DUMMY_SP,
-            props: vec![
-              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
-                value: Box::new(Expr::Lit(Lit::Str("slot".into()))),
-              }))),
-              PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
-                value: Box::new(Expr::Object(ObjectLit {
-                  span: DUMMY_SP,
-                  props: vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-                    key: PropName::Str(Str {
-                      span: DUMMY_SP,
-                      raw: Some("\"part-id\"".into()),
-                      value: "part-id".into(),
-                    }),
-                    value: Box::new(Expr::Lit(Lit::Num(Number {
-                      span: DUMMY_SP,
-                      value: idx as f64,
-                      raw: None,
-                    }))),
-                  })))],
-                })),
-              }))),
-            ],
-          });
-          out.push(ExprOrSpread {
-            spread: None,
-            expr: Box::new(expr),
-          });
+          let idx = *element_slot_index;
+          *element_slot_index += 1;
+          out.push(self.element_template_element_slot(idx));
         }
       }
     }
@@ -1431,120 +1424,85 @@ where
     out
   }
 
-  fn element_template_from_jsx_element(&self, n: &JSXElement, slot_index: &mut i32) -> Expr {
+  fn element_template_from_jsx_element(
+    &self,
+    n: &JSXElement,
+    attr_slot_index: &mut i32,
+    element_slot_index: &mut i32,
+  ) -> Expr {
     let tag_expr = jsx_name(n.opening.name.clone());
     let tag_value = match *tag_expr {
       Expr::Lit(Lit::Str(s)) => s.value,
       _ => "".into(),
     };
 
-    let mut attributes_props: Vec<PropOrSpread> = vec![];
-    let mut part_id: Option<i32> = None;
+    if tag_value == "wrapper" {
+      let idx = *element_slot_index;
+      *element_slot_index += 1;
+      return self.element_template_element_slot(idx);
+    }
+
+    let mut attribute_descriptors: Vec<Expr> = vec![];
 
     for attr in &n.opening.attrs {
-      let JSXAttrOrSpread::JSXAttr(attr) = attr else {
-        continue;
-      };
+      match attr {
+        JSXAttrOrSpread::JSXAttr(attr) => {
+          let JSXAttrName::Ident(name) = &attr.name else {
+            continue;
+          };
 
-      let JSXAttrName::Ident(name) = &attr.name else {
-        continue;
-      };
+          let key = self.element_template_attribute_key(name.sym.as_ref());
 
-      let Some(value) = &attr.value else {
-        continue;
-      };
+          if name.sym == "__lynx_part_id" {
+            continue;
+          }
 
-      if name.sym == "__lynx_part_id" {
-        if let JSXAttrValue::Str(s) = value {
-          if let Ok(pid) = s.value.to_string_lossy().parse::<i32>() {
-            part_id = Some(pid);
+          let Some(value) = &attr.value else {
+            continue;
+          };
+
+          let static_value = match value {
+            JSXAttrValue::Str(s) => Some(Expr::Lit(Lit::Str(s.clone()))),
+            JSXAttrValue::JSXExprContainer(JSXExprContainer {
+              expr: JSXExpr::Expr(expr),
+              ..
+            }) => match &**expr {
+              Expr::Lit(Lit::Str(s)) => Some(Expr::Lit(Lit::Str(s.clone()))),
+              Expr::Lit(Lit::Num(n)) => Some(Expr::Lit(Lit::Num(n.clone()))),
+              Expr::Lit(Lit::Bool(b)) => Some(Expr::Lit(Lit::Bool(*b))),
+              Expr::Lit(Lit::Null(n)) => Some(Expr::Lit(Lit::Null(n.clone()))),
+              // TODO: Support complex static values (Object, Array, Template Literal without expressions)
+              // See ElementTemplate/Todo-StaticAttributesOpts.md
+              _ => None,
+            },
+            _ => None,
+          };
+
+          if let Some(static_value) = static_value {
+            attribute_descriptors
+              .push(self.element_template_static_attribute_descriptor(key, static_value));
+          } else {
+            let idx = *attr_slot_index;
+            *attr_slot_index += 1;
+            attribute_descriptors.push(self.element_template_attribute_slot_descriptor(key, idx));
           }
         }
-        continue;
+        JSXAttrOrSpread::SpreadElement(_) => {
+          let idx = *attr_slot_index;
+          *attr_slot_index += 1;
+          attribute_descriptors.push(self.element_template_spread_slot_descriptor(idx));
+        }
       }
-
-      let lit_val = match value {
-        JSXAttrValue::Str(s) => Some(Expr::Lit(Lit::Str(s.clone()))),
-        JSXAttrValue::JSXExprContainer(JSXExprContainer {
-          expr: JSXExpr::Expr(expr),
-          ..
-        }) => match &**expr {
-          Expr::Lit(Lit::Str(s)) => Some(Expr::Lit(Lit::Str(s.clone()))),
-          Expr::Lit(Lit::Num(n)) => Some(Expr::Lit(Lit::Num(n.clone()))),
-          Expr::Lit(Lit::Bool(b)) => Some(Expr::Lit(Lit::Bool(*b))),
-          // TODO: Support complex static values (Object, Array, Null, Template Literal without expressions)
-          // See ElementTemplate/Todo-StaticAttributesOpts.md
-          _ => None,
-        },
-        _ => None,
-      };
-
-      let Some(lit_val) = lit_val else {
-        continue;
-      };
-
-      let key_sym = name.sym.as_ref();
-      let key = if key_sym == "className" {
-        "class"
-      } else {
-        key_sym
-      };
-
-      let prop_name = if key.contains('-') {
-        PropName::Str(Str {
-          span: DUMMY_SP,
-          raw: Some(format!("\"{}\"", key).into()),
-          value: key.into(),
-        })
-      } else {
-        PropName::Ident(IdentName::new(key.into(), DUMMY_SP))
-      };
-
-      attributes_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key: prop_name,
-        value: Box::new(lit_val),
-      }))));
     }
-
-    if let Some(pid) = part_id {
-      attributes_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key: PropName::Str(Str {
-          span: DUMMY_SP,
-          raw: Some("\"part-id\"".into()),
-          value: "part-id".into(),
-        }),
-        value: Box::new(Expr::Lit(Lit::Num(Number {
-          span: DUMMY_SP,
-          value: pid as f64,
-          raw: None,
-        }))),
-      }))));
-    }
-
-    let final_tag = if tag_value == "wrapper" {
-      "slot".into()
-    } else {
-      tag_value
-    };
 
     // Optimization for text tags:
     // If <text> (or similar) has only one static text child, use `text` attribute instead of checking children.
-    let is_text_tag = final_tag == "text"
-      || final_tag == "raw-text"
-      || final_tag == "inline-text"
-      || final_tag == "x-text"
-      || final_tag == "x-inline-text";
+    let is_text_tag = tag_value == "text"
+      || tag_value == "raw-text"
+      || tag_value == "inline-text"
+      || tag_value == "x-text"
+      || tag_value == "x-inline-text";
     let mut text_child_optimized = false;
-
-    let mut props: Vec<PropOrSpread> =
-      vec![PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key: PropName::Ident(IdentName::new("tag".into(), DUMMY_SP)),
-        value: Box::new(Expr::Lit(Lit::Str(Str {
-          span: DUMMY_SP,
-          raw: None,
-          value: final_tag,
-        }))),
-      })))];
 
     if is_text_tag {
       let valid_children: Vec<&JSXElementChild> = n
@@ -1559,46 +1517,23 @@ where
       if valid_children.len() == 1 {
         if let JSXElementChild::JSXText(txt) = valid_children[0] {
           let s = jsx_text_to_str(&txt.value);
-          attributes_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-            key: PropName::Ident(IdentName::new("text".into(), DUMMY_SP)),
-            value: Box::new(Expr::Lit(Lit::Str(Str {
-              span: DUMMY_SP,
-              raw: None,
-              value: s.into(),
-            }))),
-          }))));
+          attribute_descriptors.push(self.element_template_static_attribute_descriptor(
+            "text",
+            self.element_template_string_expr(s.as_ref()),
+          ));
           text_child_optimized = true;
         }
       }
     }
 
-    if !attributes_props.is_empty() {
-      props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key: PropName::Ident(IdentName::new("attributes".into(), DUMMY_SP)),
-        value: Box::new(Expr::Object(ObjectLit {
-          span: DUMMY_SP,
-          props: attributes_props,
-        })),
-      }))));
-    }
+    let children = if text_child_optimized {
+      vec![]
+    } else {
+      self.element_template_from_jsx_children(&n.children, attr_slot_index, element_slot_index)
+    };
 
-    if !text_child_optimized {
-      let children_exprs = self.element_template_from_jsx_children(&n.children, slot_index);
-      if !children_exprs.is_empty() {
-        props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-          key: PropName::Ident(IdentName::new("children".into(), DUMMY_SP)),
-          value: Box::new(Expr::Array(ArrayLit {
-            span: DUMMY_SP,
-            elems: children_exprs.into_iter().map(Some).collect(),
-          })),
-        }))));
-      }
-    }
-
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props,
-    })
+    let final_tag = tag_value.to_string_lossy().to_string();
+    self.element_template_element_node(&final_tag, attribute_descriptors, children)
   }
 }
 
@@ -2074,8 +2009,10 @@ where
     self.current_snapshot_defs.push(entry_snapshot_uid_def);
 
     if use_element_template {
-      let mut slot_index: i32 = 0;
-      let template_expr = self.element_template_from_jsx_element(node, &mut slot_index);
+      let mut attr_slot_index: i32 = 0;
+      let mut element_slot_index: i32 = 0;
+      let template_expr =
+        self.element_template_from_jsx_element(node, &mut attr_slot_index, &mut element_slot_index);
       let suffix = snapshot_uid
         .strip_prefix("_et_")
         .unwrap_or(snapshot_uid.as_str());

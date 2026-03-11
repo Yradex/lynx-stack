@@ -152,12 +152,16 @@ export class A extends Component {
 
     expect(result.code).toMatchInlineSnapshot(`
       "import { jsx as _jsx } from "react/jsx-runtime";
+      import { Slot as Slot } from "@lynx-js/react";
       import { Component } from "@lynx-js/react";
       const _et_2d408_test_1 = "_et_2d408_test_1";
       export class A extends Component {
           render() {
               return /*#__PURE__*/ _jsx(_et_2d408_test_1, {
-                  children: name
+                  children: /*#__PURE__*/ _jsx(Slot, {
+                      id: 0,
+                      children: name
+                  })
               });
           }
       }
@@ -201,26 +205,47 @@ export class A extends Component {
         templateId: '_et_2d408_test_1',
         sourceFile: 'test.js',
         compiledTemplate: {
-          attributes: {
-            class: 'Logo',
-            id: 'a',
-            style: 'color:red;',
-          },
-          children: [
+          kind: 'element',
+          tag: 'view',
+          attributes: [
             {
-              tag: 'text',
-              attributes: {
-                text: 'Hello, ',
-              },
+              kind: 'attribute',
+              key: 'class',
+              binding: 'static',
+              value: 'Logo',
             },
             {
-              tag: 'slot',
-              attributes: {
-                'part-id': 0,
-              },
+              kind: 'attribute',
+              key: 'id',
+              binding: 'static',
+              value: 'a',
+            },
+            {
+              kind: 'attribute',
+              key: 'style',
+              binding: 'static',
+              value: 'color:red;',
             },
           ],
-          tag: 'view',
+          children: [
+            {
+              kind: 'element',
+              tag: 'rawText',
+              attributes: [
+                {
+                  kind: 'attribute',
+                  key: 'text',
+                  binding: 'static',
+                  value: 'Hello, ',
+                },
+              ],
+              children: [],
+            },
+            {
+              kind: 'elementSlot',
+              elementSlotIndex: 0,
+            },
+          ],
         },
       },
     ]);
