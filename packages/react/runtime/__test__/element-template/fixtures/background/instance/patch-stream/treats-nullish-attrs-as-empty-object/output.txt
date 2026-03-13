@@ -1,10 +1,6 @@
 Array [
+  2,
   1,
-  Array [
-    4,
-    0,
-    Object {
-      "a": undefined,
-    },
-  ],
+  0,
+  null,
 ]

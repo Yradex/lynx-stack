@@ -158,14 +158,14 @@ export function initProfileHook(): void {
 
     hook(options, DIFF, (old, vnode: PatchedVNode) => {
       if (typeof vnode.type === 'function') {
-        vnode[sPatchLength] = GlobalCommitContext.patches.length;
+        vnode[sPatchLength] = GlobalCommitContext.ops.length;
       }
       old?.(vnode);
     });
 
     hook(options, DIFFED, (old, vnode: PatchedVNode) => {
       if (typeof vnode.type === 'function') {
-        if (vnode[sPatchLength] === GlobalCommitContext.patches.length) {
+        if (vnode[sPatchLength] === GlobalCommitContext.ops.length) {
           // "NoPatch" is a conventional name in Lynx
           profileMark('ReactLynx::diffFinishNoPatch', {
             args: {

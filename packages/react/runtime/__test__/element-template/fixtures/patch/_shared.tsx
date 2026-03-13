@@ -17,13 +17,14 @@ import {
 import { installElementTemplateCommitHook } from '../../../../src/element-template/background/commit-hook.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type {
-  ElementTemplateCommitContext,
-  SerializedETInstance,
+  ElementTemplateUpdateCommitContext,
+  SerializedElementTemplate,
 } from '../../../../src/element-template/protocol/types.js';
 import { root } from '../../../../src/element-template/client/root.js';
 import { __root as internalRoot } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { registerBuiltinRawTextTemplate } from '../../test-utils/debug/registry.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
 
 declare const renderPage: () => void;
@@ -38,7 +39,7 @@ interface RootNode {
 
 export interface PatchContext {
   envManager: ElementTemplateEnvManager;
-  hydrationData: SerializedETInstance[];
+  hydrationData: SerializedElementTemplate[];
   onHydrate: (event: { data: unknown }) => void;
   root: RootNode;
   nativeLog: unknown[];
@@ -47,8 +48,8 @@ export interface PatchContext {
 
 export interface UpdateFixtureContext {
   envManager: ElementTemplateEnvManager;
-  hydrationData: SerializedETInstance[];
-  updateEvents: ElementTemplateCommitContext[];
+  hydrationData: SerializedElementTemplate[];
+  updateEvents: ElementTemplateUpdateCommitContext[];
   onHydrate: (event: { data: unknown }) => void;
   onUpdate: (event: { data: unknown }) => void;
   cleanupNative: () => void;
@@ -58,11 +59,12 @@ export function setupPatchContext(): PatchContext {
   vi.clearAllMocks();
   ElementTemplateRegistry.clear();
   resetTemplateId();
+  registerBuiltinRawTextTemplate();
 
   const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
 
   const envManager = new ElementTemplateEnvManager();
-  const hydrationData: SerializedETInstance[] = [];
+  const hydrationData: SerializedElementTemplate[] = [];
 
   envManager.resetEnv('background');
   envManager.setUseElementTemplate(true);
@@ -79,7 +81,7 @@ export function setupPatchContext(): PatchContext {
     const data = event.data;
     if (Array.isArray(data)) {
       for (const item of data) {
-        hydrationData.push(item as SerializedETInstance);
+        hydrationData.push(item as SerializedElementTemplate);
       }
     }
   });
@@ -99,11 +101,12 @@ export function setupUpdateFixtureContext(): UpdateFixtureContext {
   vi.clearAllMocks();
   ElementTemplateRegistry.clear();
   resetTemplateId();
+  registerBuiltinRawTextTemplate();
 
   const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
   const envManager = new ElementTemplateEnvManager();
-  const hydrationData: SerializedETInstance[] = [];
-  const updateEvents: ElementTemplateCommitContext[] = [];
+  const hydrationData: SerializedElementTemplate[] = [];
+  const updateEvents: ElementTemplateUpdateCommitContext[] = [];
 
   envManager.resetEnv('background');
   envManager.setUseElementTemplate(true);
@@ -115,7 +118,7 @@ export function setupUpdateFixtureContext(): UpdateFixtureContext {
     const data = event.data;
     if (Array.isArray(data)) {
       for (const item of data) {
-        hydrationData.push(item as SerializedETInstance);
+        hydrationData.push(item as SerializedElementTemplate);
       }
     }
   };
@@ -124,7 +127,7 @@ export function setupUpdateFixtureContext(): UpdateFixtureContext {
   envManager.switchToMainThread();
   installElementTemplatePatchListener();
   const onUpdate = (event: { data: unknown }) => {
-    updateEvents.push(event.data as ElementTemplateCommitContext);
+    updateEvents.push(event.data as ElementTemplateUpdateCommitContext);
   };
   lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
   envManager.switchToBackground();
@@ -173,7 +176,7 @@ export function teardownUpdateFixtureContext(context: UpdateFixtureContext): voi
 }
 
 export function renderAndCollect(App: () => JSX.Element, context: PatchContext): {
-  before: SerializedETInstance;
+  before: SerializedElementTemplate;
   after: BackgroundElementTemplateInstance;
 } {
   root.render(<App />);

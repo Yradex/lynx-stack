@@ -18,7 +18,7 @@ import { ElementTemplateRegistry } from '../../../../src/element-template/runtim
 import { removeCtxNotFoundEventListener } from '../../../../src/lifecycle/patch/error.js';
 import { renderToString } from '../../../../src/renderToOpcodes/index.js';
 import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
-import { registerTemplates } from '../../test-utils/debug/registry.js';
+import { registerBuiltinRawTextTemplate, registerTemplates } from '../../test-utils/debug/registry.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 import {
   assertMissingFile,
@@ -192,8 +192,10 @@ describe('Fixture Integration Tests', () => {
 
         // 3. Register templates
         if (update && outputTemplates) {
+          registerBuiltinRawTextTemplate();
           registerTemplates(JSON.parse(outputTemplates) as any[]);
         } else if (fs.existsSync(templatesPath)) {
+          registerBuiltinRawTextTemplate();
           const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8')) as any[];
           registerTemplates(templates);
         }

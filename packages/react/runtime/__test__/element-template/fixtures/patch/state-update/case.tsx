@@ -1,20 +1,11 @@
 import { useState } from '@lynx-js/react';
 import { options } from 'preact';
 
-import { resetGlobalCommitContext } from '../../../../../src/element-template/background/commit-context.js';
 import { root } from '../../../../../src/element-template/index.js';
-import { __page } from '../../../../../src/element-template/runtime/page/page.js';
-import { __root } from '../../../../../src/element-template/runtime/page/root-instance.js';
-import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
-import { formatPatchStream } from '../../../test-utils/debug/updateRunner.js';
-import { setupUpdateFixtureContext, teardownUpdateFixtureContext } from '../_shared.js';
-
-declare const renderPage: () => void;
+import { registerTemplates } from '../../../test-utils/debug/registry.js';
+import { runElementTemplateUpdate } from '../../../test-utils/debug/updateRunner.js';
 
 export async function run() {
-  const context = setupUpdateFixtureContext();
-  const { envManager, hydrationData, updateEvents } = context;
-
   // Capture scheduled renders so we can flush them while still on background thread.
   const scheduledRenders: Array<() => void> = [];
   const previousDebounce = options.debounceRendering;
@@ -24,6 +15,20 @@ export async function run() {
 
   try {
     let triggerUpdate: (() => void) | undefined;
+    const EtStateUpdate = '_et_state_update' as unknown as JSX.ElementType;
+    registerTemplates([
+      {
+        templateId: '_et_state_update',
+        compiledTemplate: {
+          kind: 'element',
+          tag: 'view',
+          attributes: [
+            { kind: 'attribute', binding: 'slot', key: 'id', attrSlotIndex: 0 },
+          ],
+          children: [],
+        },
+      },
+    ]);
 
     function App() {
       const [label, setLabel] = useState('before');
@@ -32,48 +37,28 @@ export async function run() {
         triggerUpdate = () => setLabel('after');
       }
 
-      return <view attrs={{ 0: { id: label } }} />;
+      return <EtStateUpdate attributeSlots={[label]} />;
     }
 
-    envManager.switchToMainThread(() => {
-      root.render(<App />);
-      renderPage();
+    const result = runElementTemplateUpdate({
+      render: () => <App />,
+      update: () => {
+        triggerUpdate!();
+        while (scheduledRenders.length > 0) {
+          const flush = scheduledRenders.shift();
+          flush?.();
+        }
+      },
     });
-    const beforePageJsx = serializeToJSX(__page);
-
-    envManager.switchToBackground(() => {
-      root.render(<App />);
-    });
-
-    if (hydrationData.length === 0) {
-      throw new Error('Missing hydration payload.');
-    }
-
-    updateEvents.length = 0;
-    envManager.switchToBackground(() => {
-      resetGlobalCommitContext();
-      triggerUpdate!();
-      while (scheduledRenders.length > 0) {
-        const flush = scheduledRenders.shift();
-        flush?.();
-      }
-    });
-
-    envManager.switchToMainThread();
-    const afterPageJsx = serializeToJSX(__page);
-    const updatePayload = updateEvents[updateEvents.length - 1];
-    const eventPatches = updatePayload?.patches ?? [];
 
     return {
       files: {
-        'before-jsx.txt': beforePageJsx,
-        'after-jsx.txt': afterPageJsx,
-        'patches.txt': formatPatchStream(eventPatches),
+        'before-jsx.txt': result.beforePageJsx,
+        'after-jsx.txt': result.afterPageJsx,
+        'ops.txt': result.formattedOps,
       },
     };
   } finally {
     options.debounceRendering = previousDebounce;
-    (__root as { __jsx?: unknown }).__jsx = undefined;
-    teardownUpdateFixtureContext(context);
   }
 }

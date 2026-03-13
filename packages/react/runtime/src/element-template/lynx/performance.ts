@@ -110,13 +110,13 @@ function markTiming(timestampKey: typeof PerformanceTimingKeys[number], force?: 
 }
 
 function shouldStartUpdatePipeline(): boolean {
-  return GlobalCommitContext.patches.length > 0;
+  return GlobalCommitContext.ops.length > 0;
 }
 
 function initTimingAPI(): void {
   // eslint-disable-next-line unicorn/consistent-function-scoping
   const helper = () => {
-    // Check patches to make sure this only runs after hydrate
+    // Check update ops to make sure this only runs after hydrate
     if (__JS__ && shouldStartUpdatePipeline()) {
       if (!globalPipelineOptions) {
         beginPipeline(false, PipelineOrigins.updateTriggeredByBts);

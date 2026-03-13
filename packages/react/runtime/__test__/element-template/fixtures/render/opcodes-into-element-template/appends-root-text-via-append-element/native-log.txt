@@ -1,11 +1,19 @@
 Array [
   Array [
-    "__CreateRawText",
-    "root",
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    Array [
+      "root",
+    ],
+    Array [],
+    Object {
+      "handleId": -1,
+    },
   ],
   Array [
     "__AppendElement",
     "root",
-    "\"root\"",
+    "<__et_builtin_raw_text__ />",
   ],
 ]

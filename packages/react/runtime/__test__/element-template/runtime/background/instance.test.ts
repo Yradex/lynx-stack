@@ -4,12 +4,17 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { GlobalCommitContext } from '../../../../src/element-template/background/commit-context.js';
 import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
-  BackgroundElementTemplateText,
+  BUILTIN_RAW_TEXT_TEMPLATE_KEY,
 } from '../../../../src/element-template/background/instance.js';
 import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
+
+function createTextNode(text: string): BackgroundElementTemplateInstance {
+  return new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY, [text]);
+}
 
 describe('BackgroundElementTemplateInstance', () => {
   beforeEach(() => {
@@ -151,6 +156,30 @@ describe('BackgroundElementTemplateInstance', () => {
       expect(child2.previousSibling).toBe(mover);
       expect(mover.parent).toBe(parent2);
     });
+
+    it('should reject a reference node from another parent', () => {
+      const parent1 = new BackgroundElementTemplateInstance('view');
+      const parent2 = new BackgroundElementTemplateInstance('view');
+      const child = new BackgroundElementTemplateInstance('text');
+      const foreign = new BackgroundElementTemplateInstance('image');
+
+      parent1.appendChild(child);
+      parent2.appendChild(foreign);
+
+      expect(() => parent1.insertBefore(child, foreign)).toThrow(
+        'Reference node is not a child of this parent',
+      );
+    });
+
+    it('should reject inserting a node before itself', () => {
+      const parent = new BackgroundElementTemplateInstance('view');
+      const child = new BackgroundElementTemplateInstance('text');
+      parent.appendChild(child);
+
+      expect(() => parent.insertBefore(child, child)).toThrow(
+        'Cannot insert a node before itself',
+      );
+    });
   });
 
   describe('removeChild', () => {
@@ -261,6 +290,23 @@ describe('BackgroundElementTemplateInstance', () => {
 
     lynxObj.reportError = oldReportError;
   });
+
+  it('normalizes undefined attributeSlots before emitting create', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.setAttribute('attributeSlots', [undefined]);
+    GlobalCommitContext.ops = [];
+
+    instance.emitCreate();
+
+    expect(GlobalCommitContext.ops).toEqual([
+      1,
+      instance.instanceId,
+      'view',
+      null,
+      [null],
+      [],
+    ]);
+  });
 });
 
 describe('BackgroundElementTemplateSlot', () => {
@@ -270,59 +316,56 @@ describe('BackgroundElementTemplateSlot', () => {
   });
 });
 
-describe('BackgroundElementTemplateText', () => {
+describe('Background raw-text instance', () => {
   it('should have correct type and text', () => {
-    const textNode = new BackgroundElementTemplateText('hello');
-    expect(textNode.type).toBe('raw-text');
+    const textNode = createTextNode('hello');
+    expect(textNode.type).toBe(BUILTIN_RAW_TEXT_TEMPLATE_KEY);
     expect(textNode.text).toBe('hello');
+    expect(textNode.nodeType).toBe(3);
+    expect(textNode.attributeSlots).toEqual(['hello']);
   });
 
   it('should update text via setAttribute', () => {
-    const textNode = new BackgroundElementTemplateText('');
+    const textNode = createTextNode('');
     textNode.setAttribute('0', 'world');
     expect(textNode.text).toBe('world');
+    expect(textNode.attributeSlots).toEqual(['world']);
 
     textNode.setAttribute('data', 'demo');
     expect(textNode.text).toBe('demo');
+    expect(textNode.attributeSlots).toEqual(['demo']);
   });
 
   it('should update text via data property', () => {
-    const textNode = new BackgroundElementTemplateText('');
+    const textNode = createTextNode('');
     textNode.data = 'world';
     expect(textNode.text).toBe('world');
     expect(textNode.data).toBe('world');
   });
 
-  it('should delegate unknown attributes to super (e.g. attrs)', () => {
-    const textNode = new BackgroundElementTemplateText('');
-    const attrs = { 0: { color: 'red' } };
-    textNode.setAttribute('attrs', attrs);
-    expect(textNode._attrs[0]).toEqual({ color: 'red' });
+  it('should ignore non-slot attribute writes on raw-text nodes', () => {
+    const textNode = createTextNode('');
+    textNode.setAttribute('style', { color: 'red' });
+    expect(textNode.attributeSlots).toEqual(['']);
   });
 });
 
 describe('BackgroundElementTemplateInstance Shadow State', () => {
-  it('should accept _attrs assignment as object', () => {
+  it('should cache attributeSlots without decoding compiled template attrs', () => {
     const instance = new BackgroundElementTemplateInstance('view');
-    instance._attrs = { 0: { id: 'a' } };
+    const slots = ['logo.png', { id: 'ignored' }] as const;
 
-    expect(instance._attrs[0]).toEqual({ id: 'a' });
+    instance.setAttribute('attributeSlots', [...slots]);
 
-    instance._attrs = { 0: { id: 'b' } };
-    expect(instance._attrs[0]).toEqual({ id: 'b' });
+    expect(instance.attributeSlots).toEqual(slots);
   });
 
-  it('should update attrs map when setAttribute("attrs", ...) is called', () => {
+  it('should update attributeSlots when setAttribute("attributeSlots", ...) is called', () => {
     const instance = new BackgroundElementTemplateInstance('view');
-    const attrs = {
-      0: { id: 'a' },
-      1: { class: 'foo' },
-    };
-    instance.setAttribute('attrs', attrs);
+    const slots = [{ id: 'a' }, { class: 'foo' }] as const;
+    instance.setAttribute('attributeSlots', [...slots]);
 
-    expect(Object.keys(instance._attrs)).toHaveLength(2);
-    expect(instance._attrs[0]).toEqual({ id: 'a' });
-    expect(instance._attrs[1]).toEqual({ class: 'foo' });
+    expect(instance.attributeSlots).toEqual(slots);
   });
 });
 
@@ -338,12 +381,12 @@ describe('BackgroundElementTemplateSlot Children', () => {
 
     const slot1 = new BackgroundElementTemplateSlot();
     slot1.setAttribute('id', 0);
-    const text1 = new BackgroundElementTemplateText('Hello');
+    const text1 = createTextNode('Hello');
     slot1.appendChild(text1);
 
     const slot2 = new BackgroundElementTemplateSlot();
     slot2.setAttribute('id', 1);
-    const text2 = new BackgroundElementTemplateText('World');
+    const text2 = createTextNode('World');
     const view2 = new BackgroundElementTemplateInstance('view');
     slot2.appendChild(text2);
     slot2.appendChild(view2);
@@ -356,6 +399,75 @@ describe('BackgroundElementTemplateSlot Children', () => {
 
     expect(slotChildren.get(0)).toEqual([text1]);
     expect(slotChildren.get(1)).toEqual([text2, view2]);
+    expect(root.elementSlots[0]).toEqual([text1]);
+    expect(root.elementSlots[1]).toEqual([text2, view2]);
+  });
+
+  it('should keep elementSlots in sync when slot is attached after children exist', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const slot = new BackgroundElementTemplateSlot();
+    const text = createTextNode('late');
+
+    slot.setAttribute('id', 2);
+    slot.appendChild(text);
+    root.appendChild(slot);
+
+    expect(root.elementSlots[2]).toEqual([text]);
+  });
+
+  it('should move slot children to the new slot index when partId changes', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const slot = new BackgroundElementTemplateSlot();
+    const text = createTextNode('move');
+
+    slot.setAttribute('id', 0);
+    slot.appendChild(text);
+    root.appendChild(slot);
+    slot.setAttribute('id', 3);
+
+    expect(root.elementSlots[0]).toEqual([]);
+    expect(root.elementSlots[3]).toEqual([text]);
+  });
+
+  it('should detach a moved child from the old slot shadow state when silent reparenting', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const slotA = new BackgroundElementTemplateSlot();
+    const slotB = new BackgroundElementTemplateSlot();
+    const text = createTextNode('move');
+
+    slotA.setAttribute('id', 0);
+    slotB.setAttribute('id', 1);
+    root.appendChild(slotA);
+    root.appendChild(slotB);
+    slotA.appendChild(text);
+
+    slotB.insertBefore(text, null, true);
+
+    expect(root.elementSlots[0]).toEqual([]);
+    expect(root.elementSlots[1]).toEqual([text]);
+    expect(slotA.firstChild).toBeNull();
+    expect(slotB.firstChild).toBe(text);
+  });
+
+  it('should detach a moved child from the old parent slot shadow state', () => {
+    const rootA = new BackgroundElementTemplateInstance('element-template-view');
+    const rootB = new BackgroundElementTemplateInstance('element-template-view');
+    const slotA = new BackgroundElementTemplateSlot();
+    const slotB = new BackgroundElementTemplateSlot();
+    const text = createTextNode('move');
+
+    slotA.setAttribute('id', 0);
+    slotB.setAttribute('id', 0);
+    rootA.appendChild(slotA);
+    rootB.appendChild(slotB);
+    slotA.appendChild(text);
+
+    slotB.insertBefore(text, null, true);
+
+    expect(rootA.elementSlots[0]).toEqual([]);
+    expect(rootB.elementSlots[0]).toEqual([text]);
+    expect(slotA.firstChild).toBeNull();
+    expect(slotB.firstChild).toBe(text);
   });
 
   it('should ignore non-slot direct children (though technically invalid)', () => {
@@ -371,7 +483,7 @@ describe('BackgroundElementTemplateSlot Children', () => {
   it('should ignore slot with default partId (-1)', () => {
     const root = new BackgroundElementTemplateInstance('element-template-view');
     const slot = new BackgroundElementTemplateSlot();
-    slot.appendChild(new BackgroundElementTemplateText('Hello'));
+    slot.appendChild(createTextNode('Hello'));
     root.appendChild(slot);
 
     const slotChildren = root.slotChildren;

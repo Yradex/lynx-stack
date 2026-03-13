@@ -4,6 +4,34 @@
 
 export const templateRepo = new Map<string, any>();
 
+export const BUILTIN_RAW_TEXT_TEMPLATE_ID = '__et_builtin_raw_text__';
+
+const builtinRawTextTemplate = {
+  templateId: BUILTIN_RAW_TEXT_TEMPLATE_ID,
+  compiledTemplate: {
+    kind: 'element',
+    tag: 'raw-text',
+    attributes: [
+      {
+        kind: 'attribute',
+        key: 'text',
+        binding: 'slot',
+        attrSlotIndex: 0,
+      },
+    ],
+    children: [],
+  },
+};
+
+export function registerBuiltinRawTextTemplate(): void {
+  if (!templateRepo.has(BUILTIN_RAW_TEXT_TEMPLATE_ID)) {
+    templateRepo.set(
+      builtinRawTextTemplate.templateId,
+      builtinRawTextTemplate.compiledTemplate,
+    );
+  }
+}
+
 export function registerTemplates(templates: any[]): void {
   for (const t of templates) {
     // The key is templateId, value is compiledTemplate

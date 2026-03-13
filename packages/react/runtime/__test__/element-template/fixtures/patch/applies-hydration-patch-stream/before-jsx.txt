@@ -1,5 +1,5 @@
 "<page>
-  <view part-id=\"0\" id=\"main\">
+  <view id=\"main\">
     <view id=\"a\" />
     <text>
       <raw-text text=\"Main\" />

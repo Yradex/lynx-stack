@@ -12,12 +12,17 @@ import {
   resetElementTemplatePatchListener,
 } from '../../../../src/element-template/native/patch-listener.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
-import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
+import { ElementTemplateUpdateOps } from '../../../../src/element-template/protocol/opcodes.js';
+import type {
+  ElementTemplateUpdateCommandStream,
+  SerializedElementTemplate,
+} from '../../../../src/element-template/protocol/types.js';
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
-import { applyElementTemplatePatches } from '../../../../src/element-template/runtime/patch.js';
+import { applyElementTemplateUpdateCommands } from '../../../../src/element-template/runtime/patch.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
+import { registerBuiltinRawTextTemplate } from '../../test-utils/debug/registry.js';
 import { lastMock } from '../../test-utils/mock/mockNativePapi.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 
@@ -37,6 +42,17 @@ interface PageWithChildren {
   children?: Array<{ templateId?: string }>;
 }
 
+function createRawTextOps(id: number, text: string) {
+  return [
+    ElementTemplateUpdateOps.createTemplate,
+    id,
+    '__et_builtin_raw_text__',
+    null,
+    [text],
+    [],
+  ] as const;
+}
+
 function resetReportedErrors(): void {
   const lynxObj = globalThis.lynx as unknown as LynxWithReportErrorMock;
   lynxObj.reportError.mockClear();
@@ -45,17 +61,22 @@ function resetReportedErrors(): void {
 
 describe('ElementTemplate patch stream (apply)', () => {
   const envManager = new ElementTemplateEnvManager();
-  let hydrationData: SerializedETInstance[] = [];
+  let hydrationData: SerializedElementTemplate[] = [];
 
   let onHydrate: (event: { data: unknown }) => void;
-  let mockPatchElementTemplate: ReportErrorMock;
+  let mockSetAttributeOfElementTemplate: ReportErrorMock;
+  let mockInsertNodeToElementTemplate: ReportErrorMock;
+  let mockRemoveNodeFromElementTemplate: ReportErrorMock;
   let mockFlushElementTree: ReportErrorMock;
 
   beforeEach(() => {
     vi.clearAllMocks();
     // mocks are already installed by setup.js beforeEach
-    mockPatchElementTemplate = lastMock!.mockPatchElementTemplate as unknown as ReportErrorMock;
+    mockSetAttributeOfElementTemplate = lastMock!.mockSetAttributeOfElementTemplate as unknown as ReportErrorMock;
+    mockInsertNodeToElementTemplate = lastMock!.mockInsertNodeToElementTemplate as unknown as ReportErrorMock;
+    mockRemoveNodeFromElementTemplate = lastMock!.mockRemoveNodeFromElementTemplate as unknown as ReportErrorMock;
     mockFlushElementTree = lastMock!.mockFlushElementTree as unknown as ReportErrorMock;
+    registerBuiltinRawTextTemplate();
 
     hydrationData = [];
     envManager.resetEnv('background');
@@ -65,7 +86,7 @@ describe('ElementTemplate patch stream (apply)', () => {
       const data = event.data;
       if (Array.isArray(data)) {
         for (const item of data) {
-          hydrationData.push(item as SerializedETInstance);
+          hydrationData.push(item as SerializedElementTemplate);
         }
       }
     });
@@ -100,7 +121,7 @@ describe('ElementTemplate patch stream (apply)', () => {
     return { before, after };
   }
 
-  it('resolves non-null beforeId references when applying patches', () => {
+  it('reports missing reference handle without mutating the page', () => {
     function App() {
       return (
         <view>
@@ -114,12 +135,18 @@ describe('ElementTemplate patch stream (apply)', () => {
     envManager.switchToMainThread();
 
     const beforeJSX = serializeToJSX(__page);
-    applyElementTemplatePatches([
-      before[0],
-      [2, 9999, before[0], before[0]],
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.insertNode,
+      before.options?.handleId as number,
+      9999,
+      before.options?.handleId as number,
+      9999,
     ]);
 
     expect(serializeToJSX(__page)).toBe(beforeJSX);
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(reportError.mock.calls.length).toBeGreaterThan(0);
+    resetReportedErrors();
   });
 
   it('accepts commit context payload on update event', () => {
@@ -128,23 +155,26 @@ describe('ElementTemplate patch stream (apply)', () => {
       return <view id={id} />;
     }
 
-    const { before, after } = renderAndCollect(App);
-    const stream = hydrateBackground(before, after);
-    expect(stream.length).toBeGreaterThan(0);
+    const { before } = renderAndCollect(App);
+    const targetId = before.options?.handleId;
+    if (typeof targetId !== 'number') {
+      throw new Error('Missing handleId on hydration payload');
+    }
+    const stream = [ElementTemplateUpdateOps.setAttribute, targetId, 0, 'bg'] as const;
 
     envManager.switchToMainThread();
     installElementTemplatePatchListener();
-    mockPatchElementTemplate.mockClear();
+    mockSetAttributeOfElementTemplate.mockClear();
     mockFlushElementTree.mockClear();
 
     envManager.switchToBackground();
     lynx.getCoreContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.update,
-      data: { patches: stream, flushOptions: {} },
+      data: { ops: stream, flushOptions: {} },
     });
     envManager.switchToMainThread();
 
-    expect(mockPatchElementTemplate.mock.calls.length).toBeGreaterThan(0);
+    expect(mockSetAttributeOfElementTemplate.mock.calls.length).toBeGreaterThan(0);
     expect(mockFlushElementTree.mock.calls.length).toBeGreaterThan(0);
   });
 
@@ -154,9 +184,12 @@ describe('ElementTemplate patch stream (apply)', () => {
       return <view id={id} />;
     }
 
-    const { before, after } = renderAndCollect(App);
-    const stream = hydrateBackground(before, after);
-    expect(stream.length).toBeGreaterThan(0);
+    const { before } = renderAndCollect(App);
+    const targetId = before.options?.handleId;
+    if (typeof targetId !== 'number') {
+      throw new Error('Missing handleId on hydration payload');
+    }
+    const stream = [ElementTemplateUpdateOps.setAttribute, targetId, 0, 'bg'] as const;
 
     envManager.switchToMainThread();
     installElementTemplatePatchListener();
@@ -168,7 +201,7 @@ describe('ElementTemplate patch stream (apply)', () => {
     envManager.switchToBackground();
     lynx.getCoreContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.update,
-      data: { patches: stream, flushOptions: {}, flowIds: [101, 202] },
+      data: { ops: stream, flushOptions: {}, flowIds: [101, 202] },
     });
     envManager.switchToMainThread();
 
@@ -188,7 +221,7 @@ describe('ElementTemplate patch stream (apply)', () => {
     root.render(jsx);
     renderPage();
 
-    applyElementTemplatePatches([0, 0, 'raw-text', 'x']);
+    applyElementTemplateUpdateCommands(createRawTextOps(0, 'x'));
 
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(reportError.mock.calls).toHaveLength(1);
@@ -202,7 +235,7 @@ describe('ElementTemplate patch stream (apply)', () => {
     root.render(jsx);
     renderPage();
 
-    applyElementTemplatePatches([999, [4, 0, { a: 1 }]]);
+    applyElementTemplateUpdateCommands([ElementTemplateUpdateOps.setAttribute, 999, 0, 'a']);
 
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(reportError.mock.calls).toHaveLength(1);
@@ -216,14 +249,14 @@ describe('ElementTemplate patch stream (apply)', () => {
     root.render(jsx);
     renderPage();
 
-    applyElementTemplatePatches([-1, [2, 0, null, 999]]);
+    applyElementTemplateUpdateCommands([ElementTemplateUpdateOps.insertNode, -1, 0, 999, 0]);
 
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(reportError.mock.calls).toHaveLength(1);
     resetReportedErrors();
   });
 
-  it('resolves insertBefore/removeChild references from registry', () => {
+  it('resolves insert/remove references from registry', () => {
     envManager.switchToMainThread();
     ElementTemplateRegistry.clear();
 
@@ -234,41 +267,35 @@ describe('ElementTemplate patch stream (apply)', () => {
     ElementTemplateRegistry.set(10, beforeRef);
     ElementTemplateRegistry.set(11, childRef);
 
-    const stream = [
-      // Patch target id=1 with opcodes that reference other handle ids.
+    const stream: ElementTemplateUpdateCommandStream = [
+      ElementTemplateUpdateOps.insertNode,
       1,
-      [
-        // insertBefore(slotId=0, before=10, child=11)
-        2,
-        0,
-        10,
-        11,
-        // removeChild(slotId=0, child=11)
-        3,
-        0,
-        11,
-      ],
-    ] as unknown as Parameters<typeof applyElementTemplatePatches>[0];
+      0,
+      11,
+      10,
+      ElementTemplateUpdateOps.removeNode,
+      1,
+      0,
+      11,
+    ];
 
-    applyElementTemplatePatches(stream);
+    applyElementTemplateUpdateCommands(stream);
 
-    // The resolver should have replaced numeric ids with native refs.
-    const patchedOpcodes = (lastMock!.mockPatchElementTemplate as unknown as ReportErrorMock).mock.calls[0]
-      ?.[1] as unknown[];
-    expect(Array.isArray(patchedOpcodes)).toBe(true);
-    expect(patchedOpcodes[2]).toBe(beforeRef);
-    expect(patchedOpcodes[3]).toBe(childRef);
-    expect(patchedOpcodes[6]).toBe(childRef);
+    expect(mockInsertNodeToElementTemplate.mock.calls[0]?.[0]).toBe(targetRef);
+    expect(mockInsertNodeToElementTemplate.mock.calls[0]?.[2]).toBe(childRef);
+    expect(mockInsertNodeToElementTemplate.mock.calls[0]?.[3]).toBe(beforeRef);
+    expect(mockRemoveNodeFromElementTemplate.mock.calls[0]?.[0]).toBe(targetRef);
+    expect(mockRemoveNodeFromElementTemplate.mock.calls[0]?.[2]).toBe(childRef);
   });
 
-  it('creates raw-text with empty text when payload is not string', () => {
+  it('creates builtin raw-text template from attributeSlots', () => {
     const jsx = <view />;
     root.render(jsx);
     envManager.switchToMainThread();
     root.render(jsx);
     renderPage();
 
-    applyElementTemplatePatches([0, 1, 'raw-text', []]);
+    applyElementTemplateUpdateCommands(createRawTextOps(1, 'x'));
 
     expect(serializeToJSX(__page)).toMatchInlineSnapshot(`
       "<page>
@@ -277,7 +304,7 @@ describe('ElementTemplate patch stream (apply)', () => {
     `);
   });
 
-  it('creates template with empty init opcodes when payload is not array', () => {
+  it('creates template with empty slots when payload is null', () => {
     const jsx = <view />;
     root.render(jsx);
     envManager.switchToMainThread();
@@ -288,7 +315,14 @@ describe('ElementTemplate patch stream (apply)', () => {
     if (!templateKey) {
       throw new Error('Missing templateId on first page child');
     }
-    applyElementTemplatePatches([0, 7, templateKey, 'not-an-array']);
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      7,
+      templateKey,
+      null,
+      null,
+      null,
+    ]);
 
     expect(serializeToJSX(__page)).toMatchInlineSnapshot(`
       "<page>

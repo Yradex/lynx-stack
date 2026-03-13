@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setupBackgroundElementTemplateDocument } from '../../../../../src/element-template/background/document.js';
 import type { BackgroundElementTemplateDocument } from '../../../../../src/element-template/background/document.js';
-import { BackgroundElementTemplateInstance } from '../../../../../src/element-template/background/instance.js';
+import {
+  BackgroundElementTemplateInstance,
+  BUILTIN_RAW_TEXT_TEMPLATE_KEY,
+} from '../../../../../src/element-template/background/instance.js';
 import { Slot } from '../../../../../src/element-template/runtime/components/slot.js';
 
 describe('Background Element Template Adapter', () => {
@@ -17,7 +20,8 @@ describe('Background Element Template Adapter', () => {
     const el = doc.createElement('view');
     expect(el).toBeInstanceOf(BackgroundElementTemplateInstance);
     expect(el.type).toBe('view');
-    expect(el).not.toHaveProperty('text');
+    expect(el.text).toBe('');
+    expect(el.nodeType).toBe(1);
   });
 
   it('creates BackgroundElementTemplateSlot for "slot" type', () => {
@@ -26,18 +30,19 @@ describe('Background Element Template Adapter', () => {
     expect(el.type).toBe('slot');
   });
 
-  it('creates BackgroundElementTemplateText (via instance) for text nodes', () => {
+  it('creates builtin raw-text template instances for text nodes', () => {
     const node = doc.createTextNode('hello');
     expect(node).toBeInstanceOf(BackgroundElementTemplateInstance);
-    expect(node.type).toBe('raw-text');
-    expect((node as BackgroundElementTemplateInstance & { text: string }).text).toBe('hello');
+    expect(node.type).toBe(BUILTIN_RAW_TEXT_TEMPLATE_KEY);
+    expect(node.text).toBe('hello');
+    expect(node.nodeType).toBe(3);
   });
 
   describe('BackgroundElementTemplateInstance', () => {
-    it('supports setAttribute (attrs)', () => {
+    it('supports setAttribute (attributeSlots)', () => {
       const el = new BackgroundElementTemplateInstance('view');
-      el.setAttribute('attrs', { 0: { id: 'test' } });
-      expect(el._attrs[0]).toEqual({ id: 'test' });
+      el.setAttribute('attributeSlots', [{ id: 'test' }]);
+      expect(el.attributeSlots[0]).toEqual({ id: 'test' });
     });
 
     it('supports hierarchy operations', () => {

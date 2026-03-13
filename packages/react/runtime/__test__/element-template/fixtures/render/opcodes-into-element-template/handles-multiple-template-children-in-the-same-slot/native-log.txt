@@ -5,7 +5,9 @@ Array [
     null,
     null,
     null,
-    null,
+    Object {
+      "handleId": -1,
+    },
   ],
   Array [
     "__CreateElementTemplate",
@@ -13,7 +15,9 @@ Array [
     null,
     null,
     null,
-    null,
+    Object {
+      "handleId": -2,
+    },
   ],
   Array [
     "__CreateElementTemplate",
@@ -36,7 +40,9 @@ Array [
         },
       ],
     ],
-    null,
+    Object {
+      "handleId": -3,
+    },
   ],
   Array [
     "__AppendElement",

@@ -15,6 +15,6 @@ export function run() {
     const child = new BackgroundElementTemplateInstance('view');
     slot.insertBefore(child, null, true);
 
-    return GlobalCommitContext.patches;
+    return GlobalCommitContext.ops;
   });
 }

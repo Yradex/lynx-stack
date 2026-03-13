@@ -4,9 +4,9 @@
 
 import { markTiming, setPipeline } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
-import type { ElementTemplateCommitContext } from '../protocol/types.js';
+import type { ElementTemplateUpdateCommitContext } from '../protocol/types.js';
 import { __page } from '../runtime/page/page.js';
-import { applyElementTemplatePatches } from '../runtime/patch.js';
+import { applyElementTemplateUpdateCommands } from '../runtime/patch.js';
 
 let listener:
   | ((event: { data: unknown }) => void)
@@ -17,7 +17,7 @@ export function installElementTemplatePatchListener(): void {
 
   listener = (event: { data: unknown }) => {
     const { data } = event;
-    const payload = data as ElementTemplateCommitContext;
+    const payload = data as ElementTemplateUpdateCommitContext;
     const flushOptions = payload?.flushOptions ?? {};
     const pipelineOptions = flushOptions.pipelineOptions;
     setPipeline(pipelineOptions);
@@ -36,13 +36,13 @@ export function installElementTemplatePatchListener(): void {
       });
     }
 
-    if (Array.isArray(payload?.patches)) {
+    if (Array.isArray(payload?.ops)) {
       markTiming('mtsRenderStart');
       markTiming('parseChangesStart');
       markTiming('parseChangesEnd');
       markTiming('patchChangesStart');
       try {
-        applyElementTemplatePatches(payload.patches);
+        applyElementTemplateUpdateCommands(payload.ops);
       } finally {
         markTiming('patchChangesEnd');
         markTiming('mtsRenderEnd');

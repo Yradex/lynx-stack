@@ -1,7 +1,15 @@
 [
   [
-    "__CreateRawText",
-    "X"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "X"
+    ],
+    [],
+    {
+      "handleId": -1
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -11,12 +19,18 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "X"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "X"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -2
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -36,8 +50,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "X"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "X"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -46,7 +64,9 @@
         }
       ]
     ],
-    null
+    {
+      "handleId": -3
+    }
   ],
   [
     "__AppendElement",

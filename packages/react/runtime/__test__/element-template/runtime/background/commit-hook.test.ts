@@ -12,9 +12,21 @@ import {
   resetElementTemplateHydrationListener,
 } from '../../../../src/element-template/background/hydration-listener.js';
 import { GlobalCommitContext } from '../../../../src/element-template/background/commit-context.js';
+import { ElementTemplateUpdateOps } from '../../../../src/element-template/protocol/opcodes.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import { PipelineOrigins } from '../../../../src/element-template/lynx/performance.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
+
+function createRawTextOps(id: number, text: string) {
+  return [
+    ElementTemplateUpdateOps.createTemplate,
+    id,
+    '__et_builtin_raw_text__',
+    null,
+    [text],
+    [],
+  ];
+}
 
 describe('ElementTemplate commit hook', () => {
   const envManager = new ElementTemplateEnvManager();
@@ -45,7 +57,7 @@ describe('ElementTemplate commit hook', () => {
 
   it('dispatches update after commit when hydrated', () => {
     markElementTemplateHydrated();
-    GlobalCommitContext.patches = [0, 1, 'raw-text', 'hello'];
+    GlobalCommitContext.ops = createRawTextOps(1, 'hello');
     GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 7 };
 
     options.__c?.({} as unknown as object, []);
@@ -53,15 +65,15 @@ describe('ElementTemplate commit hook', () => {
     envManager.switchToMainThread();
     expect(updateEvents).toHaveLength(1);
     expect(updateEvents[0]).toEqual({
-      patches: [0, 1, 'raw-text', 'hello'],
+      ops: createRawTextOps(1, 'hello'),
       flushOptions: { nativeUpdateDataOrder: 7 },
     });
     envManager.switchToBackground();
-    expect(GlobalCommitContext.patches).toEqual([]);
+    expect(GlobalCommitContext.ops).toEqual([]);
   });
 
   it('skips dispatch before hydration', () => {
-    GlobalCommitContext.patches = [0, 1, 'raw-text', 'hello'];
+    GlobalCommitContext.ops = createRawTextOps(1, 'hello');
 
     options.__c?.({} as unknown as object, []);
 
@@ -72,7 +84,7 @@ describe('ElementTemplate commit hook', () => {
   it('does not leak pre-hydration patches into later commits', () => {
     installElementTemplateHydrationListener();
 
-    GlobalCommitContext.patches = [0, 1, 'raw-text', 'before'];
+    GlobalCommitContext.ops = createRawTextOps(1, 'before');
     GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 1 };
 
     envManager.switchToMainThread();
@@ -82,7 +94,7 @@ describe('ElementTemplate commit hook', () => {
     });
     envManager.switchToBackground();
 
-    GlobalCommitContext.patches.push(0, 1, 'raw-text', 'after');
+    GlobalCommitContext.ops.push(...createRawTextOps(1, 'after'));
     GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 2 };
 
     options.__c?.({} as unknown as object, []);
@@ -90,7 +102,7 @@ describe('ElementTemplate commit hook', () => {
     envManager.switchToMainThread();
     expect(updateEvents).toHaveLength(1);
     expect(updateEvents[0]).toMatchObject({
-      patches: [0, 1, 'raw-text', 'after'],
+      ops: createRawTextOps(1, 'after'),
       flushOptions: {
         nativeUpdateDataOrder: 2,
         pipelineOptions: {

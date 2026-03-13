@@ -2,14 +2,14 @@
   <view class="Background" />
   <view class="App">
     <view class="Banner">
-      <view class="Logo" bindtap="1">
-        <image src="./assets/lynx-logo.png" class="Logo--lynx" />
+      <view bindtap="1" class="Logo">
+        <image class="Logo--lynx" src="./assets/lynx-logo.png" />
       </view>
       <text class="Title" text="React" />
       <text class="Subtitle" text="on Lynx" />
     </view>
     <view class="Content">
-      <image src="./assets/arrow.png" class="Arrow" />
+      <image class="Arrow" src="./assets/arrow.png" />
       <text class="Description" text="Tap the logo and have fun!" />
       <text class="Hint">
         <raw-text text="Edit" />

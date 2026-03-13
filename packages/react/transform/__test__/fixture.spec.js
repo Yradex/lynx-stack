@@ -248,6 +248,23 @@ export class A extends Component {
           ],
         },
       },
+      {
+        templateId: '__et_builtin_raw_text__',
+        sourceFile: 'test.js',
+        compiledTemplate: {
+          kind: 'element',
+          tag: 'raw-text',
+          attributes: [
+            {
+              kind: 'attribute',
+              key: 'text',
+              binding: 'slot',
+              attrSlotIndex: 0,
+            },
+          ],
+          children: [],
+        },
+      },
     ]);
   });
 });

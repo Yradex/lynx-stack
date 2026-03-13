@@ -16,7 +16,7 @@ import '../../../../../src/element-template/native/index.js';
 import {
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
-  BackgroundElementTemplateText,
+  BUILTIN_RAW_TEXT_TEMPLATE_KEY,
 } from '../../../../../src/element-template/background/instance.js';
 import { backgroundElementTemplateInstanceManager } from '../../../../../src/element-template/background/manager.js';
 import { root } from '../../../../../src/element-template/index.js';
@@ -25,7 +25,11 @@ import {
   resetElementTemplatePatchListener,
 } from '../../../../../src/element-template/native/patch-listener.js';
 import { ElementTemplateLifecycleConstant } from '../../../../../src/element-template/protocol/lifecycle-constant.js';
-import type { SerializedETInstance } from '../../../../../src/element-template/protocol/types.js';
+import { ElementTemplateUpdateOps } from '../../../../../src/element-template/protocol/opcodes.js';
+import type {
+  SerializedElementTemplate,
+  SerializedTemplateInstance,
+} from '../../../../../src/element-template/protocol/types.js';
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from '../../../test-utils/debug/envManager.js';
@@ -41,16 +45,64 @@ declare module '@lynx-js/types' {
 }
 
 interface CaseContext {
-  hydrationData: SerializedETInstance[];
+  hydrationData: SerializedElementTemplate[];
   onHydrate: (event: { data: unknown }) => void;
 }
 
 const envManager = new ElementTemplateEnvManager();
 
+function createTextNode(text: string): BackgroundElementTemplateInstance {
+  return new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY, [text]);
+}
+
+function createHydrationTemplate(
+  handleId: number,
+  templateKey: string,
+  options: {
+    attributeSlots?: unknown[];
+    elementSlots?: SerializedTemplateInstance[][];
+  } = {},
+): SerializedElementTemplate {
+  return {
+    templateKey,
+    attributeSlots: (options.attributeSlots ?? []) as SerializedElementTemplate['attributeSlots'],
+    elementSlots: options.elementSlots ?? [],
+    options: { handleId },
+  };
+}
+
+function createHydrationChild(
+  handleId: number,
+  templateKey: string,
+  options: {
+    attributeSlots?: unknown[];
+    elementSlots?: SerializedTemplateInstance[][];
+  } = {},
+): SerializedTemplateInstance {
+  return {
+    kind: 'templateInstance',
+    ...createHydrationTemplate(handleId, templateKey, options),
+  };
+}
+
+function createHydrationRawTextRoot(handleId: number, text: unknown): SerializedElementTemplate {
+  return createHydrationTemplate(handleId, BUILTIN_RAW_TEXT_TEMPLATE_KEY, {
+    attributeSlots: [typeof text === 'string' ? text : String(text ?? '')],
+    elementSlots: [],
+  });
+}
+
+function createHydrationRawTextChild(handleId: number, text: unknown): SerializedTemplateInstance {
+  return createHydrationChild(handleId, BUILTIN_RAW_TEXT_TEMPLATE_KEY, {
+    attributeSlots: [typeof text === 'string' ? text : String(text ?? '')],
+    elementSlots: [],
+  });
+}
+
 function setup(): CaseContext {
   vi.clearAllMocks();
   installMockNativePapi({ clearTemplatesOnCleanup: false });
-  const hydrationData: SerializedETInstance[] = [];
+  const hydrationData: SerializedElementTemplate[] = [];
   envManager.resetEnv('background');
   envManager.setUseElementTemplate(true);
 
@@ -58,7 +110,7 @@ function setup(): CaseContext {
     const data = event.data;
     if (Array.isArray(data)) {
       for (const item of data) {
-        hydrationData.push(item as SerializedETInstance);
+        hydrationData.push(item as SerializedElementTemplate);
       }
     }
   });
@@ -121,7 +173,7 @@ export function runCaseByName(name: string): unknown {
     lynxObj.reportError = reportErrorSpy;
 
     const after = new BackgroundElementTemplateInstance('after');
-    const before: SerializedETInstance = [-1, 'before', {}, {}];
+    const before = createHydrationTemplate(-1, 'before');
 
     const stream = hydrateBackground(before, after);
     const firstError = reportErrorSpy.mock.calls[0]?.[0] as Error | undefined;
@@ -143,8 +195,8 @@ export function runCaseByName(name: string): unknown {
     backgroundElementTemplateInstanceManager.clear();
     backgroundElementTemplateInstanceManager.nextId = 0;
 
-    const after = new BackgroundElementTemplateText('hi');
-    const before: SerializedETInstance = [-11, 'raw-text', {}, { 0: { text: 'hi' } }];
+    const after = createTextNode('hi');
+    const before = createHydrationRawTextRoot(-11, 'hi');
 
     const stream = hydrateBackground(before, after);
 
@@ -168,7 +220,7 @@ export function runCaseByName(name: string): unknown {
 
     return {
       stream,
-      beforeInstanceId: before[0],
+      beforeInstanceId: before.options?.handleId,
       afterInstanceId: after.instanceId,
     };
   });
@@ -472,7 +524,7 @@ export function runCaseByName(name: string): unknown {
     slot0.appendChild(child);
     rootInstance.appendChild(slot0);
 
-    const before = [-1, 'root', undefined, {}] as unknown as SerializedETInstance;
+    const before = createHydrationTemplate(-1, 'root');
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
   });
@@ -484,8 +536,8 @@ export function runCaseByName(name: string): unknown {
     backgroundElementTemplateInstanceManager.nextId = 0;
 
     const rootInstance = new BackgroundElementTemplateInstance('root');
-    const beforeChild: SerializedETInstance = [-2, 'child', {}, {}];
-    const before: SerializedETInstance = [-1, 'root', { 0: [beforeChild] }, {}];
+    const beforeChild = createHydrationChild(-2, 'child');
+    const before = createHydrationTemplate(-1, 'root', { elementSlots: [[beforeChild]] });
 
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
@@ -506,17 +558,19 @@ export function runCaseByName(name: string): unknown {
     slot0.appendChild(existing);
 
     const card = new BackgroundElementTemplateInstance('card');
-    card.setAttribute('attrs', { 0: { id: 'card' } });
+    card.setAttribute('attributeSlots', [{ id: 'card' }]);
     const cardSlot = new BackgroundElementTemplateSlot();
     cardSlot.setAttribute('id', 0);
-    const text = new BackgroundElementTemplateText('NEW');
+    const text = createTextNode('NEW');
     cardSlot.appendChild(text);
     card.appendChild(cardSlot);
     slot0.insertBefore(card, existing);
 
-    const beforeExisting: SerializedETInstance = [-2, 'existing', {}, {}];
-    const beforeRemoved: SerializedETInstance = [-3, 'removed', {}, {}];
-    const before: SerializedETInstance = [-1, 'root', { 0: [beforeExisting, beforeRemoved] }, {}];
+    const beforeExisting = createHydrationChild(-2, 'existing');
+    const beforeRemoved = createHydrationChild(-3, 'removed');
+    const before = createHydrationTemplate(-1, 'root', {
+      elementSlots: [[beforeExisting, beforeRemoved]],
+    });
 
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
@@ -578,10 +632,12 @@ export function runCaseByName(name: string): unknown {
     const slot0 = new BackgroundElementTemplateSlot();
     slot0.setAttribute('id', 0);
     rootInstance.appendChild(slot0);
-    const rawText = new BackgroundElementTemplateText('');
+    const rawText = createTextNode('');
     slot0.appendChild(rawText);
 
-    const before = [-1, 'root', { 0: [[3, 'raw-text', {}, { 0: { text: '' } }]] }] as unknown as SerializedETInstance;
+    const before = createHydrationTemplate(-1, 'root', {
+      elementSlots: [[createHydrationRawTextChild(3, '')]],
+    });
     const stream = hydrateBackground(before, rootInstance);
 
     return {
@@ -601,39 +657,24 @@ export function runCaseByName(name: string): unknown {
     slot0.setAttribute('id', 0);
     rootInstance.appendChild(slot0);
 
-    const rawTextText = new BackgroundElementTemplateText('bg');
-    const rawTextInstance = new BackgroundElementTemplateInstance('raw-text');
+    const rawTextText = createTextNode('bg');
+    const rawTextInstance = new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY);
     slot0.appendChild(rawTextText);
     slot0.appendChild(rawTextInstance);
 
-    const beforeExistingString: SerializedETInstance = [
-      rawTextText.instanceId,
-      'raw-text',
-      {},
-      { 0: { text: 'bg' } },
-    ];
-    const beforeExistingNonString: SerializedETInstance = [
-      rawTextInstance.instanceId,
-      'raw-text',
-      {},
-      { 0: { text: 123 } },
-    ];
-    const beforeMissingString: SerializedETInstance = [-2, 'raw-text', {}, { 0: { text: 'missing' } }];
-    const beforeMissingNonString: SerializedETInstance = [-3, 'raw-text', {}, { 0: { text: 456 } }];
+    const beforeExistingString = createHydrationRawTextChild(rawTextText.instanceId, 'bg');
+    const beforeExistingNonString = createHydrationRawTextChild(rawTextInstance.instanceId, 123);
+    const beforeMissingString = createHydrationRawTextChild(-2, 'missing');
+    const beforeMissingNonString = createHydrationRawTextChild(-3, 456);
 
-    const before: SerializedETInstance = [
-      rootInstance.instanceId,
-      'root',
-      {
-        0: [
-          beforeExistingString,
-          beforeExistingNonString,
-          beforeMissingString,
-          beforeMissingNonString,
-        ],
-      },
-      {},
-    ];
+    const before = createHydrationTemplate(rootInstance.instanceId, 'root', {
+      elementSlots: [[
+        beforeExistingString,
+        beforeExistingNonString,
+        beforeMissingString,
+        beforeMissingNonString,
+      ]],
+    });
 
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
@@ -653,7 +694,7 @@ export function runCaseByName(name: string): unknown {
     slot1.setAttribute('id', 1);
     rootInstance.appendChild(slot1);
 
-    const before = [-1, 'root', { 1: [] }, {}] as unknown as SerializedETInstance;
+    const before = createHydrationTemplate(-1, 'root', { elementSlots: [[], []] });
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
   });
@@ -671,20 +712,20 @@ export function runCaseByName(name: string): unknown {
     const child = new BackgroundElementTemplateInstance('child');
     slot0.appendChild(child);
 
-    const before = [-1, 'root', { 0: [] }, {}] as unknown as SerializedETInstance;
+    const before = createHydrationTemplate(-1, 'root', { elementSlots: [[]] });
 
     const created = new Set<number>();
     resetGlobalCommitContext();
     hydrateIntoContext(before, rootInstance, created);
-    const first = GlobalCommitContext.patches;
+    const first = GlobalCommitContext.ops;
     resetGlobalCommitContext();
-    const firstIncludes = first.includes(0);
+    const firstIncludes = first[0] === ElementTemplateUpdateOps.createTemplate;
 
     resetGlobalCommitContext();
     hydrateIntoContext(before, rootInstance, created);
-    const second = GlobalCommitContext.patches;
+    const second = GlobalCommitContext.ops;
     resetGlobalCommitContext();
-    const secondIncludes = second.includes(0);
+    const secondIncludes = second[0] === ElementTemplateUpdateOps.createTemplate;
 
     return {
       firstIncludes,
@@ -703,7 +744,7 @@ export function runCaseByName(name: string): unknown {
     slot0.setAttribute('id', 0);
     rootInstance.appendChild(slot0);
 
-    const before = [-1, 'root', { 0: undefined }] as unknown as SerializedETInstance;
+    const before = createHydrationTemplate(-1, 'root', { elementSlots: [[]] });
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
   });
@@ -726,15 +767,12 @@ export function runCaseByName(name: string): unknown {
     slot0.appendChild(childA);
     slot0.appendChild(childC);
 
-    const beforeChildA: SerializedETInstance = [childA.instanceId, 'a', {}, {}];
-    const beforeChildB: SerializedETInstance = [childB.instanceId, 'b', {}, {}];
-    const beforeChildC: SerializedETInstance = [childC.instanceId, 'c', {}, {}];
-    const before: SerializedETInstance = [
-      rootInstance.instanceId,
-      'root',
-      { 0: [beforeChildA, beforeChildB, beforeChildC] },
-      {},
-    ];
+    const beforeChildA = createHydrationChild(childA.instanceId, 'a');
+    const beforeChildB = createHydrationChild(childB.instanceId, 'b');
+    const beforeChildC = createHydrationChild(childC.instanceId, 'c');
+    const before = createHydrationTemplate(rootInstance.instanceId, 'root', {
+      elementSlots: [[beforeChildA, beforeChildB, beforeChildC]],
+    });
 
     const stream = hydrateBackground(before, rootInstance);
     return { stream };
@@ -747,12 +785,12 @@ export function runCaseByName(name: string): unknown {
     backgroundElementTemplateInstanceManager.nextId = 0;
     resetGlobalCommitContext();
 
-    const rawText = new BackgroundElementTemplateText('raw');
+    const rawText = createTextNode('raw');
     rawText.emitCreate();
-    const patches = [...GlobalCommitContext.patches];
+    const ops = [...GlobalCommitContext.ops];
     resetGlobalCommitContext();
 
-    return { patches };
+    return { ops };
   });
 }
 
@@ -762,12 +800,12 @@ export function runCaseByName(name: string): unknown {
     backgroundElementTemplateInstanceManager.nextId = 0;
     resetGlobalCommitContext();
 
-    const rawText = new BackgroundElementTemplateInstance('raw-text');
+    const rawText = new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY);
     rawText.emitCreate();
-    const patches = [...GlobalCommitContext.patches];
+    const ops = [...GlobalCommitContext.ops];
     resetGlobalCommitContext();
 
-    return { patches };
+    return { ops };
   });
 }
 

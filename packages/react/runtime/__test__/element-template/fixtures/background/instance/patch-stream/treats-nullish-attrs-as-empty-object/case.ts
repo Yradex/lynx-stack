@@ -8,11 +8,11 @@ import {
 export function run() {
   return runCase(() => {
     const instance = new BackgroundElementTemplateInstance('view');
-    instance.setAttribute('attrs', { 0: { a: 1 } });
+    instance.setAttribute('attributeSlots', [{ a: 1 }]);
     resetGlobalCommitContext();
 
-    instance.setAttribute('attrs', undefined as unknown as Record<string, unknown>);
-    const stream = GlobalCommitContext.patches;
+    instance.setAttribute('attributeSlots', []);
+    const stream = GlobalCommitContext.ops;
     resetGlobalCommitContext();
 
     return stream;

@@ -4,26 +4,36 @@
 
 import { GlobalCommitContext, resetGlobalCommitContext } from './commit-context.js';
 import {
+  BUILTIN_RAW_TEXT_TEMPLATE_KEY,
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
-  BackgroundElementTemplateText,
 } from './instance.js';
 import { backgroundElementTemplateInstanceManager } from './manager.js';
-import type { ElementTemplatePatchStream, SerializedETInstance } from '../protocol/types.js';
+import { isDirectOrDeepEqual } from '../../utils.js';
+import { ElementTemplateUpdateOps } from '../protocol/opcodes.js';
+import type {
+  ElementTemplateUpdateCommandStream,
+  SerializableValue,
+  SerializedElementNode,
+  SerializedElementTemplate,
+  SerializedTemplateInstance,
+} from '../protocol/types.js';
 
-const RAW_TEXT_TEMPLATE_KEY = 'raw-text';
+function isRawTextTemplateKey(type: string): boolean {
+  return type === BUILTIN_RAW_TEXT_TEMPLATE_KEY;
+}
 
 export function hydrate(
-  before: SerializedETInstance,
+  before: SerializedElementTemplate,
   after: BackgroundElementTemplateInstance,
-): ElementTemplatePatchStream {
+): ElementTemplateUpdateCommandStream {
   resetGlobalCommitContext();
   hydrateIntoContext(before, after);
-  return GlobalCommitContext.patches;
+  return GlobalCommitContext.ops;
 }
 
 export function hydrateIntoContext(
-  before: SerializedETInstance,
+  before: SerializedElementTemplate | SerializedTemplateInstance,
   after: BackgroundElementTemplateInstance,
   created?: Set<number>,
 ): void {
@@ -87,41 +97,54 @@ function diffArrayAction<T, K>(
 }
 
 function hydrateImpl(
-  before: SerializedETInstance,
+  before: SerializedElementTemplate | SerializedTemplateInstance,
   after: BackgroundElementTemplateInstance,
   created: Set<number>,
 ): void {
-  if (before[1] !== after.type && __DEV__) {
+  if (before.templateKey !== after.type && __DEV__) {
     lynx.reportError(
       new Error(
-        `ElementTemplate hydrate key mismatch: main='${before[1]}' background='${after.type}'.`,
+        `ElementTemplate hydrate key mismatch: main='${before.templateKey}' background='${after.type}'.`,
       ),
     );
     return;
   }
 
-  backgroundElementTemplateInstanceManager.updateId(after.instanceId, before[0]);
-
-  if (before[1] === RAW_TEXT_TEMPLATE_KEY) {
+  const handleId = getSerializedHandleId(before);
+  if (handleId == null) {
+    if (__DEV__) {
+      lynx.reportError(
+        new Error(`ElementTemplate hydrate missing handleId for '${before.templateKey}'.`),
+      );
+    }
     return;
   }
 
-  const beforeAttrs = before[3] ?? {};
-  const bgAttrs = after._attrs;
-  after._attrs = beforeAttrs;
-  after.setAttribute('attrs', bgAttrs);
+  if (!bindHydrationHandleId(after, handleId, before.templateKey)) {
+    return;
+  }
+  syncAttributeSlots(handleId, before.attributeSlots, after.attributeSlots);
 
-  const beforeSlots = before[2] ?? {};
+  if (isRawTextTemplateKey(before.templateKey)) {
+    return;
+  }
+
   const slotIds = new Set<number>();
-  for (const key of Object.keys(beforeSlots)) {
-    slotIds.add(Number(key));
+  for (let slotId = 0; slotId < before.elementSlots.length; slotId += 1) {
+    if (!before.elementSlots[slotId]) {
+      continue;
+    }
+    slotIds.add(slotId);
   }
 
   for (const slotId of slotIds) {
-    syncSlotChildren(after, slotId, beforeSlots[slotId] ?? [], created);
+    syncSlotChildren(after, slotId, getSerializedTemplateChildren(before.elementSlots[slotId]), created);
   }
 
-  for (const slotId of after.slotChildren.keys()) {
+  for (let slotId = 0; slotId < after.elementSlots.length; slotId += 1) {
+    if (!after.elementSlots[slotId]) {
+      continue;
+    }
     if (slotIds.has(slotId)) {
       continue;
     }
@@ -132,14 +155,14 @@ function hydrateImpl(
 function syncSlotChildren(
   parent: BackgroundElementTemplateInstance,
   slotId: number,
-  beforeChildren: SerializedETInstance[],
+  beforeChildren: SerializedTemplateInstance[],
   created: Set<number>,
 ): void {
   const slot = ensureSlot(parent, slotId);
 
-  const afterChildren = collectChildren(slot);
+  const afterChildren = parent.elementSlots[slotId] ?? [];
 
-  const beforeMap: Record<string, Array<[SerializedETInstance, number]>> = {};
+  const beforeMap: Record<string, Array<[SerializedTemplateInstance, number]>> = {};
   for (let i = 0; i < beforeChildren.length; i += 1) {
     const node = beforeChildren[i]!;
     const key = getSerializedInstanceKey(node);
@@ -158,7 +181,7 @@ function syncSlotChildren(
     const afterNode = afterChildren[i]!;
     const key = getBackgroundInstanceKey(afterNode);
     const beforeNodes = beforeMap[key];
-    let beforeNode: [SerializedETInstance, number] | undefined;
+    let beforeNode: [SerializedTemplateInstance, number] | undefined;
 
     if (beforeNodes && beforeNodes.length) {
       beforeNode = beforeNodes.shift();
@@ -189,7 +212,10 @@ function syncSlotChildren(
 
   const mainOrder: BackgroundElementTemplateInstance[] = [];
   for (const serialized of beforeChildren) {
-    const reused = backgroundElementTemplateInstanceManager.get(serialized[0]);
+    const handleId = getSerializedHandleId(serialized);
+    const reused = handleId == null
+      ? undefined
+      : backgroundElementTemplateInstanceManager.get(handleId);
     mainOrder.push(reused ?? createPlaceholder(serialized));
   }
 
@@ -199,28 +225,34 @@ function syncSlotChildren(
     beforeChildren,
     diffResult,
     (node, target) => {
-      const beforeId = target ? target[0] : null;
-      const beforeChild = beforeId == null
+      const beforeHandleId = getSerializedHandleId(target);
+      const beforeChild = beforeHandleId == null
         ? null
-        : backgroundElementTemplateInstanceManager.get(beforeId)!;
+        : backgroundElementTemplateInstanceManager.get(beforeHandleId)!;
       emitCreateRecursive(node, created);
       slot.insertBefore(node, beforeChild);
-      return (target ?? node) as unknown as SerializedETInstance;
+      return (target ?? node) as unknown as SerializedTemplateInstance;
     },
     (node) => {
-      const childId = node[0];
+      const childId = getSerializedHandleId(node);
+      if (childId == null) {
+        return;
+      }
       const child = backgroundElementTemplateInstanceManager.get(childId);
       if (child && child.parent === slot) {
         slot.removeChild(child);
       }
     },
     (node, target) => {
-      const childId = node[0];
+      const childId = getSerializedHandleId(node);
+      if (childId == null) {
+        return;
+      }
       const child = backgroundElementTemplateInstanceManager.get(childId);
-      const beforeId = target ? target[0] : null;
-      const beforeChild = beforeId == null
+      const beforeHandleId = getSerializedHandleId(target);
+      const beforeChild = beforeHandleId == null
         ? null
-        : backgroundElementTemplateInstanceManager.get(beforeId)!;
+        : backgroundElementTemplateInstanceManager.get(beforeHandleId)!;
       if (child && child.parent === slot) {
         slot.insertBefore(child, beforeChild);
       }
@@ -232,34 +264,23 @@ function emitCreateRecursive(node: BackgroundElementTemplateInstance, created: S
   if (created.has(node.instanceId)) {
     return;
   }
+  for (const slotChildren of node.elementSlots) {
+    if (!slotChildren) {
+      continue;
+    }
+    for (const child of slotChildren) {
+      emitCreateRecursive(child, created);
+    }
+  }
   created.add(node.instanceId);
   node.emitCreate();
-  if (node.type === RAW_TEXT_TEMPLATE_KEY) {
-    return;
-  }
-
-  let slot = node.firstChild;
-  while (slot) {
-    if (slot instanceof BackgroundElementTemplateSlot && slot.partId !== -1) {
-      const children = collectChildren(slot);
-      for (const child of children) {
-        emitCreateRecursive(child, created);
-      }
-
-      replaceChildren(slot, []);
-
-      for (const child of children) {
-        slot.insertBefore(child, null);
-      }
-    }
-    slot = slot.nextSibling;
-  }
 }
 
 function ensureSlot(
   parent: BackgroundElementTemplateInstance,
   slotId: number,
 ): BackgroundElementTemplateSlot {
+  parent.elementSlots[slotId] ??= [];
   let child = parent.firstChild;
   while (child) {
     if (child instanceof BackgroundElementTemplateSlot && child.partId === slotId) {
@@ -272,16 +293,6 @@ function ensureSlot(
   slot.setAttribute('id', slotId);
   parent.appendChild(slot);
   return slot;
-}
-
-function collectChildren(slot: BackgroundElementTemplateSlot): BackgroundElementTemplateInstance[] {
-  const res: BackgroundElementTemplateInstance[] = [];
-  let child = slot.firstChild;
-  while (child) {
-    res.push(child);
-    child = child.nextSibling;
-  }
-  return res;
 }
 
 function replaceChildren(
@@ -313,18 +324,29 @@ function replaceChildren(
     prev = c;
     parent.lastChild = c;
   }
+
+  if (parent instanceof BackgroundElementTemplateSlot) {
+    const host = parent.parent;
+    if (host && parent.partId >= 0) {
+      host.elementSlots[parent.partId] = [...children];
+    }
+  }
 }
 
-function createPlaceholder(serialized: SerializedETInstance): BackgroundElementTemplateInstance {
-  const [id, type, , attrs] = serialized;
+function createPlaceholder(serialized: SerializedTemplateInstance): BackgroundElementTemplateInstance {
+  const handleId = getSerializedHandleId(serialized);
+  const type = serialized.templateKey;
   let node: BackgroundElementTemplateInstance;
-  if (type === RAW_TEXT_TEMPLATE_KEY) {
-    const text = attrs?.[0]?.['text'];
-    node = new BackgroundElementTemplateText(typeof text === 'string' ? text : '');
+  if (isRawTextTemplateKey(type)) {
+    const text = getSerializedRawText(serialized);
+    node = new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY, [text]);
   } else {
     node = new BackgroundElementTemplateInstance(type);
+    node.attributeSlots = [...serialized.attributeSlots];
   }
-  backgroundElementTemplateInstanceManager.updateId(node.instanceId, id);
+  if (handleId != null) {
+    bindHydrationHandleId(node, handleId, serialized.templateKey);
+  }
   return node;
 }
 
@@ -334,18 +356,97 @@ function isEmptyDiffResult(result: DiffResult<unknown>): boolean {
     && Object.keys(result.m).length === 0;
 }
 
-function getSerializedInstanceKey(instance: SerializedETInstance): string {
-  if (instance[1] === RAW_TEXT_TEMPLATE_KEY) {
-    const text = instance[3]?.[0]?.['text'];
-    return `${RAW_TEXT_TEMPLATE_KEY}:${typeof text === 'string' ? text : ''}`;
-  }
-  return instance[1];
+function getSerializedInstanceKey(instance: SerializedTemplateInstance): string {
+  return instance.templateKey;
 }
 
 function getBackgroundInstanceKey(instance: BackgroundElementTemplateInstance): string {
-  if (instance.type === RAW_TEXT_TEMPLATE_KEY) {
-    const text = instance instanceof BackgroundElementTemplateText ? instance.text : '';
-    return `${RAW_TEXT_TEMPLATE_KEY}:${text}`;
-  }
   return instance.type;
+}
+
+function getSerializedTemplateChildren(
+  value: SerializedElementNode[] | undefined,
+): SerializedTemplateInstance[] {
+  if (!value) {
+    return [];
+  }
+
+  const children: SerializedTemplateInstance[] = [];
+  for (const node of value) {
+    if (node.kind === 'templateInstance') {
+      children.push(node);
+      continue;
+    }
+
+    if (__DEV__) {
+      lynx.reportError(
+        new Error(`ElementTemplate hydrate received non-template child '${node.tag}'.`),
+      );
+    }
+  }
+  return children;
+}
+
+function getSerializedHandleId(
+  value: SerializedElementTemplate | SerializedTemplateInstance | undefined,
+): number | undefined {
+  const handleId = value?.options?.['handleId'];
+  return typeof handleId === 'number' ? handleId : undefined;
+}
+
+function getSerializedRawText(
+  value: SerializedElementTemplate | SerializedTemplateInstance,
+): string {
+  const text = value.attributeSlots[0];
+  if (typeof text === 'string') {
+    return text;
+  }
+  if (typeof text === 'number' || typeof text === 'boolean') {
+    return String(text);
+  }
+  return '';
+}
+
+function bindHydrationHandleId(
+  instance: BackgroundElementTemplateInstance,
+  handleId: number,
+  templateKey: string,
+): boolean {
+  try {
+    backgroundElementTemplateInstanceManager.updateId(instance.instanceId, handleId);
+    return true;
+  } catch (error) {
+    if (__DEV__) {
+      const reason = error instanceof Error ? error.message : String(error);
+      lynx.reportError(
+        new Error(`ElementTemplate hydrate received invalid handleId ${handleId} for '${templateKey}': ${reason}`),
+      );
+    }
+    return false;
+  }
+}
+
+function syncAttributeSlots(
+  handleId: number,
+  beforeSlots: SerializableValue[],
+  afterSlots: SerializableValue[],
+): void {
+  const slotCount = Math.max(beforeSlots.length, afterSlots.length);
+  for (let slotIndex = 0; slotIndex < slotCount; slotIndex += 1) {
+    const beforeValue = beforeSlots[slotIndex];
+    const afterValue = afterSlots[slotIndex];
+    if (isDirectOrDeepEqual(beforeValue, afterValue)) {
+      continue;
+    }
+    GlobalCommitContext.ops.push(
+      ElementTemplateUpdateOps.setAttribute,
+      handleId,
+      slotIndex,
+      normalizeAttributeSlotValue(afterValue),
+    );
+  }
+}
+
+function normalizeAttributeSlotValue(value: SerializableValue | undefined): SerializableValue | null {
+  return value === undefined ? null : value;
 }

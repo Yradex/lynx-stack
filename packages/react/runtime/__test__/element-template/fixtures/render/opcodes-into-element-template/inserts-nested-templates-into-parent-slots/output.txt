@@ -18,8 +18,12 @@ Object {
                 },
                 "children": Array [
                   Object {
-                    "text": "X",
-                    "type": "rawText",
+                    "attributes": Object {
+                      "text": "X",
+                    },
+                    "children": Array [],
+                    "tag": "raw-text",
+                    "templateId": "__et_builtin_raw_text__",
                   },
                 ],
                 "tag": "slot",

@@ -7,30 +7,45 @@ import type { BackgroundElementTemplateInstance } from '../../../../src/element-
 import { root } from '../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type {
-  ElementTemplatePatchStream,
-  SerializedETInstance,
+  ElementTemplateUpdateCommandStream,
+  SerializedElementTemplate,
 } from '../../../../src/element-template/protocol/types.js';
-import { applyElementTemplatePatches } from '../../../../src/element-template/runtime/patch.js';
+import { applyElementTemplateUpdateCommands } from '../../../../src/element-template/runtime/patch.js';
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from './envManager.js';
 import { lastMock } from '../mock/mockNativePapi.js';
-import { formatOpcodes } from '../mock/mockNativePapi/templateTree.js';
+import { formatUpdateCommands } from '../mock/mockNativePapi/templateTree.js';
 import { serializeBackgroundTree, serializeToJSX } from './serializer.js';
 
 declare const renderPage: () => void;
 
-type FormattedPatchEntry =
+type FormattedUpdateEntry =
   | {
     type: 'create';
     id: number;
     template: string;
-    init: unknown;
+    attributeSlots: unknown;
+    elementSlots: unknown;
   }
   | {
-    type: 'patch';
+    type: 'setAttribute';
     id: number;
-    opcodes: unknown;
+    attrSlotIndex: number;
+    value: unknown;
+  }
+  | {
+    type: 'insertNode';
+    id: number;
+    elementSlotIndex: number;
+    child: unknown;
+    reference: unknown;
+  }
+  | {
+    type: 'removeNode';
+    id: number;
+    elementSlotIndex: number;
+    child: unknown;
   };
 
 export interface UpdateRunOptions {
@@ -42,28 +57,56 @@ export interface UpdateRunResult {
   beforePageJsx: string;
   afterPageJsx: string;
   backgroundJsx: string;
-  patches: ElementTemplatePatchStream;
-  formattedPatches: FormattedPatchEntry[];
+  ops: ElementTemplateUpdateCommandStream;
+  formattedOps: FormattedUpdateEntry[];
   updateNativeLog: unknown[];
   formattedNativeLog: unknown[];
 }
 
-export function formatPatchStream(stream: ElementTemplatePatchStream): FormattedPatchEntry[] {
-  const formatted: FormattedPatchEntry[] = [];
+export function formatUpdateStream(stream: ElementTemplateUpdateCommandStream): FormattedUpdateEntry[] {
+  const formatted: FormattedUpdateEntry[] = [];
   let index = 0;
   while (index < stream.length) {
-    const header = stream[index++] as number;
-    if (header === 0) {
-      const id = stream[index++] as number;
-      const template = stream[index++] as string;
-      const initPayload = stream[index++] as unknown;
-      const init = Array.isArray(initPayload) ? formatOpcodes(initPayload) : initPayload;
-      formatted.push({ type: 'create', id, template, init });
-    } else {
-      const id = header;
-      const opcodes = stream[index++] as unknown;
-      formatted.push({ type: 'patch', id, opcodes: formatOpcodes(opcodes) });
+    const opcode = stream[index++] as number;
+    if (opcode === 1) {
+      formatted.push({
+        type: 'create',
+        id: stream[index++] as number,
+        template: stream[index++] as string,
+        attributeSlots: stream[index + 1] as unknown,
+        elementSlots: stream[index + 2] as unknown,
+      });
+      index += 3;
+      continue;
     }
+
+    if (opcode === 2) {
+      formatted.push({
+        type: 'setAttribute',
+        id: stream[index++] as number,
+        attrSlotIndex: stream[index++] as number,
+        value: stream[index++] as unknown,
+      });
+      continue;
+    }
+
+    if (opcode === 3) {
+      formatted.push({
+        type: 'insertNode',
+        id: stream[index++] as number,
+        elementSlotIndex: stream[index++] as number,
+        child: stream[index++] as unknown,
+        reference: stream[index++] as unknown,
+      });
+      continue;
+    }
+
+    formatted.push({
+      type: 'removeNode',
+      id: stream[index++] as number,
+      elementSlotIndex: stream[index++] as number,
+      child: stream[index++] as unknown,
+    });
   }
   return formatted;
 }
@@ -73,9 +116,12 @@ export function formatNativePatchLog(nativeLog: unknown[]): unknown[] {
     if (!Array.isArray(entry)) {
       return entry;
     }
-    if (entry[0] === '__PatchElementTemplate') {
-      const [, node, opcodes, config] = entry;
-      return ['__PatchElementTemplate', node, formatOpcodes(opcodes), config];
+    if (
+      entry[0] === '__SetAttributeOfElementTemplate'
+      || entry[0] === '__InsertNodeToElementTemplate'
+      || entry[0] === '__RemoveNodeFromElementTemplate'
+    ) {
+      return entry;
     }
     return entry;
   });
@@ -84,13 +130,13 @@ export function formatNativePatchLog(nativeLog: unknown[]): unknown[] {
 export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunResult {
   const envManager = new ElementTemplateEnvManager();
   const nativeLog = lastMock!.nativeLog;
-  const hydrationData: SerializedETInstance[] = [];
+  const hydrationData: SerializedElementTemplate[] = [];
 
   const onHydrate = (event: { data: unknown }) => {
     const data = event.data;
     if (Array.isArray(data)) {
       for (const item of data) {
-        hydrationData.push(item as SerializedETInstance);
+        hydrationData.push(item as SerializedElementTemplate);
       }
     }
   };
@@ -126,11 +172,11 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
       throw new Error('Missing background root child.');
     }
 
-    const patches = hydrateBackground(before, afterBackground);
+    const ops = hydrateBackground(before, afterBackground);
 
     envManager.switchToMainThread();
-    if (patches.length > 0) {
-      applyElementTemplatePatches(patches);
+    if (ops.length > 0) {
+      applyElementTemplateUpdateCommands(ops);
     }
 
     const afterPageJsx = serializeToJSX(__page);
@@ -140,8 +186,8 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
       beforePageJsx,
       afterPageJsx,
       backgroundJsx: serializeBackgroundTree(afterBackground),
-      patches,
-      formattedPatches: formatPatchStream(patches),
+      ops,
+      formattedOps: formatUpdateStream(ops),
       updateNativeLog,
       formattedNativeLog: formatNativePatchLog(updateNativeLog),
     };

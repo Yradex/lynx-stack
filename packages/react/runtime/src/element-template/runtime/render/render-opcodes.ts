@@ -3,13 +3,17 @@
 // LICENSE file in the root directory of this source tree.
 
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
+import type { SerializableValue } from '../../protocol/types.js';
+import { createElementTemplateWithHandle } from '../template/handle.js';
+
+const BUILTIN_RAW_TEXT_TEMPLATE_KEY = '__et_builtin_raw_text__';
 
 interface Frame {
   // Current template Key (vnode.type). null for the initial root frame.
   templateKey: string | null;
 
   // Collected dynamic attributes passed from transform lowering.
-  attributeSlots: unknown[] | undefined;
+  attributeSlots: SerializableValue[] | undefined;
 
   // Collected dynamic children keyed by elementSlotIndex.
   elementSlots: ElementRef[][] | undefined;
@@ -76,12 +80,11 @@ export function renderOpcodesIntoElementTemplate(
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
-        const elementRef = __CreateElementTemplate(
+        const elementRef = createElementTemplateWithHandle(
           templateKey,
           null,
           frame.attributeSlots ?? null,
           frame.elementSlots ?? null,
-          null,
         );
 
         // Append to parent
@@ -102,7 +105,7 @@ export function renderOpcodesIntoElementTemplate(
       }
       case __OpAttr: {
         const name = opcodes[i + 1] as string;
-        const value = opcodes[i + 2] as unknown[];
+        const value = opcodes[i + 2] as SerializableValue[];
         const frame = stack[stack.length - 1];
         if (frame && name === 'attributeSlots') {
           frame.attributeSlots = value;
@@ -123,7 +126,12 @@ export function renderOpcodesIntoElementTemplate(
         const text = opcodes[i + 1] as string;
         const frame = stack[stack.length - 1];
         if (frame) {
-          const textRef = __CreateRawText(text);
+          const textRef = createElementTemplateWithHandle(
+            BUILTIN_RAW_TEXT_TEMPLATE_KEY,
+            null,
+            [String(text)],
+            [],
+          );
 
           if (frame.templateKey === null) {
             rootRefs.push(textRef);

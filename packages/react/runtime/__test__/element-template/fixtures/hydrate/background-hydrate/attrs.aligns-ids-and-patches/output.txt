@@ -2,13 +2,12 @@ Object {
   "afterInstanceId": -1,
   "beforeInstanceId": -1,
   "stream": Array [
+    2,
     -1,
-    Array [
-      4,
-      0,
-      Object {
-        "src": "background.png",
-      },
-    ],
+    0,
+    Object {
+      "__spread": true,
+      "src": "background.png",
+    },
   ],
 }

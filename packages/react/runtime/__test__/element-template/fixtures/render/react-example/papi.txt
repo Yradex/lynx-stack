@@ -7,11 +7,21 @@
       "./assets/lynx-logo.png"
     ],
     null,
-    null
+    {
+      "handleId": -1
+    }
   ],
   [
-    "__CreateRawText",
-    " src/App.tsx "
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      " src/App.tsx "
+    ],
+    [],
+    {
+      "handleId": -2
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -35,12 +45,18 @@
       ],
       [
         {
-          "type": "rawText",
-          "text": " src/App.tsx "
+          "tag": "raw-text",
+          "attributes": {
+            "text": " src/App.tsx "
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -3
+    }
   ],
   [
     "__AppendElement",

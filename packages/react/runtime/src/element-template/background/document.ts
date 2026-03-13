@@ -5,9 +5,9 @@
 import { options } from 'preact';
 
 import {
+  BUILTIN_RAW_TEXT_TEMPLATE_KEY,
   BackgroundElementTemplateInstance,
   BackgroundElementTemplateSlot,
-  BackgroundElementTemplateText,
 } from './instance.js';
 
 export interface BackgroundElementTemplateDocument {
@@ -31,7 +31,7 @@ export function setupBackgroundElementTemplateDocument(): BackgroundElementTempl
       return new BackgroundElementTemplateInstance(type);
     },
     createTextNode(text: string): BackgroundElementTemplateInstance {
-      return new BackgroundElementTemplateText(text);
+      return new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY, [text]);
     },
   };
 

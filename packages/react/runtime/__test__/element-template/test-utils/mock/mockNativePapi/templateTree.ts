@@ -16,6 +16,9 @@ export interface CompiledTemplateNode {
   children?: unknown[];
   type?: string;
   text?: string;
+  __handleId?: number;
+  __compiledTemplate?: CompiledElementNode;
+  __attributeSlots?: unknown[] | null;
 }
 
 interface CompiledAttributeDescriptor {
@@ -31,6 +34,7 @@ interface CompiledElementNode {
   tag: string;
   attributes?: CompiledAttributeDescriptor[];
   children?: CompiledTemplateChild[];
+  parts?: Record<string, unknown>;
 }
 
 interface CompiledElementSlotNode {
@@ -94,6 +98,9 @@ function collectNodesByPartId(root: unknown): Map<number, CompiledTemplateNode> 
   };
 
   collect(root);
+  if (!nodesByPartId.has(0) && isRecord(root)) {
+    nodesByPartId.set(0, root as CompiledTemplateNode);
+  }
   return nodesByPartId;
 }
 
@@ -276,6 +283,7 @@ export function instantiateCompiledTemplateNode(
   return {
     tag: node.tag,
     attributes: applyCompiledAttributes(node, attributeSlots),
+    ...(isRecord(node.parts) ? { parts: { ...node.parts } } : {}),
     children: instantiatedChildren,
   };
 }
@@ -290,6 +298,343 @@ export function instantiateCompiledTemplate(
   }
 
   return instantiateCompiledTemplateNode(template, attributeSlots, elementSlots);
+}
+
+function collectElementSlotsFromInstance(root: CompiledTemplateNode): unknown[][] {
+  const elementSlots: unknown[][] = [];
+  const children = root.children;
+  if (!isUnknownArray(children)) {
+    return elementSlots;
+  }
+
+  for (const child of children) {
+    if (!isRecord(child)) {
+      continue;
+    }
+    const slotId = getSlotId(child);
+    if (slotId === undefined) {
+      continue;
+    }
+    const slotChildren = child.children;
+    elementSlots[slotId] = isUnknownArray(slotChildren) ? [...slotChildren] : [];
+  }
+
+  return elementSlots;
+}
+
+function assignTemplateInstance(
+  target: CompiledTemplateNode,
+  next: CompiledTemplateNode,
+): void {
+  target.tag = next.tag;
+  target.attributes = next.attributes;
+  if (next.parts) {
+    target.parts = next.parts;
+  } else {
+    delete target.parts;
+  }
+  target.children = next.children;
+}
+
+function rebuildTemplateInstance(root: CompiledTemplateNode): void {
+  const compiledTemplate = root.__compiledTemplate;
+  if (!compiledTemplate) {
+    return;
+  }
+
+  const attributeSlots = normalizeAttributeSlots(root.__attributeSlots);
+  const elementSlots = collectElementSlotsFromInstance(root);
+  const next = instantiateCompiledTemplate(compiledTemplate, attributeSlots, elementSlots);
+  assignTemplateInstance(root, next);
+}
+
+export function setAttributeSlotOnTemplateInstance(
+  root: CompiledTemplateNode,
+  attrSlotIndex: number,
+  value: unknown,
+): void {
+  const attributeSlots = normalizeAttributeSlots(root.__attributeSlots);
+  attributeSlots[attrSlotIndex] = value;
+  root.__attributeSlots = attributeSlots;
+  rebuildTemplateInstance(root);
+}
+
+export function insertNodeIntoTemplateInstance(
+  root: CompiledTemplateNode,
+  elementSlotIndex: number,
+  node: unknown,
+  referenceNode?: unknown,
+): void {
+  if (!root.__compiledTemplate) {
+    return;
+  }
+  const attributeSlots = normalizeAttributeSlots(root.__attributeSlots);
+  const elementSlots = collectElementSlotsFromInstance(root);
+  for (let slotIndex = 0; slotIndex < elementSlots.length; slotIndex += 1) {
+    const children = elementSlots[slotIndex];
+    if (!children) {
+      continue;
+    }
+    const existingIndex = children.indexOf(node);
+    if (existingIndex >= 0) {
+      elementSlots[slotIndex] = [
+        ...children.slice(0, existingIndex),
+        ...children.slice(existingIndex + 1),
+      ];
+    }
+  }
+
+  const targetChildren = [...(elementSlots[elementSlotIndex] ?? [])];
+  if (referenceNode == null) {
+    targetChildren.push(node);
+  } else {
+    const beforeIndex = targetChildren.indexOf(referenceNode);
+    if (beforeIndex >= 0) {
+      targetChildren.splice(beforeIndex, 0, node);
+    } else {
+      targetChildren.push(node);
+    }
+  }
+
+  elementSlots[elementSlotIndex] = targetChildren;
+  root.__attributeSlots = attributeSlots;
+  const next = instantiateCompiledTemplate(root.__compiledTemplate, attributeSlots, elementSlots);
+  assignTemplateInstance(root, next);
+}
+
+export function removeNodeFromTemplateInstance(
+  root: CompiledTemplateNode,
+  elementSlotIndex: number,
+  node: unknown,
+): void {
+  if (!root.__compiledTemplate) {
+    return;
+  }
+  const attributeSlots = normalizeAttributeSlots(root.__attributeSlots);
+  const elementSlots = collectElementSlotsFromInstance(root);
+  const targetChildren = [...(elementSlots[elementSlotIndex] ?? [])];
+  const index = targetChildren.indexOf(node);
+  if (index >= 0) {
+    targetChildren.splice(index, 1);
+  }
+  elementSlots[elementSlotIndex] = targetChildren;
+  root.__attributeSlots = attributeSlots;
+  const next = instantiateCompiledTemplate(root.__compiledTemplate, attributeSlots, elementSlots);
+  assignTemplateInstance(root, next);
+}
+
+type SerializableValueForMock =
+  | string
+  | number
+  | boolean
+  | null
+  | SerializableValueForMock[]
+  | { [key: string]: SerializableValueForMock };
+
+interface SerializedTemplateInstanceForMock {
+  kind: 'templateInstance';
+  templateKey: string;
+  bundleUrl?: string;
+  attributeSlots: SerializableValueForMock[];
+  elementSlots: SerializedTemplateInstanceForMock[][];
+  options?: {
+    handleId: number;
+  };
+}
+
+interface SerializedElementTemplateForMock {
+  templateKey: string;
+  bundleUrl?: string;
+  attributeSlots: SerializableValueForMock[];
+  elementSlots: SerializedTemplateInstanceForMock[][];
+  options?: {
+    handleId: number;
+  };
+}
+
+function getSlotId(node: Record<string, unknown>): number | undefined {
+  const attrs = node['attributes'];
+  if (!isRecord(attrs)) {
+    return undefined;
+  }
+
+  const slotId = attrs['slot-id'];
+  if (typeof slotId === 'string' || typeof slotId === 'number') {
+    return Number(slotId);
+  }
+
+  return undefined;
+}
+
+function getSerializedAttrsForNode(
+  node: CompiledTemplateNode,
+): Record<string, unknown> | undefined {
+  const attrs = node.attributes;
+  if (!isRecord(attrs)) {
+    return undefined;
+  }
+
+  const serialized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === 'part-id' || key === 'slot-id') {
+      continue;
+    }
+    serialized[key] = value;
+  }
+
+  return Object.keys(serialized).length > 0 ? serialized : undefined;
+}
+
+function collectSerializedAttrs(
+  root: CompiledTemplateNode,
+): Record<number, Record<string, unknown>> | undefined {
+  const nodesByPartId = collectNodesByPartId(root);
+  let serialized: Record<number, Record<string, unknown>> | undefined;
+
+  for (const [partId, node] of nodesByPartId) {
+    const attrs = getSerializedAttrsForNode(node);
+    if (!attrs) {
+      continue;
+    }
+    (serialized ??= {})[partId] = attrs;
+  }
+
+  return serialized;
+}
+
+function decodeDynamicAttrsForNode(
+  compiledTemplate: CompiledElementNode,
+  attributeSlots: unknown[],
+): Record<string, unknown> | undefined {
+  const attrs: Record<string, unknown> = {};
+
+  for (const descriptor of compiledTemplate.attributes ?? []) {
+    if (descriptor.binding !== 'slot') {
+      continue;
+    }
+
+    const slotValue = attributeSlots[descriptor.attrSlotIndex ?? -1];
+    if (descriptor.kind === 'attribute') {
+      if (descriptor.key && slotValue !== null && slotValue !== undefined) {
+        attrs[descriptor.key] = slotValue;
+      }
+      continue;
+    }
+
+    if (!isRecord(slotValue)) {
+      continue;
+    }
+    for (const [key, value] of Object.entries(slotValue)) {
+      if (key === '__spread') {
+        continue;
+      }
+      attrs[key] = value;
+    }
+  }
+
+  return Object.keys(attrs).length > 0 ? attrs : undefined;
+}
+
+function decodeDynamicAttrsFromTemplate(
+  compiledTemplate: CompiledElementNode | undefined,
+  attributeSlots: unknown[] | null | undefined,
+): Record<number, Record<string, unknown>> | undefined {
+  if (!compiledTemplate || !attributeSlots) {
+    return undefined;
+  }
+
+  let nextPartId = 0;
+  const attrsByPartId: Record<number, Record<string, unknown>> = {};
+
+  const visit = (node: CompiledElementNode): void => {
+    const attrs = decodeDynamicAttrsForNode(node, attributeSlots);
+    if (attrs) {
+      attrsByPartId[nextPartId++] = attrs;
+    }
+
+    for (const child of node.children ?? []) {
+      if (isCompiledElementNode(child)) {
+        visit(child);
+      }
+    }
+  };
+
+  visit(compiledTemplate);
+
+  return Object.keys(attrsByPartId).length > 0 ? attrsByPartId : undefined;
+}
+
+function normalizeAttributeSlots(
+  value: unknown,
+): SerializableValueForMock[] {
+  return isUnknownArray(value) ? (value as SerializableValueForMock[]) : [];
+}
+
+function serializeTemplateNode(
+  root: unknown,
+  kind: 'root' | 'child',
+): SerializedElementTemplateForMock | SerializedTemplateInstanceForMock {
+  if (!isRecord(root) || typeof root['templateId'] !== 'string') {
+    throw new Error('ElementTemplate: __SerializeElementTemplate expects a template instance.');
+  }
+
+  const handleId = root['__handleId'];
+  if (typeof handleId !== 'number') {
+    throw new Error('ElementTemplate: __SerializeElementTemplate expects a template instance handleId.');
+  }
+
+  const templateId = root['templateId'];
+  const serializedSlots: SerializedTemplateInstanceForMock[][] = [];
+  const children = root['children'];
+  if (isUnknownArray(children)) {
+    for (const child of children) {
+      if (!isRecord(child)) {
+        continue;
+      }
+
+      const slotId = getSlotId(child);
+      if (slotId === undefined) {
+        continue;
+      }
+
+      const slotChildren: SerializedTemplateInstanceForMock[] = [];
+      const childNodes = child['children'];
+      if (isUnknownArray(childNodes)) {
+        for (const childNode of childNodes) {
+          if (!isRecord(childNode) || typeof childNode['templateId'] !== 'string') {
+            continue;
+          }
+          slotChildren.push(
+            serializeTemplateNode(childNode, 'child') as SerializedTemplateInstanceForMock,
+          );
+        }
+      }
+
+      serializedSlots[slotId] = slotChildren;
+    }
+  }
+
+  const payload = {
+    templateKey: templateId === '__et_builtin_raw_text__' ? '__et_builtin_raw_text__' : templateId,
+    attributeSlots: templateId === '__et_builtin_raw_text__'
+      ? [String((isRecord(root['attributes']) ? root['attributes']?.['text'] : '') ?? '')]
+      : normalizeAttributeSlots(root['__attributeSlots']),
+    elementSlots: serializedSlots,
+    options: { handleId },
+  };
+
+  if (kind === 'child') {
+    return {
+      kind: 'templateInstance',
+      ...payload,
+    };
+  }
+
+  return payload;
+}
+
+export function serializeTemplateInstance(root: unknown): SerializedElementTemplateForMock {
+  return serializeTemplateNode(root, 'root') as SerializedElementTemplateForMock;
 }
 
 export function formatOpcodes(ops: unknown): unknown {
@@ -318,6 +663,54 @@ export function formatOpcodes(ops: unknown): unknown {
         node: ops[i + 2],
       });
       i += 3;
+    } else {
+      res.push(opcode);
+      i += 1;
+    }
+  }
+  return res;
+}
+
+export function formatUpdateCommands(ops: unknown): unknown {
+  if (!isUnknownArray(ops)) return ops;
+  const res: unknown[] = [];
+  for (let i = 0; i < ops.length;) {
+    const opcode = ops[i];
+    if (opcode === 1) {
+      res.push({
+        type: 'createTemplate',
+        id: ops[i + 1],
+        template: ops[i + 2],
+        bundleUrl: ops[i + 3],
+        attributeSlots: ops[i + 4],
+        elementSlots: ops[i + 5],
+      });
+      i += 6;
+    } else if (opcode === 2) {
+      res.push({
+        type: 'setAttribute',
+        id: ops[i + 1],
+        attrSlotIndex: ops[i + 2],
+        value: ops[i + 3],
+      });
+      i += 4;
+    } else if (opcode === 3) {
+      res.push({
+        type: 'insertNode',
+        id: ops[i + 1],
+        elementSlotIndex: ops[i + 2],
+        child: ops[i + 3],
+        reference: ops[i + 4],
+      });
+      i += 5;
+    } else if (opcode === 4) {
+      res.push({
+        type: 'removeNode',
+        id: ops[i + 1],
+        elementSlotIndex: ops[i + 2],
+        child: ops[i + 3],
+      });
+      i += 4;
     } else {
       res.push(opcode);
       i += 1;

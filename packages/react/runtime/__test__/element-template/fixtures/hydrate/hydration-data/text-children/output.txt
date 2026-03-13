@@ -1,21 +1,24 @@
 Array [
-  Array [
-    -2,
-    "_et_a94a8_test_3",
-    Object {
-      "0": Array [
-        Array [
-          -1,
-          "raw-text",
-          Object {},
-          Object {
-            "0": Object {
-              "text": "Hello",
-            },
+  Object {
+    "attributeSlots": Array [],
+    "elementSlots": Array [
+      Array [
+        Object {
+          "attributeSlots": Array [
+            "Hello",
+          ],
+          "elementSlots": Array [],
+          "kind": "templateInstance",
+          "options": Object {
+            "handleId": -1,
           },
-        ],
+          "templateKey": "__et_builtin_raw_text__",
+        },
       ],
+    ],
+    "options": Object {
+      "handleId": -2,
     },
-    undefined,
-  ],
+    "templateKey": "_et_a94a8_test_3",
+  },
 ]

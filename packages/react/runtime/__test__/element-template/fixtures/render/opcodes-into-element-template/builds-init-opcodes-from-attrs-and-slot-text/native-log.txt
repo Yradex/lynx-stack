@@ -1,7 +1,15 @@
 Array [
   Array [
-    "__CreateRawText",
-    "Hello",
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    Array [
+      "Hello",
+    ],
+    Array [],
+    Object {
+      "handleId": -1,
+    },
   ],
   Array [
     "__CreateElementTemplate",
@@ -14,12 +22,18 @@ Array [
       ,
       Array [
         Object {
-          "text": "Hello",
-          "type": "rawText",
+          "attributes": Object {
+            "text": "Hello",
+          },
+          "children": Array [],
+          "tag": "raw-text",
+          "templateId": "__et_builtin_raw_text__",
         },
       ],
     ],
-    null,
+    Object {
+      "handleId": -2,
+    },
   ],
   Array [
     "__AppendElement",

@@ -5,7 +5,9 @@ Array [
     null,
     null,
     null,
-    null,
+    Object {
+      "handleId": -1,
+    },
   ],
   Array [
     "__AppendElement",

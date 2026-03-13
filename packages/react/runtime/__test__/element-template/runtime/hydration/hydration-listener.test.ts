@@ -6,18 +6,24 @@ import {
 } from '../../../../src/element-template/background/hydration-listener.js';
 import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
 import { backgroundElementTemplateInstanceManager } from '../../../../src/element-template/background/manager.js';
-import {
-  PerformanceTimingFlags,
-  PipelineOrigins,
-} from '../../../../src/element-template/lynx/performance.js';
+import { PerformanceTimingFlags, PipelineOrigins } from '../../../../src/element-template/lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
-import type { SerializedETInstance } from '../../../../src/element-template/protocol/types.js';
+import type { SerializedElementTemplate } from '../../../../src/element-template/protocol/types.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
 import { flushCoreContextEvents } from '../../test-utils/mock/mockNativePapi/context.js';
 // removed installMockNativePapi import
 
 import '../../../../src/element-template/native/index.js';
+
+function createSerializedTemplate(handleId: number, templateKey: string): SerializedElementTemplate {
+  return {
+    templateKey,
+    attributeSlots: [],
+    elementSlots: [],
+    options: { handleId },
+  };
+}
 
 interface LynxMock {
   getJSContext(): { dispatchEvent(event: { type: string; data: unknown }): number };
@@ -50,9 +56,9 @@ describe('ElementTemplate hydration listener', () => {
     const oldId = after.instanceId;
 
     envManager.switchToMainThread();
-    const instances: SerializedETInstance[] = [
-      [-1, '_et_test', {}, {}],
-      [-2, '_et_test', {}, {}],
+    const instances: SerializedElementTemplate[] = [
+      createSerializedTemplate(-1, '_et_test'),
+      createSerializedTemplate(-2, '_et_test'),
     ];
     lynx.getJSContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.hydrate,
@@ -82,7 +88,7 @@ describe('ElementTemplate hydration listener', () => {
     const oldId = after.instanceId;
 
     envManager.switchToMainThread();
-    const instances: SerializedETInstance[] = [[-1, '_et_test', {}, {}]];
+    const instances: SerializedElementTemplate[] = [createSerializedTemplate(-1, '_et_test')];
     lynx.getJSContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.hydrate,
       data: instances,
@@ -108,7 +114,7 @@ describe('ElementTemplate hydration listener', () => {
     tt.callDestroyLifetimeFun?.();
 
     envManager.switchToMainThread();
-    const instances: SerializedETInstance[] = [[-1, '_et_test', {}, {}]];
+    const instances: SerializedElementTemplate[] = [createSerializedTemplate(-1, '_et_test')];
     lynx.getJSContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.hydrate,
       data: instances,
@@ -128,7 +134,7 @@ describe('ElementTemplate hydration listener', () => {
     backgroundRoot.appendChild(after);
 
     envManager.switchToMainThread();
-    const instances: SerializedETInstance[] = [[-1, '_et_test', {}, {}]];
+    const instances: SerializedElementTemplate[] = [createSerializedTemplate(-1, '_et_test')];
     lynx.getJSContext().dispatchEvent({
       type: ElementTemplateLifecycleConstant.hydrate,
       data: instances,
@@ -161,5 +167,67 @@ describe('ElementTemplate hydration listener', () => {
       ['pipelineID', 'diffVdomStart'],
       ['pipelineID', 'diffVdomEnd'],
     ]);
+  });
+
+  it('reports illegal handleId 0 during hydrate', () => {
+    envManager.switchToBackground();
+    installElementTemplateHydrationListener();
+
+    const lynxObj = globalThis.lynx as typeof lynx & { reportError?: (error: Error) => void };
+    const oldReportError = lynxObj.reportError;
+    const reportErrorSpy = vi.fn();
+    lynxObj.reportError = reportErrorSpy;
+
+    const backgroundRoot = __root as BackgroundElementTemplateInstance;
+    const after = new BackgroundElementTemplateInstance('_et_test');
+    backgroundRoot.appendChild(after);
+    const oldId = after.instanceId;
+
+    envManager.switchToMainThread();
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: [createSerializedTemplate(0, '_et_test')],
+    });
+
+    envManager.switchToBackground();
+
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
+    expect(String(reportErrorSpy.mock.calls[0]?.[0]?.message ?? '')).toContain('invalid handleId 0');
+    expect(backgroundElementTemplateInstanceManager.get(oldId)).toBe(after);
+    expect(backgroundElementTemplateInstanceManager.get(0)).toBeUndefined();
+
+    lynxObj.reportError = oldReportError;
+  });
+
+  it('reports duplicate handleId during hydrate', () => {
+    envManager.switchToBackground();
+    installElementTemplateHydrationListener();
+
+    const lynxObj = globalThis.lynx as typeof lynx & { reportError?: (error: Error) => void };
+    const oldReportError = lynxObj.reportError;
+    const reportErrorSpy = vi.fn();
+    lynxObj.reportError = reportErrorSpy;
+
+    const backgroundRoot = __root as BackgroundElementTemplateInstance;
+    const first = new BackgroundElementTemplateInstance('_et_test');
+    const second = new BackgroundElementTemplateInstance('_et_test');
+    backgroundRoot.appendChild(first);
+    backgroundRoot.appendChild(second);
+    const oldSecondId = second.instanceId;
+
+    envManager.switchToMainThread();
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: [createSerializedTemplate(-1, '_et_test'), createSerializedTemplate(-1, '_et_test')],
+    });
+
+    envManager.switchToBackground();
+
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
+    expect(String(reportErrorSpy.mock.calls[0]?.[0]?.message ?? '')).toContain('already bound');
+    expect(backgroundElementTemplateInstanceManager.get(-1)).toBe(first);
+    expect(backgroundElementTemplateInstanceManager.get(oldSecondId)).toBe(second);
+
+    lynxObj.reportError = oldReportError;
   });
 });

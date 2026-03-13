@@ -1,8 +1,10 @@
 Object {
-  "patches": Array [
-    0,
+  "ops": Array [
     1,
-    "raw-text",
-    "",
+    1,
+    "__et_builtin_raw_text__",
+    null,
+    Array [],
+    Array [],
   ],
 }

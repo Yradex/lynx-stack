@@ -9,11 +9,14 @@
 import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
 import { profileEnd, profileStart } from '../../../debug/utils.js';
 import { render as renderToString } from '../../../renderToOpcodes/index.js';
+import { ElementTemplateLifecycleConstant } from '../../protocol/lifecycle-constant.js';
+import type { SerializedElementTemplate } from '../../protocol/types.js';
 import { __page } from '../page/page.js';
 import { __root } from '../page/root-instance.js';
 
 function renderMainThread(): void {
   let opcodes;
+  let rootRefs: ElementRef[] = [];
   profileStart('ReactLynx::renderMainThread');
   try {
     opcodes = renderToString(__root.__jsx, undefined);
@@ -26,10 +29,25 @@ function renderMainThread(): void {
 
   profileStart('ReactLynx::renderOpcodes');
   try {
-    const { rootRefs } = renderOpcodesIntoElementTemplate(opcodes);
+    ({ rootRefs } = renderOpcodesIntoElementTemplate(opcodes));
     for (const rootRef of rootRefs) {
       __AppendElement(__page, rootRef as FiberElement);
     }
+  } finally {
+    profileEnd();
+  }
+
+  profileStart('ReactLynx::packSerializedETInstance');
+  try {
+    const instances: SerializedElementTemplate[] = [];
+    for (const rootRef of rootRefs) {
+      instances.push(__SerializeElementTemplate(rootRef) as SerializedElementTemplate);
+    }
+
+    lynx.getJSContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.hydrate,
+      data: instances,
+    });
   } finally {
     profileEnd();
   }

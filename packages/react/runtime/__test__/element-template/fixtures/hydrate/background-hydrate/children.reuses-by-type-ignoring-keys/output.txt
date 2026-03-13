@@ -1,11 +1,9 @@
 Object {
   "stream": Array [
+    3,
     -3,
-    Array [
-      2,
-      0,
-      null,
-      -1,
-    ],
+    0,
+    -1,
+    0,
   ],
 }

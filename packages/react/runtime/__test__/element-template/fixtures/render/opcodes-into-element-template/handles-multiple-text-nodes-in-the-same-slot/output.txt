@@ -1,12 +1,20 @@
 Object {
   "slotChildren": Array [
     Object {
-      "text": "A",
-      "type": "rawText",
+      "attributes": Object {
+        "text": "A",
+      },
+      "children": Array [],
+      "tag": "raw-text",
+      "templateId": "__et_builtin_raw_text__",
     },
     Object {
-      "text": "B",
-      "type": "rawText",
+      "attributes": Object {
+        "text": "B",
+      },
+      "children": Array [],
+      "tag": "raw-text",
+      "templateId": "__et_builtin_raw_text__",
     },
   ],
 }

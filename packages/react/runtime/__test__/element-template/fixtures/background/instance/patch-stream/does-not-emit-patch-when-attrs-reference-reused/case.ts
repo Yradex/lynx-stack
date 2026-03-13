@@ -9,11 +9,11 @@ export function run() {
   return runCase(() => {
     const instance = new BackgroundElementTemplateInstance('view');
     const props = { a: 1 };
-    instance.setAttribute('attrs', { 0: props });
+    instance.setAttribute('attributeSlots', [props]);
     resetGlobalCommitContext();
 
-    instance.setAttribute('attrs', { 0: props });
-    const stream = GlobalCommitContext.patches;
+    instance.setAttribute('attributeSlots', [props]);
+    const stream = GlobalCommitContext.ops;
     resetGlobalCommitContext();
 
     return stream;

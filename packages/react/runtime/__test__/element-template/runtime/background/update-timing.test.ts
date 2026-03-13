@@ -13,11 +13,23 @@ import {
   PipelineOrigins,
   setPipeline,
 } from '../../../../src/element-template/lynx/performance.js';
+import { ElementTemplateUpdateOps } from '../../../../src/element-template/protocol/opcodes.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
 
 interface UpdateEvent {
   flushOptions?: Record<string, unknown>;
+}
+
+function createRawTextOps(id: number, text: string) {
+  return [
+    ElementTemplateUpdateOps.createTemplate,
+    id,
+    '__et_builtin_raw_text__',
+    null,
+    [text],
+    [],
+  ];
 }
 
 describe('ElementTemplate update timing (background commit)', () => {
@@ -65,7 +77,7 @@ describe('ElementTemplate update timing (background commit)', () => {
     beginPipeline(true, PipelineOrigins.updateTriggeredByBts);
     markTimingLegacy('updateSetStateTrigger', 'flag');
 
-    GlobalCommitContext.patches = [0, 1, 'raw-text', 'payload'];
+    GlobalCommitContext.ops = createRawTextOps(1, 'payload');
     GlobalCommitContext.flushOptions = { nativeUpdateDataOrder: 9 };
 
     options.__c?.({} as unknown as object, []);

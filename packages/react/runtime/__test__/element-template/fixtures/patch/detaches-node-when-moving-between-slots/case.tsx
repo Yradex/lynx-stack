@@ -1,13 +1,24 @@
-import { ElementTemplateOpcodes } from '../../../../../src/element-template/protocol/opcodes.js';
+import { ElementTemplateUpdateOps } from '../../../../../src/element-template/protocol/opcodes.js';
 import { root } from '../../../../../src/element-template/index.js';
 import { __page } from '../../../../../src/element-template/runtime/page/page.js';
-import { applyElementTemplatePatches } from '../../../../../src/element-template/runtime/patch.js';
+import { applyElementTemplateUpdateCommands } from '../../../../../src/element-template/runtime/patch.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
 import { registerTemplates } from '../../../test-utils/debug/registry.js';
 import { serializeToJSX } from '../../../test-utils/debug/serializer.js';
 import { setupPatchContext, teardownPatchContext } from '../_shared.js';
 
 declare const renderPage: () => void;
+
+function createRawTextOps(id: number, text: string) {
+  return [
+    ElementTemplateUpdateOps.createTemplate,
+    id,
+    '__et_builtin_raw_text__',
+    null,
+    [text],
+    [],
+  ] as const;
+}
 
 export function run() {
   const context = setupPatchContext();
@@ -22,56 +33,54 @@ export function run() {
       {
         templateId: '_et_test_detach',
         compiledTemplate: {
-          tag: '_et_test_detach',
-          attributes: {},
+          kind: 'element',
+          tag: 'view',
           children: [
-            { tag: 'slot', attributes: { 'part-id': 0 } },
-            { tag: 'slot', attributes: { 'part-id': 1 } },
+            { kind: 'elementSlot', elementSlotIndex: 0 },
+            { kind: 'elementSlot', elementSlotIndex: 1 },
           ],
         },
       },
     ]);
 
-    applyElementTemplatePatches([0, 20, '_et_test_detach', []]);
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      20,
+      '_et_test_detach',
+      null,
+      [],
+      [],
+    ]);
     const page = __page as unknown as { children?: unknown[] };
     page.children ??= [];
     page.children.push(ElementTemplateRegistry.get(20)!);
 
-    applyElementTemplatePatches([
-      0,
-      10,
-      'raw-text',
-      'A',
-      0,
-      11,
-      'raw-text',
-      'B',
+    applyElementTemplateUpdateCommands([
+      ...createRawTextOps(10, 'A'),
+      ...createRawTextOps(11, 'B'),
     ]);
 
-    applyElementTemplatePatches([
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.insertNode,
       20,
-      [
-        ElementTemplateOpcodes.insertBefore,
-        0,
-        null,
-        10,
-        ElementTemplateOpcodes.insertBefore,
-        0,
-        null,
-        11,
-      ],
+      0,
+      10,
+      0,
+      ElementTemplateUpdateOps.insertNode,
+      20,
+      0,
+      11,
+      0,
     ]);
 
     const beforeMove = serializeToJSX(__page);
 
-    applyElementTemplatePatches([
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.insertNode,
       20,
-      [
-        ElementTemplateOpcodes.insertBefore,
-        1,
-        null,
-        10,
-      ],
+      1,
+      10,
+      0,
     ]);
 
     const afterMove = serializeToJSX(__page);

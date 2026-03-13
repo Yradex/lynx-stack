@@ -34,6 +34,8 @@ pub struct ElementTemplateAsset {
   pub source_file: String,
 }
 
+const BUILTIN_RAW_TEXT_TEMPLATE_ID: &str = "__et_builtin_raw_text__";
+
 pub mod napi;
 
 use swc_plugins_shared::{
@@ -1194,6 +1196,46 @@ where
     });
   }
 
+  fn builtin_raw_text_template_asset(&self) -> ElementTemplateAsset {
+    ElementTemplateAsset {
+      template_id: BUILTIN_RAW_TEXT_TEMPLATE_ID.to_string(),
+      compiled_template: serde_json::json!({
+        "kind": "element",
+        "tag": "raw-text",
+        "attributes": [
+          {
+            "kind": "attribute",
+            "key": "text",
+            "binding": "slot",
+            "attrSlotIndex": 0,
+          }
+        ],
+        "children": [],
+      }),
+      source_file: self.cfg.filename.clone(),
+    }
+  }
+
+  fn ensure_builtin_element_templates(&self) {
+    let Some(element_templates) = &self.element_templates else {
+      return;
+    };
+
+    let mut templates = element_templates.borrow_mut();
+    if templates.is_empty() {
+      return;
+    }
+
+    if templates
+      .iter()
+      .any(|template| template.template_id == BUILTIN_RAW_TEXT_TEMPLATE_ID)
+    {
+      return;
+    }
+
+    templates.push(self.builtin_raw_text_template_asset());
+  }
+
   fn element_template_to_json(&self, expr: &Expr) -> serde_json::Value {
     match expr {
       Expr::Lit(lit) => match lit {
@@ -2013,6 +2055,9 @@ where
     }
 
     n.visit_mut_children_with(self);
+    if self.cfg.experimental_enable_element_template {
+      self.ensure_builtin_element_templates();
+    }
     if let Some(Expr::Ident(runtime_id)) = Lazy::<Expr>::get(&self.runtime_id) {
       prepend_stmt(
         &mut n.body,

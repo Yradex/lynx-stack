@@ -5,7 +5,9 @@
     null,
     null,
     null,
-    null
+    {
+      "handleId": -1
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -24,7 +26,9 @@
         }
       ]
     ],
-    null
+    {
+      "handleId": -2
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -32,7 +36,9 @@
     null,
     null,
     null,
-    null
+    {
+      "handleId": -3
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -51,7 +57,9 @@
         }
       ]
     ],
-    null
+    {
+      "handleId": -4
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -108,7 +116,9 @@
         }
       ]
     ],
-    null
+    {
+      "handleId": -5
+    }
   ],
   [
     "__AppendElement",

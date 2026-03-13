@@ -35,6 +35,23 @@ describe('BackgroundElementTemplateInstanceManager', () => {
     expect(backgroundElementTemplateInstanceManager.get(newId)).toBe(instance);
   });
 
+  it('rejects illegal handleId 0', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+
+    expect(() => backgroundElementTemplateInstanceManager.updateId(instance.instanceId, 0))
+      .toThrow('ElementTemplate handleId must be a non-zero integer');
+  });
+
+  it('rejects duplicate handleId rebinding', () => {
+    const first = new BackgroundElementTemplateInstance('view');
+    const second = new BackgroundElementTemplateInstance('view');
+
+    backgroundElementTemplateInstanceManager.updateId(first.instanceId, -1);
+
+    expect(() => backgroundElementTemplateInstanceManager.updateId(second.instanceId, -1))
+      .toThrow('ElementTemplate handleId -1 is already bound.');
+  });
+
   it('should clear all instances', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     expect(backgroundElementTemplateInstanceManager.get(instance.instanceId)).toBe(instance);

@@ -1,8 +1,10 @@
 Array [
-  Array [
-    -1,
-    "_et_a94a8_test_2",
-    Object {},
-    undefined,
-  ],
+  Object {
+    "attributeSlots": Array [],
+    "elementSlots": Array [],
+    "options": Object {
+      "handleId": -1,
+    },
+    "templateKey": "_et_a94a8_test_2",
+  },
 ]

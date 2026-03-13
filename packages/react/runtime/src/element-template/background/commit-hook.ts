@@ -30,7 +30,7 @@ export function installElementTemplateCommitHook(): void {
   installed = true;
 
   hook(options, COMMIT, (originalCommit, vnode, commitQueue) => {
-    if (__BACKGROUND__ && hasHydrated && GlobalCommitContext.patches.length > 0) {
+    if (__BACKGROUND__ && hasHydrated && GlobalCommitContext.ops.length > 0) {
       markTimingLegacy('updateDiffVdomEnd');
       markTiming('diffVdomEnd');
 
@@ -52,7 +52,7 @@ export function installElementTemplateCommitHook(): void {
       lynx.getCoreContext().dispatchEvent({
         type: ElementTemplateLifecycleConstant.update,
         data: {
-          patches: GlobalCommitContext.patches,
+          ops: GlobalCommitContext.ops,
           flushOptions: GlobalCommitContext.flushOptions,
           flowIds: GlobalCommitContext.flowIds,
         },

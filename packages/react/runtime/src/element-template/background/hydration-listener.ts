@@ -8,7 +8,7 @@ import { BackgroundElementTemplateInstance } from './instance.js';
 import { profileEnd, profileStart } from '../../debug/utils.js';
 import { PerformanceTimingFlags, PipelineOrigins, beginPipeline, markTiming } from '../lynx/performance.js';
 import { ElementTemplateLifecycleConstant } from '../protocol/lifecycle-constant.js';
-import type { SerializedETInstance } from '../protocol/types.js';
+import type { SerializedElementTemplate } from '../protocol/types.js';
 import { __root } from '../runtime/page/root-instance.js';
 
 let listener:
@@ -25,7 +25,7 @@ export function installElementTemplateHydrationListener(): void {
     }
     beginPipeline(true, PipelineOrigins.reactLynxHydrate, PerformanceTimingFlags.reactLynxHydrate);
     markTiming('hydrateParseSnapshotStart');
-    const instances = data as SerializedETInstance[];
+    const instances = data as SerializedElementTemplate[];
     markTiming('hydrateParseSnapshotEnd');
     markTiming('diffVdomStart');
 
@@ -48,11 +48,11 @@ export function installElementTemplateHydrationListener(): void {
 
     markElementTemplateHydrated();
 
-    if (GlobalCommitContext.patches.length > 0) {
+    if (GlobalCommitContext.ops.length > 0) {
       lynx.getCoreContext().dispatchEvent({
         type: ElementTemplateLifecycleConstant.update,
         data: {
-          patches: GlobalCommitContext.patches,
+          ops: GlobalCommitContext.ops,
           flushOptions: GlobalCommitContext.flushOptions,
           flowIds: GlobalCommitContext.flowIds,
         },

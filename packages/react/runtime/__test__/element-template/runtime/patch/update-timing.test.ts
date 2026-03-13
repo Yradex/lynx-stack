@@ -5,19 +5,33 @@ import {
   resetElementTemplatePatchListener,
 } from '../../../../src/element-template/native/patch-listener.js';
 import { setPipeline } from '../../../../src/element-template/lynx/performance.js';
+import { ElementTemplateUpdateOps } from '../../../../src/element-template/protocol/opcodes.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
+import { registerBuiltinRawTextTemplate } from '../../test-utils/debug/registry.js';
 
 const pipelineOptions = {
   pipelineID: 'pipelineID',
   needTimestamps: true,
 } as const;
 
+function createRawTextOps(id: number, text: string) {
+  return [
+    ElementTemplateUpdateOps.createTemplate,
+    id,
+    '__et_builtin_raw_text__',
+    null,
+    [text],
+    [],
+  ];
+}
+
 describe('ElementTemplate update timing (main thread patch)', () => {
   const envManager = new ElementTemplateEnvManager();
 
   beforeEach(() => {
     envManager.resetEnv('main');
+    registerBuiltinRawTextTemplate();
     installElementTemplatePatchListener();
     lynx.performance._markTiming.mockClear();
     (__FlushElementTree as unknown as { mockClear: () => void }).mockClear();
@@ -30,7 +44,7 @@ describe('ElementTemplate update timing (main thread patch)', () => {
 
   it('marks parse/patch timings using pipeline options', () => {
     const payload = {
-      patches: [0, 1, 'raw-text', 'hello'],
+      ops: createRawTextOps(1, 'hello'),
       flushOptions: { pipelineOptions },
     };
 
@@ -59,7 +73,7 @@ describe('ElementTemplate update timing (main thread patch)', () => {
 
   it('handles updates without flush options', () => {
     const payload = {
-      patches: [0, 1, 'raw-text', 'hello'],
+      ops: createRawTextOps(1, 'hello'),
     };
 
     envManager.switchToBackground(() => {

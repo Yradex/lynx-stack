@@ -5,11 +5,14 @@ Array [
     0,
   ],
   Array [
-    "__ElementFromBinary",
+    "__CreateElementTemplate",
     "_et_a94a8_test_1",
     null,
-    Array [],
     null,
+    null,
+    Object {
+      "handleId": -1,
+    },
   ],
   Array [
     "__AppendElement",

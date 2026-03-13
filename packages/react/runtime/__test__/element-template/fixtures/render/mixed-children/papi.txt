@@ -1,15 +1,39 @@
 [
   [
-    "__CreateRawText",
-    "A"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "A"
+    ],
+    [],
+    {
+      "handleId": -1
+    }
   ],
   [
-    "__CreateRawText",
-    "B"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "B"
+    ],
+    [],
+    {
+      "handleId": -2
+    }
   ],
   [
-    "__CreateRawText",
-    "C"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "C"
+    ],
+    [],
+    {
+      "handleId": -3
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -19,24 +43,38 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "A"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "A"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ],
       [
         {
-          "type": "rawText",
-          "text": "B"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "B"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ],
       [
         {
-          "type": "rawText",
-          "text": "C"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "C"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -4
+    }
   ],
   [
     "__AppendElement",

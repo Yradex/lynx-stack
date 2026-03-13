@@ -1,8 +1,8 @@
 "<page>
   <view />
-  <_et_test_detach>
+  <view>
     <raw-text text=\"A\" />
     <raw-text text=\"B\" />
 
-  </_et_test_detach>
+  </view>
 </page>"

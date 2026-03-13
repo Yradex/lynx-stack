@@ -32,5 +32,21 @@ expression: actual_jsons
         }
       ]
     }
+  },
+  {
+    "template_id": "__et_builtin_raw_text__",
+    "template": {
+      "kind": "element",
+      "tag": "raw-text",
+      "attributes": [
+        {
+          "kind": "attribute",
+          "key": "text",
+          "binding": "slot",
+          "attrSlotIndex": 0
+        }
+      ],
+      "children": []
+    }
   }
 ]

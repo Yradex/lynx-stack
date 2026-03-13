@@ -1,7 +1,15 @@
 Array [
   Array [
-    "__CreateRawText",
-    "X",
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    Array [
+      "X",
+    ],
+    Array [],
+    Object {
+      "handleId": -1,
+    },
   ],
   Array [
     "__CreateElementTemplate",
@@ -13,12 +21,18 @@ Array [
     Array [
       Array [
         Object {
-          "text": "X",
-          "type": "rawText",
+          "attributes": Object {
+            "text": "X",
+          },
+          "children": Array [],
+          "tag": "raw-text",
+          "templateId": "__et_builtin_raw_text__",
         },
       ],
     ],
-    null,
+    Object {
+      "handleId": -2,
+    },
   ],
   Array [
     "__CreateElementTemplate",
@@ -38,8 +52,12 @@ Array [
               },
               "children": Array [
                 Object {
-                  "text": "X",
-                  "type": "rawText",
+                  "attributes": Object {
+                    "text": "X",
+                  },
+                  "children": Array [],
+                  "tag": "raw-text",
+                  "templateId": "__et_builtin_raw_text__",
                 },
               ],
               "tag": "slot",
@@ -50,7 +68,9 @@ Array [
         },
       ],
     ],
-    null,
+    Object {
+      "handleId": -3,
+    },
   ],
   Array [
     "__AppendElement",

@@ -5,7 +5,7 @@ import { resetTemplateId } from '../../../../../src/element-template/runtime/tem
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../../../src/renderToOpcodes/index.js';
 import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
-import { registerTemplates } from '../../../test-utils/debug/registry.js';
+import { registerBuiltinRawTextTemplate, registerTemplates } from '../../../test-utils/debug/registry.js';
 
 export interface RootNode {
   type: 'root';
@@ -18,6 +18,22 @@ export interface CaseContext {
 }
 
 const templates = [
+  {
+    templateId: '__et_builtin_raw_text__',
+    compiledTemplate: {
+      kind: 'element',
+      tag: 'raw-text',
+      attributes: [
+        {
+          kind: 'attribute',
+          key: 'text',
+          binding: 'slot',
+          attrSlotIndex: 0,
+        },
+      ],
+      children: [],
+    },
+  },
   {
     templateId: '_et_foo',
     compiledTemplate: {
@@ -91,6 +107,7 @@ function setup(): CaseContext {
   resetTemplateId();
 
   const installed = installMockNativePapi({ clearTemplatesOnCleanup: false });
+  registerBuiltinRawTextTemplate();
   registerTemplates(templates);
 
   return {

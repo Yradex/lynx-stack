@@ -2,14 +2,49 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-export type SerializedETInstance = [
-  number,
-  string,
-  Record<number, SerializedETInstance[]> | undefined,
-  Record<number, Record<string, unknown>> | undefined,
-];
+export type SerializableValue =
+  | string
+  | number
+  | boolean
+  | null
+  | SerializableValue[]
+  | { [key: string]: SerializableValue };
 
-export type ElementTemplatePatchStream = (number | string | null | unknown[])[];
+export type RuntimeOptions = Record<string, SerializableValue>;
+
+export interface SerializedElementNodeInstance {
+  kind: 'element';
+  tag: string;
+  attributes?: Record<string, SerializableValue>;
+  children?: SerializedElementNode[];
+}
+
+export interface SerializedTemplateInstance {
+  kind: 'templateInstance';
+  templateKey: string;
+  bundleUrl?: string;
+  attributeSlots: SerializableValue[];
+  elementSlots: SerializedElementNode[][];
+  options?: RuntimeOptions;
+}
+
+export type SerializedElementNode =
+  | SerializedElementNodeInstance
+  | SerializedTemplateInstance;
+
+export interface SerializedElementTemplate {
+  templateKey: string;
+  bundleUrl?: string;
+  attributeSlots: SerializableValue[];
+  elementSlots: SerializedElementNode[][];
+  options?: RuntimeOptions;
+}
+
+// Stage 7 target protocol: flat command stream over create/setAttribute/insert/remove.
+// The stream intentionally stays opaque at this layer until runtime producer/consumer land.
+export type ElementTemplateUpdateCommandStream = (
+  number | string | null | SerializableValue | SerializableValue[] | unknown[]
+)[];
 
 export interface ElementTemplateFlushOptions {
   // triggerLayout?: boolean;
@@ -29,8 +64,8 @@ export interface ElementTemplateFlushOptions {
   // triggerDataUpdated?: boolean;
 }
 
-export interface ElementTemplateCommitContext {
-  patches: ElementTemplatePatchStream;
+export interface ElementTemplateUpdateCommitContext {
+  ops: ElementTemplateUpdateCommandStream;
   flushOptions: ElementTemplateFlushOptions;
   flowIds?: number[];
 }

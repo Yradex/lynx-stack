@@ -11,6 +11,7 @@ import {
   PipelineOrigins,
   setPipeline,
 } from '../../../src/element-template/lynx/performance.js';
+import { ElementTemplateUpdateOps } from '../../../src/element-template/protocol/opcodes.js';
 import { RENDER_COMPONENT } from '../../../src/renderToOpcodes/constants.js';
 import { ElementTemplateEnvManager } from '../test-utils/debug/envManager.js';
 
@@ -18,6 +19,17 @@ const envManager = new ElementTemplateEnvManager();
 
 let nativeMarkTiming: ReturnType<typeof vi.fn>;
 let originalLynx: unknown;
+
+function createRawTextOps(id: number, text: string) {
+  return [
+    ElementTemplateUpdateOps.createTemplate,
+    id,
+    '__et_builtin_raw_text__',
+    null,
+    [text],
+    [],
+  ];
+}
 
 beforeEach(() => {
   envManager.resetEnv('background');
@@ -37,7 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   setPipeline(undefined);
-  GlobalCommitContext.patches = [];
+  GlobalCommitContext.ops = [];
   globalThis.lynx = originalLynx as typeof lynx;
 });
 
@@ -82,7 +94,7 @@ describe('ElementTemplate performance timing (current api)', () => {
   it('initTimingAPI hooks diff timing when updates are detected', () => {
     initTimingAPI();
 
-    GlobalCommitContext.patches = [0, 1, 'raw-text', 'payload'];
+    GlobalCommitContext.ops = createRawTextOps(1, 'payload');
     options[RENDER_COMPONENT]?.({} as unknown as object, null);
 
     expect(globalThis.lynx.performance._markTiming).toHaveBeenCalledWith(
@@ -95,7 +107,7 @@ describe('ElementTemplate performance timing (current api)', () => {
     initTimingAPI();
 
     markTimingLegacy('updateSetStateTrigger', 'flag');
-    GlobalCommitContext.patches = [0, 1, 'raw-text', 'payload'];
+    GlobalCommitContext.ops = createRawTextOps(1, 'payload');
 
     options.__?.({} as unknown as object, null);
 

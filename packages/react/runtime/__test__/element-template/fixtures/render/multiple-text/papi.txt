@@ -1,19 +1,51 @@
 [
   [
-    "__CreateRawText",
-    "A"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "A"
+    ],
+    [],
+    {
+      "handleId": -1
+    }
   ],
   [
-    "__CreateRawText",
-    "B"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "B"
+    ],
+    [],
+    {
+      "handleId": -2
+    }
   ],
   [
-    "__CreateRawText",
-    "C"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "C"
+    ],
+    [],
+    {
+      "handleId": -3
+    }
   ],
   [
-    "__CreateRawText",
-    "A"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "A"
+    ],
+    [],
+    {
+      "handleId": -4
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -23,16 +55,30 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "A"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "A"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -5
+    }
   ],
   [
-    "__CreateRawText",
-    "B"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "B"
+    ],
+    [],
+    {
+      "handleId": -6
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -42,16 +88,30 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "B"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "B"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -7
+    }
   ],
   [
-    "__CreateRawText",
-    "C"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "C"
+    ],
+    [],
+    {
+      "handleId": -8
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -61,28 +121,66 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "C"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "C"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -9
+    }
   ],
   [
-    "__CreateRawText",
-    "A"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "A"
+    ],
+    [],
+    {
+      "handleId": -10
+    }
   ],
   [
-    "__CreateRawText",
-    "B"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "B"
+    ],
+    [],
+    {
+      "handleId": -11
+    }
   ],
   [
-    "__CreateRawText",
-    "C"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "C"
+    ],
+    [],
+    {
+      "handleId": -12
+    }
   ],
   [
-    "__CreateRawText",
-    "A"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "A"
+    ],
+    [],
+    {
+      "handleId": -13
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -92,16 +190,30 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "A"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "A"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -14
+    }
   ],
   [
-    "__CreateRawText",
-    "B"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "B"
+    ],
+    [],
+    {
+      "handleId": -15
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -111,16 +223,30 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "B"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "B"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -16
+    }
   ],
   [
-    "__CreateRawText",
-    "C"
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "C"
+    ],
+    [],
+    {
+      "handleId": -17
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -130,12 +256,18 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "C"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "C"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ]
     ],
-    null
+    {
+      "handleId": -18
+    }
   ],
   [
     "__CreateElementTemplate",
@@ -145,16 +277,28 @@
     [
       [
         {
-          "type": "rawText",
-          "text": "A"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "A"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         },
         {
-          "type": "rawText",
-          "text": "B"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "B"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         },
         {
-          "type": "rawText",
-          "text": "C"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "C"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ],
       [
@@ -169,8 +313,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "A"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "A"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -188,8 +336,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "B"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "B"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -207,8 +359,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "C"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "C"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -218,16 +374,28 @@
       ],
       [
         {
-          "type": "rawText",
-          "text": "A"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "A"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         },
         {
-          "type": "rawText",
-          "text": "B"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "B"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         },
         {
-          "type": "rawText",
-          "text": "C"
+          "tag": "raw-text",
+          "attributes": {
+            "text": "C"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
         }
       ],
       [
@@ -242,8 +410,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "A"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "A"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -261,8 +433,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "B"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "B"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -280,8 +456,12 @@
               },
               "children": [
                 {
-                  "type": "rawText",
-                  "text": "C"
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "C"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
                 }
               ]
             }
@@ -290,7 +470,9 @@
         }
       ]
     ],
-    null
+    {
+      "handleId": -19
+    }
   ],
   [
     "__AppendElement",

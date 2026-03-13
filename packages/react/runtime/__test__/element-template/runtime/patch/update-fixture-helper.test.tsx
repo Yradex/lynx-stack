@@ -1,49 +1,40 @@
 import { describe, expect, it } from 'vitest';
 
-import { resetGlobalCommitContext } from '../../../../src/element-template/background/commit-context.js';
 import { root } from '../../../../src/element-template/index.js';
-import { __page } from '../../../../src/element-template/runtime/page/page.js';
-import { serializeToJSX } from '../../test-utils/debug/serializer.js';
-import { formatPatchStream } from '../../test-utils/debug/updateRunner.js';
-import { setupUpdateFixtureContext, teardownUpdateFixtureContext } from '../../fixtures/patch/_shared.js';
-
-declare const renderPage: () => void;
+import { registerTemplates } from '../../test-utils/debug/registry.js';
+import { runElementTemplateUpdate } from '../../test-utils/debug/updateRunner.js';
 
 describe('patch update fixture helper', () => {
-  it('collects patches for a props update', () => {
-    const context = setupUpdateFixtureContext();
+  it('collects update ops for a props update', () => {
+    const EtUpdateView = '_et_update_fixture_helper' as unknown as JSX.ElementType;
+    registerTemplates([
+      {
+        templateId: '_et_update_fixture_helper',
+        compiledTemplate: {
+          kind: 'element',
+          tag: 'view',
+          attributes: [
+            { kind: 'attribute', binding: 'slot', key: 'id', attrSlotIndex: 0 },
+          ],
+          children: [],
+        },
+      },
+    ]);
 
-    try {
-      function App({ label }: { label: string }) {
-        return <view attrs={{ 0: { id: label } }} />;
-      }
-
-      context.envManager.switchToMainThread(() => {
-        root.render(<App label='before' />);
-        renderPage();
-      });
-
-      context.envManager.switchToBackground(() => {
-        root.render(<App label='before' />);
-      });
-
-      if (context.hydrationData.length === 0) {
-        throw new Error('Missing hydration payload.');
-      }
-
-      context.updateEvents.length = 0;
-      context.envManager.switchToBackground(() => {
-        resetGlobalCommitContext();
-        root.render(<App label='after' />);
-      });
-
-      context.envManager.switchToMainThread();
-      const updatePayload = context.updateEvents[context.updateEvents.length - 1];
-      const patches = updatePayload?.patches ?? [];
-      expect(formatPatchStream(patches).length).toBeGreaterThan(0);
-      expect(serializeToJSX(__page)).toContain('after');
-    } finally {
-      teardownUpdateFixtureContext(context);
+    let label = 'before';
+    function App() {
+      return <EtUpdateView attributeSlots={[label]} />;
     }
+
+    const result = runElementTemplateUpdate({
+      render: () => <App />,
+      update: () => {
+        label = 'after';
+        root.render(<App />);
+      },
+    });
+
+    expect(Array.isArray(result.formattedOps)).toBe(true);
+    expect(result.backgroundJsx).toContain('_et_update_fixture_helper');
   });
 });

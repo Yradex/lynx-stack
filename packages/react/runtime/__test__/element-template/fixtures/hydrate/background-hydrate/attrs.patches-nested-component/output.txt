@@ -1,14 +1,14 @@
 Object {
   "stream": Array [
+    2,
     -1,
-    Array [
-      4,
-      0,
-      Object {
-        "info": Object {
-          "key": "new",
-        },
+    0,
+    Object {
+      "__spread": true,
+      "id": "same",
+      "info": Object {
+        "key": "new",
       },
-    ],
+    },
   ],
 }

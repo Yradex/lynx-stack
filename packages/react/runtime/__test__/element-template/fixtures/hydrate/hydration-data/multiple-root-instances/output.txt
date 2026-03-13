@@ -1,14 +1,18 @@
 Array [
-  Array [
-    -1,
-    "_et_a94a8_test_4",
-    Object {},
-    undefined,
-  ],
-  Array [
-    -2,
-    "_et_a94a8_test_5",
-    Object {},
-    undefined,
-  ],
+  Object {
+    "attributeSlots": Array [],
+    "elementSlots": Array [],
+    "options": Object {
+      "handleId": -1,
+    },
+    "templateKey": "_et_a94a8_test_4",
+  },
+  Object {
+    "attributeSlots": Array [],
+    "elementSlots": Array [],
+    "options": Object {
+      "handleId": -2,
+    },
+    "templateKey": "_et_a94a8_test_5",
+  },
 ]

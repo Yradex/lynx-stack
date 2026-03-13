@@ -22,14 +22,16 @@ describe('renderMainThread', () => {
     setupPage({ type: 'page', children: [] } as unknown as FiberElement);
     globalThis.__MAIN_THREAD__ = true;
     globalThis.__BACKGROUND__ = false;
+    const dispatchEvent = vi.fn();
     globalThis.lynx = {
       ...(globalThis.lynx ?? {}),
       reportError: vi.fn(),
-      getCoreContext: vi.fn(() => ({
-        dispatchEvent: vi.fn(),
+      getJSContext: vi.fn(() => ({
+        dispatchEvent,
       })),
     } as typeof lynx;
     vi.stubGlobal('__AppendElement', vi.fn());
+    vi.stubGlobal('__SerializeElementTemplate', vi.fn());
     vi.mocked(mockRenderOpcodesIntoElementTemplate).mockReturnValue({ rootRefs: [] });
   });
 
@@ -50,19 +52,30 @@ describe('renderMainThread', () => {
     expect(reportErrorSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'Render failed' }));
   });
 
-  it('should render opcodes into the current page without dispatching hydrate', () => {
+  it('should render opcodes into the current page and dispatch hydrate data', () => {
     const opcodes = [0, 'opcode'];
     const rootRefA = { type: 'ref-a' } as unknown as ElementRef;
     const rootRefB = { type: 'ref-b' } as unknown as ElementRef;
     const dispatchEvent = vi.fn();
+    const serializedA = [-1, '_et_a', {}, undefined];
+    const serializedB = [-2, '_et_b', {}, undefined];
     vi.mocked(mockRender).mockReturnValue(opcodes);
     vi.mocked(mockRenderOpcodesIntoElementTemplate).mockReturnValue({
       rootRefs: [rootRefA, rootRefB],
     });
-    (globalThis.lynx as typeof lynx & { getCoreContext?: () => { dispatchEvent: typeof dispatchEvent } })
-      .getCoreContext = vi.fn(() => ({
+    (globalThis.lynx as typeof lynx & { getJSContext?: () => { dispatchEvent: typeof dispatchEvent } })
+      .getJSContext = vi.fn(() => ({
         dispatchEvent,
       }));
+    vi.mocked(__SerializeElementTemplate).mockImplementation((ref: ElementRef) => {
+      if (ref === rootRefA) {
+        return serializedA as unknown as ReturnType<typeof __SerializeElementTemplate>;
+      }
+      if (ref === rootRefB) {
+        return serializedB as unknown as ReturnType<typeof __SerializeElementTemplate>;
+      }
+      throw new Error('Unexpected root ref.');
+    });
 
     expect(() => renderMainThread()).not.toThrow();
     expect(mockRender).toHaveBeenCalledWith({ type: 'test-root' }, undefined);
@@ -71,6 +84,11 @@ describe('renderMainThread', () => {
     );
     expect(__AppendElement).toHaveBeenNthCalledWith(1, expect.objectContaining({ type: 'page' }), rootRefA);
     expect(__AppendElement).toHaveBeenNthCalledWith(2, expect.objectContaining({ type: 'page' }), rootRefB);
-    expect(dispatchEvent).not.toHaveBeenCalled();
+    expect(__SerializeElementTemplate).toHaveBeenNthCalledWith(1, rootRefA);
+    expect(__SerializeElementTemplate).toHaveBeenNthCalledWith(2, rootRefB);
+    expect(dispatchEvent).toHaveBeenCalledWith({
+      type: 'rLynxElementTemplateHydrate',
+      data: [serializedA, serializedB],
+    });
   });
 });

@@ -7,6 +7,22 @@ use swc_plugin_snapshot::{JSXTransformer, JSXTransformerConfig};
 use swc_plugins_shared::target::TransformTarget;
 use swc_plugins_shared::transform_mode::TransformMode;
 
+const BUILTIN_RAW_TEXT_TEMPLATE_ID: &str = "__et_builtin_raw_text__";
+
+fn assert_has_single_builtin_raw_text_template(
+  templates: &[swc_plugin_snapshot::ElementTemplateAsset],
+) {
+  let builtin_count = templates
+    .iter()
+    .filter(|template| template.template_id == BUILTIN_RAW_TEXT_TEMPLATE_ID)
+    .count();
+  assert_eq!(
+    builtin_count, 1,
+    "Expected exactly one builtin raw-text template, got {}",
+    builtin_count
+  );
+}
+
 test!(
   module,
   Syntax::Es(EsSyntax {
@@ -931,12 +947,16 @@ fn should_not_emit_element_template_map_in_element_template_mode() {
   );
 
   assert!(!templates.is_empty(), "Should collect element templates");
+  assert_has_single_builtin_raw_text_template(&templates);
   assert!(!code.contains("__elementTemplateMap"));
   assert!(!code.contains("__template_"));
   assert!(code.contains("const _et_"));
   assert!(!code.contains("const __snapshot_"));
 
   for template in templates {
+    if template.template_id == BUILTIN_RAW_TEXT_TEMPLATE_ID {
+      continue;
+    }
     assert!(template.template_id.starts_with("_et_"));
     assert!(code.contains(&format!("\"{}\"", template.template_id)));
   }
@@ -980,11 +1000,15 @@ fn should_collect_element_templates_for_dynamic_component_in_element_template_mo
   );
 
   assert!(!templates.is_empty(), "Should collect element templates");
+  assert_has_single_builtin_raw_text_template(&templates);
   assert!(!code.contains("__elementTemplateMap"));
   assert!(code.contains("globDynamicComponentEntry"));
 
   for template in templates {
-    assert!(template.template_id.starts_with("_et_"));
+    assert!(
+      template.template_id == BUILTIN_RAW_TEXT_TEMPLATE_ID
+        || template.template_id.starts_with("_et_")
+    );
     assert!(!template.template_id.contains(':'));
   }
 }

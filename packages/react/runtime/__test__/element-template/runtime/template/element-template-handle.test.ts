@@ -3,21 +3,27 @@
 // LICENSE file in the root directory of this source tree.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import {
-  createElementTemplateId,
+  ElementTemplateRegistry,
+  setElementTemplateNativeRef,
+} from '../../../../src/element-template/runtime/template/registry.js';
+import {
+  createElementTemplateWithHandle,
   destroyElementTemplateId,
-  patchElementTemplateById,
+  reserveElementTemplateId,
 } from '../../../../src/element-template/runtime/template/handle.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 
 describe('ElementTemplateHandle', () => {
   const mockNativeRef = { __isNativeRef: true };
-  const mockPatchElementTemplate = vi.fn();
+  const mockCreatedNativeRef = { __isTemplateRef: true };
+  const mockCreateElementTemplate = vi.fn();
   // const mockReleaseElement = vi.fn();
 
   beforeEach(() => {
-    vi.stubGlobal('__PatchElementTemplate', mockPatchElementTemplate);
+    mockCreateElementTemplate.mockReset();
+    mockCreateElementTemplate.mockReturnValue(mockCreatedNativeRef);
+    vi.stubGlobal('__CreateElementTemplate', mockCreateElementTemplate);
     // vi.stubGlobal('__ReleaseElement', mockReleaseElement);
     ElementTemplateRegistry.clear();
     resetTemplateId();
@@ -27,30 +33,49 @@ describe('ElementTemplateHandle', () => {
     vi.unstubAllGlobals();
   });
 
-  it('should create and register a handle', () => {
-    const id = createElementTemplateId(mockNativeRef as any);
+  it('should reserve and bind a handle separately', () => {
+    const id = reserveElementTemplateId();
 
     expect(id).toBe(-1);
-    expect(ElementTemplateRegistry.get(-1)).toBe(mockNativeRef);
+    expect(ElementTemplateRegistry.has(id)).toBe(false);
+
+    setElementTemplateNativeRef(id, mockNativeRef as any);
+
+    expect(ElementTemplateRegistry.get(id)).toBe(mockNativeRef);
   });
 
-  it('should patch a handle by calling native API', () => {
-    const id = createElementTemplateId(mockNativeRef as any);
-    const opcodes = ['some', 'opcodes'];
+  it('should create an element template with handle id and register the native ref', () => {
+    const nativeRef = createElementTemplateWithHandle(
+      '_et_test',
+      null,
+      ['text'],
+      null,
+    );
 
-    patchElementTemplateById(id, opcodes);
-
-    expect(mockPatchElementTemplate).toHaveBeenCalledWith(mockNativeRef, opcodes, null);
+    expect(nativeRef).toBe(mockCreatedNativeRef);
+    expect(mockCreateElementTemplate).toHaveBeenCalledWith(
+      '_et_test',
+      null,
+      ['text'],
+      null,
+      { handleId: -1 },
+    );
+    expect(ElementTemplateRegistry.get(-1)).toBe(mockCreatedNativeRef);
   });
 
-  it('should throw when patching a missing handle id', () => {
-    expect(() => {
-      patchElementTemplateById(-999, ['op']);
-    }).toThrowError('ElementTemplate handle -999 not found.');
+  it('should allocate monotonically decreasing handle ids for template creation', () => {
+    createElementTemplateWithHandle('_et_first', null, null, null);
+    createElementTemplateWithHandle('_et_second', null, null, null);
+
+    expect(mockCreateElementTemplate.mock.calls[0]?.[4]).toEqual({ handleId: -1 });
+    expect(mockCreateElementTemplate.mock.calls[1]?.[4]).toEqual({ handleId: -2 });
+    expect(ElementTemplateRegistry.get(-1)).toBe(mockCreatedNativeRef);
+    expect(ElementTemplateRegistry.get(-2)).toBe(mockCreatedNativeRef);
   });
 
   it('should destroy and unregister a handle', () => {
-    const id = createElementTemplateId(mockNativeRef as any);
+    const id = reserveElementTemplateId();
+    setElementTemplateNativeRef(id, mockNativeRef as any);
 
     expect(ElementTemplateRegistry.has(id)).toBe(true);
 

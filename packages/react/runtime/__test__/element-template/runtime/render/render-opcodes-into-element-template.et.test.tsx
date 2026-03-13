@@ -2,17 +2,25 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
-import { __OpBegin, __OpEnd } from '../../../../src/renderToOpcodes/index.js';
-import { registerTemplates } from '../../test-utils/debug/registry.js';
+import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
+import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
+import { __OpBegin, __OpEnd, __OpText } from '../../../../src/renderToOpcodes/index.js';
 
 describe('renderOpcodesIntoElementTemplate', () => {
-  let root: { type: 'root' };
+  const createElementTemplate = vi.fn();
 
   beforeEach(() => {
-    root = { type: 'root' };
+    createElementTemplate.mockReset();
+    vi.stubGlobal('__CreateElementTemplate', createElementTemplate);
+    ElementTemplateRegistry.clear();
+    resetTemplateId();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('throws when popping the root frame', () => {
@@ -21,22 +29,33 @@ describe('renderOpcodesIntoElementTemplate', () => {
     );
   });
 
-  it('throws when the stack underflows', () => {
-    const originalPop = Array.prototype.pop;
-    let hasReturnedUndefined = false;
-    const popSpy = vi.spyOn(Array.prototype, 'pop').mockImplementation(function() {
-      if (!hasReturnedUndefined) {
-        hasReturnedUndefined = true;
-        return undefined;
-      }
-      return originalPop.apply(this);
-    });
+  it('creates root text through the builtin raw-text template with a handle id', () => {
+    const rootTextRef = { kind: 'text-ref' };
+    createElementTemplate.mockReturnValue(rootTextRef);
 
-    expect(() => renderOpcodesIntoElementTemplate([__OpEnd])).toThrow(
-      'Stack underflow',
+    const result = renderOpcodesIntoElementTemplate([__OpText, 'hello']);
+
+    expect(result.rootRefs).toEqual([rootTextRef]);
+    expect(createElementTemplate).toHaveBeenCalledWith(
+      '__et_builtin_raw_text__',
+      null,
+      ['hello'],
+      [],
+      { handleId: -1 },
     );
+    expect(ElementTemplateRegistry.get(-1)).toBe(rootTextRef);
+  });
 
-    popSpy.mockRestore();
+  it('throws when text is emitted outside of an element slot', () => {
+    expect(() =>
+      renderOpcodesIntoElementTemplate([
+        __OpBegin,
+        { type: '_et_parent' },
+        __OpText,
+        'hello',
+        __OpEnd,
+      ])
+    ).toThrow('Template \'_et_parent\' received a text child outside of any element slot.');
   });
 
   it('throws on unknown opcodes', () => {

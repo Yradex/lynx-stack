@@ -25,7 +25,9 @@ export function serializeToJSX(element: any, indent: string = ''): string {
       .join('\n');
   }
 
-  const attrStr = Object.entries(attributes)
+  const attrEntries = Object.entries(attributes).sort(([left], [right]) => left.localeCompare(right));
+
+  const attrStr = attrEntries
     .map(([key, value]) => {
       if (typeof value === 'object' && value !== null) {
         return ` ${key}={${JSON.stringify(value)}}`;
@@ -46,13 +48,13 @@ export function serializeToJSX(element: any, indent: string = ''): string {
 }
 
 export function serializeBackgroundTree(node: any, indent = ''): string {
-  const type = node.type;
+  const type = node.type === '__et_builtin_raw_text__' ? 'raw-text' : node.type;
   // Normalize template keys for stability if needed, but here they seem deterministic
   // if (type.startsWith('_et_')) type = '_et_ANY';
 
   let attrStr = '';
 
-  // Include partId as id for slots (restoring snapshot behavior)
+  // Surface slot ids in background tree snapshots to keep slot ordering/debugging readable.
   if (typeof node.partId === 'number' && node.partId !== -1) {
     attrStr += ` id=${node.partId}`;
   }

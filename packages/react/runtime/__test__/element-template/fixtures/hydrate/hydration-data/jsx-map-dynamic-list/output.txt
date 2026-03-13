@@ -1,95 +1,118 @@
 Array [
-  Array [
-    -10,
-    "_et_a94a8_test_8",
-    Object {
-      "0": Array [
-        Array [
-          -3,
-          "_et_a94a8_test_9",
-          Object {
-            "0": Array [
-              Array [
-                -2,
-                "_et_a94a8_test_10",
-                Object {
-                  "0": Array [
-                    Array [
-                      -1,
-                      "raw-text",
-                      Object {},
-                      Object {
-                        "0": Object {
-                          "text": "item-1",
-                        },
+  Object {
+    "attributeSlots": Array [],
+    "elementSlots": Array [
+      Array [
+        Object {
+          "attributeSlots": Array [],
+          "elementSlots": Array [
+            Array [
+              Object {
+                "attributeSlots": Array [],
+                "elementSlots": Array [
+                  Array [
+                    Object {
+                      "attributeSlots": Array [
+                        "item-1",
+                      ],
+                      "elementSlots": Array [],
+                      "kind": "templateInstance",
+                      "options": Object {
+                        "handleId": -1,
                       },
-                    ],
+                      "templateKey": "__et_builtin_raw_text__",
+                    },
                   ],
+                ],
+                "kind": "templateInstance",
+                "options": Object {
+                  "handleId": -2,
                 },
-                undefined,
-              ],
+                "templateKey": "_et_a94a8_test_10",
+              },
             ],
+          ],
+          "kind": "templateInstance",
+          "options": Object {
+            "handleId": -3,
           },
-          undefined,
-        ],
-        Array [
-          -6,
-          "_et_a94a8_test_9",
-          Object {
-            "0": Array [
-              Array [
-                -5,
-                "_et_a94a8_test_10",
-                Object {
-                  "0": Array [
-                    Array [
-                      -4,
-                      "raw-text",
-                      Object {},
-                      Object {
-                        "0": Object {
-                          "text": "item-2",
-                        },
+          "templateKey": "_et_a94a8_test_9",
+        },
+        Object {
+          "attributeSlots": Array [],
+          "elementSlots": Array [
+            Array [
+              Object {
+                "attributeSlots": Array [],
+                "elementSlots": Array [
+                  Array [
+                    Object {
+                      "attributeSlots": Array [
+                        "item-2",
+                      ],
+                      "elementSlots": Array [],
+                      "kind": "templateInstance",
+                      "options": Object {
+                        "handleId": -4,
                       },
-                    ],
+                      "templateKey": "__et_builtin_raw_text__",
+                    },
                   ],
+                ],
+                "kind": "templateInstance",
+                "options": Object {
+                  "handleId": -5,
                 },
-                undefined,
-              ],
+                "templateKey": "_et_a94a8_test_10",
+              },
             ],
+          ],
+          "kind": "templateInstance",
+          "options": Object {
+            "handleId": -6,
           },
-          undefined,
-        ],
-        Array [
-          -9,
-          "_et_a94a8_test_9",
-          Object {
-            "0": Array [
-              Array [
-                -8,
-                "_et_a94a8_test_10",
-                Object {
-                  "0": Array [
-                    Array [
-                      -7,
-                      "raw-text",
-                      Object {},
-                      Object {
-                        "0": Object {
-                          "text": "item-3",
-                        },
+          "templateKey": "_et_a94a8_test_9",
+        },
+        Object {
+          "attributeSlots": Array [],
+          "elementSlots": Array [
+            Array [
+              Object {
+                "attributeSlots": Array [],
+                "elementSlots": Array [
+                  Array [
+                    Object {
+                      "attributeSlots": Array [
+                        "item-3",
+                      ],
+                      "elementSlots": Array [],
+                      "kind": "templateInstance",
+                      "options": Object {
+                        "handleId": -7,
                       },
-                    ],
+                      "templateKey": "__et_builtin_raw_text__",
+                    },
                   ],
+                ],
+                "kind": "templateInstance",
+                "options": Object {
+                  "handleId": -8,
                 },
-                undefined,
-              ],
+                "templateKey": "_et_a94a8_test_10",
+              },
             ],
+          ],
+          "kind": "templateInstance",
+          "options": Object {
+            "handleId": -9,
           },
-          undefined,
-        ],
+          "templateKey": "_et_a94a8_test_9",
+        },
       ],
+    ],
+    "options": Object {
+      "handleId": -10,
     },
-    undefined,
-  ],
+    "templateKey": "_et_a94a8_test_8",
+  },
 ]

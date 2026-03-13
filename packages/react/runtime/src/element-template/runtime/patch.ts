@@ -1,94 +1,120 @@
-// Copyright 2025 The Lynx Authors. All rights reserved.
+// Copyright 2026 The Lynx Authors. All rights reserved.
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
 import { ElementTemplateRegistry } from './template/registry.js';
-import { ElementTemplateOpcodes } from '../protocol/opcodes.js';
-import type { ElementTemplateOpcode } from '../protocol/opcodes.js';
-import type { ElementTemplatePatchStream } from '../protocol/types.js';
+import { ElementTemplateUpdateOps } from '../protocol/opcodes.js';
+import type { ElementTemplateUpdateOp } from '../protocol/opcodes.js';
+import type { ElementTemplateUpdateCommandStream, SerializableValue } from '../protocol/types.js';
 
-export type { ElementTemplatePatchStream } from '../protocol/types.js';
+export type { ElementTemplateUpdateCommandStream } from '../protocol/types.js';
 
-const RAW_TEXT_TEMPLATE_KEY = 'raw-text';
-
-export function applyElementTemplatePatches(stream: ElementTemplatePatchStream): void {
+export function applyElementTemplateUpdateCommands(
+  stream: ElementTemplateUpdateCommandStream,
+): void {
   let i = 0;
   while (i < stream.length) {
-    const header = stream[i++] as number;
+    const op = stream[i++] as ElementTemplateUpdateOp;
 
-    if (header === 0) {
-      const handleId = stream[i++] as number;
-      const templateKey = stream[i++] as string;
-      const initPayload = stream[i++] as unknown[] | string;
+    switch (op) {
+      case ElementTemplateUpdateOps.createTemplate: {
+        const handleId = stream[i++] as number;
+        const templateKey = stream[i++] as string;
+        const bundleUrl = stream[i++] as string | null | undefined;
+        const attributeSlots = stream[i++] as SerializableValue[] | null | undefined;
+        const elementSlots = stream[i++] as number[][] | null | undefined;
 
-      if (handleId === 0 && __DEV__) {
-        lynx.reportError(new Error('ElementTemplate patch has illegal handleId 0.'));
-        continue;
+        if (handleId === 0 && __DEV__) {
+          lynx.reportError(new Error('ElementTemplate update has illegal handleId 0.'));
+          continue;
+        }
+
+        const nativeRef = __CreateElementTemplate(
+          templateKey,
+          bundleUrl,
+          attributeSlots,
+          resolveElementSlots(elementSlots),
+          { handleId },
+        );
+
+        if (nativeRef) {
+          ElementTemplateRegistry.set(handleId, nativeRef);
+        }
+        break;
       }
 
-      let nativeRef: ElementRef | null = null;
-      if (templateKey === RAW_TEXT_TEMPLATE_KEY) {
-        const text = typeof initPayload === 'string' ? initPayload : '';
-        nativeRef = __CreateRawText(text);
-      } else {
-        const initOpcodes = Array.isArray(initPayload) ? initPayload : [];
-        resolveOpcodes(initOpcodes);
-        nativeRef = __ElementFromBinary(templateKey, null, initOpcodes, null);
+      case ElementTemplateUpdateOps.setAttribute: {
+        const targetId = stream[i++] as number;
+        const attrSlotIndex = stream[i++] as number;
+        const value = stream[i++] as SerializableValue | null;
+        const nativeRef = resolveHandle(targetId, 'target');
+        if (!nativeRef) {
+          continue;
+        }
+        __SetAttributeOfElementTemplate(nativeRef, attrSlotIndex, value, null);
+        break;
       }
 
-      if (nativeRef) {
-        ElementTemplateRegistry.set(handleId, nativeRef);
+      case ElementTemplateUpdateOps.insertNode: {
+        const targetId = stream[i++] as number;
+        const elementSlotIndex = stream[i++] as number;
+        const childId = stream[i++] as number;
+        const referenceId = stream[i++] as number;
+        const nativeRef = resolveHandle(targetId, 'target');
+        const childRef = resolveHandle(childId, 'child');
+        if (!nativeRef || !childRef) {
+          continue;
+        }
+        const referenceRef = referenceId === 0 ? null : resolveHandle(referenceId, 'reference');
+        if (referenceId !== 0 && !referenceRef) {
+          continue;
+        }
+        __InsertNodeToElementTemplate(nativeRef, elementSlotIndex, childRef, referenceRef);
+        break;
       }
-    } else {
-      const targetId = header;
-      const opcodes = stream[i++] as unknown[];
-      const nativeRef = ElementTemplateRegistry.get(targetId);
-      if (!nativeRef) {
-        lynx.reportError(new Error(`ElementTemplate patch target ${targetId} not found.`));
-        continue;
+
+      case ElementTemplateUpdateOps.removeNode: {
+        const targetId = stream[i++] as number;
+        const elementSlotIndex = stream[i++] as number;
+        const childId = stream[i++] as number;
+        const nativeRef = resolveHandle(targetId, 'target');
+        const childRef = resolveHandle(childId, 'child');
+        if (!nativeRef || !childRef) {
+          continue;
+        }
+        __RemoveNodeFromElementTemplate(nativeRef, elementSlotIndex, childRef);
+        break;
       }
-      resolveOpcodes(opcodes);
-      __PatchElementTemplate(nativeRef, opcodes, null);
+
+      default: {
+        lynx.reportError(new Error(`ElementTemplate update opcode ${String(op)} is not supported.`));
+      }
     }
   }
 }
 
-function resolveOpcodes(opcodes: unknown[]): void {
-  let i = 0;
-  while (i < opcodes.length) {
-    const opcode = opcodes[i] as ElementTemplateOpcode;
-    switch (opcode) {
-      case ElementTemplateOpcodes.insertBefore: {
-        const beforeIndex = i + 2;
-        const childIndex = i + 3;
-        const beforeId = opcodes[beforeIndex] as number | null;
-        const childId = opcodes[childIndex] as number;
-
-        opcodes[beforeIndex] = beforeId == null ? null : resolveHandle(beforeId);
-        opcodes[childIndex] = resolveHandle(childId);
-
-        i += 4;
-        break;
-      }
-      case ElementTemplateOpcodes.removeChild: {
-        const childIndex = i + 2;
-        const childId = opcodes[childIndex] as number;
-        opcodes[childIndex] = resolveHandle(childId);
-        i += 3;
-        break;
-      }
-      case ElementTemplateOpcodes.setAttributes: {
-        i += 3;
-        break;
-      }
-    }
+function resolveElementSlots(
+  elementSlots: number[][] | null | undefined,
+): ElementRef[][] | null {
+  if (!Array.isArray(elementSlots)) {
+    return null;
   }
+
+  return elementSlots.map((children) => {
+    if (!Array.isArray(children)) {
+      return [];
+    }
+
+    return children
+      .map((childId) => resolveHandle(childId, 'child'))
+      .filter((childRef): childRef is ElementRef => childRef !== null);
+  });
 }
 
-function resolveHandle(id: number): ElementRef | null {
+function resolveHandle(id: number, role: string): ElementRef | null {
   const nativeRef = ElementTemplateRegistry.get(id);
   if (!nativeRef) {
-    lynx.reportError(new Error(`ElementTemplate patch handle ${id} not found.`));
+    lynx.reportError(new Error(`ElementTemplate update ${role} handle ${id} not found.`));
     return null;
   }
   return nativeRef;

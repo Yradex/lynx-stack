@@ -13,6 +13,10 @@ import {
   instantiateCompiledTemplate,
   isRecordForMock,
   isUnknownArrayForMock,
+  insertNodeIntoTemplateInstance,
+  removeNodeFromTemplateInstance,
+  serializeTemplateInstance,
+  setAttributeSlotOnTemplateInstance,
 } from './mockNativePapi/templateTree.js';
 import type { CompiledTemplateNode } from './mockNativePapi/templateTree.js';
 import { clearTemplates, templateRepo } from '../debug/registry.js';
@@ -24,7 +28,10 @@ export interface MockNativePapi {
   nativeLog: any[];
   mockElementFromBinary: any;
   mockCreateRawText: any;
-  mockPatchElementTemplate: any;
+  mockSerializeElementTemplate: any;
+  mockSetAttributeOfElementTemplate: any;
+  mockInsertNodeToElementTemplate: any;
+  mockRemoveNodeFromElementTemplate: any;
   mockReportError: any;
   mockFlushElementTree: any;
   mockCreatePage: any;
@@ -97,7 +104,28 @@ export function installMockNativePapi(
     const template = templateRepo.get(templateKey) as unknown;
     const element = instantiateCompiledTemplate(template, attributeSlots, elementSlots);
     element.templateId = templateKey;
+    Object.defineProperty(element, '__compiledTemplate', {
+      value: template,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(element, '__attributeSlots', {
+      value: attributeSlots ?? null,
+      writable: true,
+      configurable: true,
+    });
+    if (isRecord(options) && typeof options['handleId'] === 'number') {
+      Object.defineProperty(element, '__handleId', {
+        value: options['handleId'],
+        writable: true,
+        configurable: true,
+      });
+    }
     return element;
+  });
+
+  const mockSerializeElementTemplate = vi.fn().mockImplementation((templateInstance: unknown) => {
+    return serializeTemplateInstance(templateInstance);
   });
 
   const mockReportError = vi.fn().mockImplementation((error: Error) => {
@@ -126,11 +154,51 @@ export function installMockNativePapi(
     }
   });
 
-  const mockPatchElementTemplate = vi.fn().mockImplementation(
-    (nativeRef: unknown, opcodes: unknown, config: unknown) => {
-      nativeLog.push(['__PatchElementTemplate', formatNode(nativeRef), opcodes, config]);
+  const mockSetAttributeOfElementTemplate = vi.fn().mockImplementation(
+    (nativeRef: unknown, attrSlotIndex: number, value: unknown, options: unknown) => {
+      nativeLog.push([
+        '__SetAttributeOfElementTemplate',
+        formatNode(nativeRef),
+        attrSlotIndex,
+        value,
+        options,
+      ]);
       if (isRecord(nativeRef)) {
-        applyOpcodesToTemplateInstance(nativeRef as CompiledTemplateNode, opcodes);
+        setAttributeSlotOnTemplateInstance(nativeRef as CompiledTemplateNode, attrSlotIndex, value);
+      }
+    },
+  );
+
+  const mockInsertNodeToElementTemplate = vi.fn().mockImplementation(
+    (nativeRef: unknown, elementSlotIndex: number, node: unknown, referenceNode: unknown) => {
+      nativeLog.push([
+        '__InsertNodeToElementTemplate',
+        formatNode(nativeRef),
+        elementSlotIndex,
+        formatNode(node),
+        referenceNode == null ? null : formatNode(referenceNode),
+      ]);
+      if (isRecord(nativeRef)) {
+        insertNodeIntoTemplateInstance(
+          nativeRef as CompiledTemplateNode,
+          elementSlotIndex,
+          node,
+          referenceNode,
+        );
+      }
+    },
+  );
+
+  const mockRemoveNodeFromElementTemplate = vi.fn().mockImplementation(
+    (nativeRef: unknown, elementSlotIndex: number, node: unknown) => {
+      nativeLog.push([
+        '__RemoveNodeFromElementTemplate',
+        formatNode(nativeRef),
+        elementSlotIndex,
+        formatNode(node),
+      ]);
+      if (isRecord(nativeRef)) {
+        removeNodeFromTemplateInstance(nativeRef as CompiledTemplateNode, elementSlotIndex, node);
       }
     },
   );
@@ -144,7 +212,10 @@ export function installMockNativePapi(
   vi.stubGlobal('__CreateRawText', mockCreateRawText);
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);
-  vi.stubGlobal('__PatchElementTemplate', mockPatchElementTemplate);
+  vi.stubGlobal('__SetAttributeOfElementTemplate', mockSetAttributeOfElementTemplate);
+  vi.stubGlobal('__InsertNodeToElementTemplate', mockInsertNodeToElementTemplate);
+  vi.stubGlobal('__RemoveNodeFromElementTemplate', mockRemoveNodeFromElementTemplate);
+  vi.stubGlobal('__SerializeElementTemplate', mockSerializeElementTemplate);
   vi.stubGlobal('__FlushElementTree', mockFlushElementTree);
   const currentLynx = (globalThis as unknown as { lynx?: any }).lynx;
   const baseLynx = (currentLynx && typeof currentLynx === 'object') ? currentLynx : {};
@@ -157,7 +228,10 @@ export function installMockNativePapi(
     nativeLog: nativeLog,
     mockElementFromBinary: mockElementFromBinary,
     mockCreateRawText: mockCreateRawText,
-    mockPatchElementTemplate: mockPatchElementTemplate,
+    mockSerializeElementTemplate: mockSerializeElementTemplate,
+    mockSetAttributeOfElementTemplate: mockSetAttributeOfElementTemplate,
+    mockInsertNodeToElementTemplate: mockInsertNodeToElementTemplate,
+    mockRemoveNodeFromElementTemplate: mockRemoveNodeFromElementTemplate,
     mockReportError: mockReportError,
     mockFlushElementTree: mockFlushElementTree,
     mockCreatePage: mockCreatePage,

@@ -21,15 +21,30 @@ export const backgroundElementTemplateInstanceManager: {
   },
 
   updateId(oldId: number, newId: number): void {
-    const instance = this.values.get(oldId);
-    if (instance) {
-      this.values.delete(oldId);
-      instance.instanceId = newId;
-      this.values.set(newId, instance);
-
-      // DevTools event emission can be added here later
-      // if (__DEV__) { ... }
+    if (!Number.isInteger(newId) || newId === 0) {
+      throw new Error(`ElementTemplate handleId must be a non-zero integer, got ${String(newId)}.`);
     }
+
+    const instance = this.values.get(oldId);
+    if (!instance) {
+      throw new Error(`ElementTemplate instance ${oldId} is not registered.`);
+    }
+
+    const existing = this.values.get(newId);
+    if (existing && existing !== instance) {
+      throw new Error(`ElementTemplate handleId ${newId} is already bound.`);
+    }
+
+    if (oldId === newId) {
+      return;
+    }
+
+    this.values.delete(oldId);
+    instance.instanceId = newId;
+    this.values.set(newId, instance);
+
+    // DevTools event emission can be added here later
+    // if (__DEV__) { ... }
   },
 
   get(id: number): BackgroundElementTemplateInstance | undefined {

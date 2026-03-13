@@ -1,12 +1,12 @@
 Array [
-  Array [
-    -1,
-    "_et_a94a8_test_1",
-    Object {},
-    Object {
-      "0": Object {
-        "id": "logo.png",
-      },
+  Object {
+    "attributeSlots": Array [
+      "logo.png",
+    ],
+    "elementSlots": Array [],
+    "options": Object {
+      "handleId": -1,
     },
-  ],
+    "templateKey": "_et_a94a8_test_1",
+  },
 ]
