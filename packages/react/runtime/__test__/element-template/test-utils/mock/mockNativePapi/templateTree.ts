@@ -32,13 +32,14 @@ interface CompiledAttributeDescriptor {
 interface CompiledElementNode {
   kind: 'element';
   tag: string;
-  attributes?: CompiledAttributeDescriptor[];
+  attributesArray?: CompiledAttributeDescriptor[];
   children?: CompiledTemplateChild[];
   parts?: Record<string, unknown>;
 }
 
 interface CompiledElementSlotNode {
   kind: 'elementSlot';
+  tag: 'slot';
   elementSlotIndex: number;
 }
 
@@ -216,7 +217,10 @@ function isCompiledElementNode(node: unknown): node is CompiledElementNode {
 }
 
 function isCompiledElementSlotNode(node: unknown): node is CompiledElementSlotNode {
-  return isRecord(node) && node['kind'] === 'elementSlot' && typeof node['elementSlotIndex'] === 'number';
+  return isRecord(node)
+    && node['kind'] === 'elementSlot'
+    && node['tag'] === 'slot'
+    && typeof node['elementSlotIndex'] === 'number';
 }
 
 function applyCompiledAttributes(
@@ -225,7 +229,7 @@ function applyCompiledAttributes(
 ): Record<string, unknown> {
   const attributes: Record<string, unknown> = {};
 
-  for (const descriptor of node.attributes ?? []) {
+  for (const descriptor of node.attributesArray ?? []) {
     if (descriptor.kind === 'attribute') {
       if (descriptor.binding === 'static') {
         if (descriptor.key) {
@@ -508,7 +512,7 @@ function decodeDynamicAttrsForNode(
 ): Record<string, unknown> | undefined {
   const attrs: Record<string, unknown> = {};
 
-  for (const descriptor of compiledTemplate.attributes ?? []) {
+  for (const descriptor of compiledTemplate.attributesArray ?? []) {
     if (descriptor.binding !== 'slot') {
       continue;
     }

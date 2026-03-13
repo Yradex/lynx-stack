@@ -11,7 +11,7 @@ const builtinRawTextTemplate = {
   compiledTemplate: {
     kind: 'element',
     tag: 'raw-text',
-    attributes: [
+    attributesArray: [
       {
         kind: 'attribute',
         key: 'text',

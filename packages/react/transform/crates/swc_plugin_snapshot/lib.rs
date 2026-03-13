@@ -1202,7 +1202,7 @@ where
       compiled_template: serde_json::json!({
         "kind": "element",
         "tag": "raw-text",
-        "attributes": [
+        "attributesArray": [
           {
             "kind": "attribute",
             "key": "text",
@@ -1331,7 +1331,7 @@ where
 
   fn element_template_element_slot(&self, element_slot_index: i32) -> Expr {
     quote!(
-      r#"{ kind: "elementSlot", elementSlotIndex: $element_slot_index }"# as Expr,
+      r#"{ kind: "elementSlot", tag: "slot", elementSlotIndex: $element_slot_index }"# as Expr,
       element_slot_index: Expr = i32_to_expr(&element_slot_index),
     )
   }
@@ -1343,7 +1343,7 @@ where
     children: Vec<Expr>,
   ) -> Expr {
     quote!(
-      r#"{ kind: "element", tag: $tag, attributes: $attributes, children: $children }"# as Expr,
+      r#"{ kind: "element", tag: $tag, attributesArray: $attributes, children: $children }"# as Expr,
       tag: Expr = self.element_template_string_expr(tag),
       attributes: Expr = self.element_template_array_expr(attributes),
       children: Expr = self.element_template_array_expr(children),

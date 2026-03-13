@@ -4,10 +4,11 @@
     "compiledTemplate": {
       "kind": "element",
       "tag": "view",
-      "attributes": [],
+      "attributesArray": [],
       "children": [
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 0
         }
       ]
@@ -19,10 +20,11 @@
     "compiledTemplate": {
       "kind": "element",
       "tag": "view",
-      "attributes": [],
+      "attributesArray": [],
       "children": [
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 0
         }
       ]
@@ -34,7 +36,7 @@
     "compiledTemplate": {
       "kind": "element",
       "tag": "raw-text",
-      "attributes": [
+      "attributesArray": [
         {
           "kind": "attribute",
           "key": "text",

@@ -13,7 +13,7 @@ describe('patch update fixture helper', () => {
         compiledTemplate: {
           kind: 'element',
           tag: 'view',
-          attributes: [
+          attributesArray: [
             { kind: 'attribute', binding: 'slot', key: 'id', attrSlotIndex: 0 },
           ],
           children: [],

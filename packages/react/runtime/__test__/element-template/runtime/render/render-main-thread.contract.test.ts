@@ -40,11 +40,11 @@ describe('renderMainThread contract', () => {
         compiledTemplate: {
           kind: 'element',
           tag: 'view',
-          attributes: [
+          attributesArray: [
             { kind: 'attribute', key: 'id', binding: 'slot', attrSlotIndex: 0 },
           ],
           children: [
-            { kind: 'elementSlot', elementSlotIndex: 0 },
+            { kind: 'elementSlot', tag: 'slot', elementSlotIndex: 0 },
           ],
         },
       },

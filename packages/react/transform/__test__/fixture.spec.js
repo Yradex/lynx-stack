@@ -207,7 +207,7 @@ export class A extends Component {
         compiledTemplate: {
           kind: 'element',
           tag: 'view',
-          attributes: [
+          attributesArray: [
             {
               kind: 'attribute',
               key: 'class',
@@ -231,7 +231,7 @@ export class A extends Component {
             {
               kind: 'element',
               tag: 'raw-text',
-              attributes: [
+              attributesArray: [
                 {
                   kind: 'attribute',
                   key: 'text',
@@ -243,6 +243,7 @@ export class A extends Component {
             },
             {
               kind: 'elementSlot',
+              tag: 'slot',
               elementSlotIndex: 0,
             },
           ],
@@ -254,7 +255,7 @@ export class A extends Component {
         compiledTemplate: {
           kind: 'element',
           tag: 'raw-text',
-          attributes: [
+          attributesArray: [
             {
               kind: 'attribute',
               key: 'text',

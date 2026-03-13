@@ -8,16 +8,17 @@ expression: actual_jsons
     "template": {
       "kind": "element",
       "tag": "view",
-      "attributes": [],
+      "attributesArray": [],
       "children": [
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 0.0
         },
         {
           "kind": "element",
           "tag": "text",
-          "attributes": [
+          "attributesArray": [
             {
               "kind": "attribute",
               "key": "text",
@@ -29,6 +30,7 @@ expression: actual_jsons
         },
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 1.0
         }
       ]
@@ -39,7 +41,7 @@ expression: actual_jsons
     "template": {
       "kind": "element",
       "tag": "raw-text",
-      "attributes": [
+      "attributesArray": [
         {
           "kind": "attribute",
           "key": "text",

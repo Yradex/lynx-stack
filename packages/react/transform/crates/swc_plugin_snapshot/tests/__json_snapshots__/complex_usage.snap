@@ -8,7 +8,7 @@ expression: actual_jsons
     "template": {
       "kind": "element",
       "tag": "view",
-      "attributes": [
+      "attributesArray": [
         {
           "kind": "attribute",
           "key": "class",
@@ -26,7 +26,7 @@ expression: actual_jsons
         {
           "kind": "element",
           "tag": "text",
-          "attributes": [
+          "attributesArray": [
             {
               "kind": "attribute",
               "key": "text",
@@ -39,7 +39,7 @@ expression: actual_jsons
         {
           "kind": "element",
           "tag": "image",
-          "attributes": [
+          "attributesArray": [
             {
               "kind": "attribute",
               "key": "src",
@@ -57,7 +57,7 @@ expression: actual_jsons
     "template": {
       "kind": "element",
       "tag": "raw-text",
-      "attributes": [
+      "attributesArray": [
         {
           "kind": "attribute",
           "key": "text",

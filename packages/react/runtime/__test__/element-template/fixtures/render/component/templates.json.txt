@@ -4,16 +4,17 @@
     "compiledTemplate": {
       "kind": "element",
       "tag": "view",
-      "attributes": [],
+      "attributesArray": [],
       "children": [
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 0
         },
         {
           "kind": "element",
           "tag": "text",
-          "attributes": [
+          "attributesArray": [
             {
               "kind": "attribute",
               "key": "text",
@@ -25,12 +26,13 @@
         },
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 1
         },
         {
           "kind": "element",
           "tag": "text",
-          "attributes": [
+          "attributesArray": [
             {
               "kind": "attribute",
               "key": "text",
@@ -42,6 +44,7 @@
         },
         {
           "kind": "elementSlot",
+          "tag": "slot",
           "elementSlotIndex": 2
         }
       ]
@@ -53,7 +56,7 @@
     "compiledTemplate": {
       "kind": "element",
       "tag": "raw-text",
-      "attributes": [
+      "attributesArray": [
         {
           "kind": "attribute",
           "key": "text",

@@ -82,7 +82,9 @@ fn should_keep_slot_descriptor_order_for_dynamic_attr_spread_event_and_ref() {
     "#,
   );
 
-  let attrs = template["attributes"].as_array().expect("attributes array");
+  let attrs = template["attributesArray"]
+    .as_array()
+    .expect("attributesArray");
   assert_eq!(attrs.len(), 4);
 
   assert_eq!(attrs[0]["kind"], "attribute");
@@ -123,8 +125,10 @@ fn should_keep_element_slot_indices_stable_for_mixed_dynamic_children() {
   assert_eq!(children[0]["tag"], "text");
   assert_eq!(children[1]["kind"], "elementSlot");
   assert_eq!(children[1]["elementSlotIndex"].as_f64(), Some(0.0));
+  assert_eq!(children[1]["tag"], "slot");
   assert_eq!(children[2]["kind"], "element");
   assert_eq!(children[2]["tag"], "image");
   assert_eq!(children[3]["kind"], "elementSlot");
   assert_eq!(children[3]["elementSlotIndex"].as_f64(), Some(1.0));
+  assert_eq!(children[3]["tag"], "slot");
 }
