@@ -24,16 +24,24 @@ export function applyElementTemplateUpdateCommands(
         const attributeSlots = stream[i++] as SerializableValue[] | null | undefined;
         const elementSlots = stream[i++] as number[][] | null | undefined;
 
-        if (handleId === 0 && __DEV__) {
-          lynx.reportError(new Error('ElementTemplate update has illegal handleId 0.'));
+        if (__DEV__) {
+          const createError = validateCreateTemplatePayload(handleId, attributeSlots, elementSlots);
+          if (createError) {
+            lynx.reportError(createError);
+            continue;
+          }
+        }
+
+        const resolvedElementSlots = resolveElementSlots(elementSlots);
+        if (__DEV__ && resolvedElementSlots.hasError) {
           continue;
         }
 
         const nativeRef = __CreateElementTemplate(
           templateKey,
           bundleUrl,
-          attributeSlots,
-          resolveElementSlots(elementSlots),
+          normalizeAttributeSlots(attributeSlots),
+          resolvedElementSlots.value,
           { handleId },
         );
 
@@ -95,20 +103,36 @@ export function applyElementTemplateUpdateCommands(
 
 function resolveElementSlots(
   elementSlots: number[][] | null | undefined,
-): ElementRef[][] | null {
+): { hasError: boolean; value: ElementRef[][] | null } {
   if (!Array.isArray(elementSlots)) {
-    return null;
+    return { hasError: false, value: null };
   }
 
-  return elementSlots.map((children) => {
+  let hasError = false;
+  const value = elementSlots.map((children, slotIndex) => {
     if (!Array.isArray(children)) {
+      if (__DEV__) {
+        lynx.reportError(
+          new Error(`ElementTemplate create slot ${slotIndex} must be an array of child handles.`),
+        );
+        hasError = true;
+      }
       return [];
     }
 
     return children
-      .map((childId) => resolveHandle(childId, 'child'))
+      .map((childId) => {
+        const childRef = __DEV__
+          ? resolveHandle(childId, 'child')
+          : (ElementTemplateRegistry.get(childId) ?? null);
+        if (__DEV__ && childRef === null) {
+          hasError = true;
+        }
+        return childRef;
+      })
       .filter((childRef): childRef is ElementRef => childRef !== null);
   });
+  return { hasError, value };
 }
 
 function resolveHandle(id: number, role: string): ElementRef | null {
@@ -118,4 +142,37 @@ function resolveHandle(id: number, role: string): ElementRef | null {
     return null;
   }
   return nativeRef;
+}
+
+function isValidHandleId(handleId: number): boolean {
+  return Number.isInteger(handleId) && handleId !== 0;
+}
+
+function validateCreateTemplatePayload(
+  handleId: number,
+  attributeSlots: SerializableValue[] | null | undefined,
+  elementSlots: number[][] | null | undefined,
+): Error | null {
+  if (!isValidHandleId(handleId)) {
+    return new Error(`ElementTemplate update has invalid handleId ${String(handleId)}.`);
+  }
+  if (ElementTemplateRegistry.get(handleId)) {
+    return new Error(`ElementTemplate update received duplicate handleId ${handleId}.`);
+  }
+  if (attributeSlots != null && !Array.isArray(attributeSlots)) {
+    return new Error('ElementTemplate update create attributeSlots must be an array, null, or undefined.');
+  }
+  if (elementSlots != null && !Array.isArray(elementSlots)) {
+    return new Error('ElementTemplate update create elementSlots must be an array, null, or undefined.');
+  }
+  return null;
+}
+
+function normalizeAttributeSlots(
+  attributeSlots: SerializableValue[] | null | undefined,
+): SerializableValue[] | null | undefined {
+  if (!Array.isArray(attributeSlots)) {
+    return attributeSlots;
+  }
+  return attributeSlots.map((value) => (value === undefined ? null : value));
 }

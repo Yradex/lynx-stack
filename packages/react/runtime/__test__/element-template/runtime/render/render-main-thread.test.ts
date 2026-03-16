@@ -57,8 +57,18 @@ describe('renderMainThread', () => {
     const rootRefA = { type: 'ref-a' } as unknown as ElementRef;
     const rootRefB = { type: 'ref-b' } as unknown as ElementRef;
     const dispatchEvent = vi.fn();
-    const serializedA = [-1, '_et_a', {}, undefined];
-    const serializedB = [-2, '_et_b', {}, undefined];
+    const serializedA = {
+      templateKey: '_et_a',
+      attributeSlots: [],
+      elementSlots: [],
+      options: { handleId: -1 },
+    };
+    const serializedB = {
+      templateKey: '_et_b',
+      attributeSlots: [],
+      elementSlots: [],
+      options: { handleId: -2 },
+    };
     vi.mocked(mockRender).mockReturnValue(opcodes);
     vi.mocked(mockRenderOpcodesIntoElementTemplate).mockReturnValue({
       rootRefs: [rootRefA, rootRefB],

@@ -14,7 +14,6 @@ import { ElementTemplateUpdateOps } from '../protocol/opcodes.js';
 import type {
   ElementTemplateUpdateCommandStream,
   SerializableValue,
-  SerializedElementNode,
   SerializedElementTemplate,
   SerializedTemplateInstance,
 } from '../protocol/types.js';
@@ -158,6 +157,10 @@ function syncSlotChildren(
   beforeChildren: SerializedTemplateInstance[],
   created: Set<number>,
 ): void {
+  if (__DEV__ && !validateTemplateChildrenHandles(parent, slotId, beforeChildren)) {
+    return;
+  }
+
   const slot = ensureSlot(parent, slotId);
 
   const afterChildren = parent.elementSlots[slotId]!;
@@ -367,24 +370,21 @@ function getBackgroundInstanceKey(instance: BackgroundElementTemplateInstance): 
 }
 
 function getSerializedTemplateChildren(
-  value: SerializedElementNode[] | undefined,
+  value: SerializedTemplateInstance[] | undefined,
 ): SerializedTemplateInstance[] {
   /* v8 ignore next 3 */
   if (!value) {
     return [];
   }
-
   const children: SerializedTemplateInstance[] = [];
-  for (const node of value) {
-    if (node.kind === 'templateInstance') {
-      children.push(node);
-      continue;
-    }
-
-    if (__DEV__) {
-      lynx.reportError(
-        new Error(`ElementTemplate hydrate received non-template child '${node.tag}'.`),
-      );
+  for (const node of value as unknown[]) {
+    if (
+      typeof node === 'object'
+      && node !== null
+      && 'kind' in node
+      && node.kind === 'templateInstance'
+    ) {
+      children.push(node as SerializedTemplateInstance);
     }
   }
   return children;
@@ -395,6 +395,31 @@ function getSerializedHandleId(
 ): number | undefined {
   const handleId = value?.options?.['handleId'];
   return typeof handleId === 'number' ? handleId : undefined;
+}
+
+function isValidHandleId(handleId: number | undefined): handleId is number {
+  return Number.isInteger(handleId) && handleId !== 0;
+}
+
+function validateTemplateChildrenHandles(
+  parent: BackgroundElementTemplateInstance,
+  slotId: number,
+  beforeChildren: SerializedTemplateInstance[],
+): boolean {
+  for (const child of beforeChildren) {
+    const handleId = getSerializedHandleId(child);
+    if (isValidHandleId(handleId)) {
+      continue;
+    }
+    lynx.reportError(
+      new Error(
+        `ElementTemplate hydrate received invalid nested handleId ${String(handleId)} for `
+          + `'${child.templateKey}' in slot ${slotId} of '${parent.type}'.`,
+      ),
+    );
+    return false;
+  }
+  return true;
 }
 
 function getSerializedRawText(

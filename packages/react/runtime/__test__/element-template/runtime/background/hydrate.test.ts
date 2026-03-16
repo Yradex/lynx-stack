@@ -18,7 +18,7 @@ function createHydrationTemplate(
   templateKey: string,
   options: {
     attributeSlots?: unknown[];
-    elementSlots?: SerializedElementNode[][];
+    elementSlots?: SerializedTemplateInstance[][];
   } = {},
 ): SerializedElementTemplate {
   return {
@@ -34,7 +34,7 @@ function createHydrationChild(
   templateKey: string,
   options: {
     attributeSlots?: unknown[];
-    elementSlots?: SerializedElementNode[][];
+    elementSlots?: SerializedTemplateInstance[][];
   } = {},
 ): SerializedTemplateInstance {
   return {
@@ -117,30 +117,23 @@ describe('hydrate', () => {
     expect(placeholder?.attributeSlots).toEqual(['payload']);
   });
 
-  it('reports non-template serialized children inside element slots', () => {
-    const oldReportError = lynx.reportError;
-    const reportError = vi.fn();
-    lynx.reportError = reportError;
+  it('ignores non-template serialized children inside element slots by design', () => {
     const root = new BackgroundElementTemplateInstance('root');
     const invalidChild = {
       kind: 'element',
       tag: 'view',
       attributes: {},
       children: [],
-    } as SerializedElementNode;
+    } as unknown as SerializedTemplateInstance;
 
-    hydrate(
+    const stream = hydrate(
       createHydrationTemplate(root.instanceId, 'root', {
         elementSlots: [[invalidChild]],
       }),
       root,
     );
 
-    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain(
-      'hydrate received non-template child \'view\'',
-    );
-    lynx.reportError = oldReportError;
-    (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
+    expect(stream).toEqual([]);
   });
 
   it('reports non-Error failures when rebinding handle ids', () => {
@@ -171,7 +164,7 @@ describe('hydrate', () => {
 
     const stream = hydrate(
       createHydrationTemplate(root.instanceId, 'root', {
-        elementSlots: [undefined as unknown as SerializedElementNode[]],
+        elementSlots: [undefined as unknown as SerializedTemplateInstance[]],
       }),
       root,
     );
@@ -188,8 +181,8 @@ describe('hydrate', () => {
     const stream = hydrate(
       createHydrationTemplate(root.instanceId, 'root', {
         elementSlots: [
-          undefined as unknown as SerializedElementNode[],
-          undefined as unknown as SerializedElementNode[],
+          undefined as unknown as SerializedTemplateInstance[],
+          undefined as unknown as SerializedTemplateInstance[],
           [],
         ],
       }),
@@ -202,7 +195,10 @@ describe('hydrate', () => {
     expect(root.elementSlots[2]).toEqual([]);
   });
 
-  it('skips remove operations for serialized children without handle ids', () => {
+  it('fails fast in dev for nested serialized children without handle ids', () => {
+    const oldReportError = lynx.reportError;
+    const reportError = vi.fn();
+    lynx.reportError = reportError;
     const root = new BackgroundElementTemplateInstance('root');
 
     const stream = hydrate(
@@ -220,9 +216,14 @@ describe('hydrate', () => {
     );
 
     expect(stream).toEqual([]);
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain(
+      'invalid nested handleId undefined for \'child\'',
+    );
+    lynx.reportError = oldReportError;
+    (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
   });
 
-  it('skips move operations for serialized children without handle ids', () => {
+  it('fails fast in dev for nested move candidates without handle ids', () => {
     const oldReportError = lynx.reportError;
     const reportError = vi.fn();
     lynx.reportError = reportError;
@@ -252,8 +253,9 @@ describe('hydrate', () => {
     );
 
     expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain(
-      'missing handleId for \'a\'',
+      'invalid nested handleId undefined for \'a\'',
     );
+    expect(root.elementSlots[0]).toEqual([childB, childA]);
     lynx.reportError = oldReportError;
     (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
   });

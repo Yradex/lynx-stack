@@ -214,6 +214,26 @@ describe('ElementTemplate patch stream (apply)', () => {
     expect(lastFlushOptions.flowIds).toBeUndefined();
   });
 
+  it('does not profile empty update payloads that only flush native options', () => {
+    envManager.switchToMainThread();
+    installElementTemplatePatchListener();
+    const performance = lynx.performance;
+    performance.profileStart.mockClear();
+    performance.profileEnd.mockClear();
+    mockFlushElementTree.mockClear();
+
+    envManager.switchToBackground();
+    lynx.getCoreContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.update,
+      data: { flushOptions: {}, flowIds: [101, 202] },
+    });
+    envManager.switchToMainThread();
+
+    expect(performance.profileStart).not.toHaveBeenCalled();
+    expect(performance.profileEnd).not.toHaveBeenCalled();
+    expect(mockFlushElementTree.mock.calls).toHaveLength(1);
+  });
+
   it('reports illegal handleId 0 on create', () => {
     const jsx = <view />;
     root.render(jsx);
@@ -225,6 +245,42 @@ describe('ElementTemplate patch stream (apply)', () => {
 
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(reportError.mock.calls).toHaveLength(1);
+    resetReportedErrors();
+  });
+
+  it('reports invalid non-integer handleId on create', () => {
+    envManager.switchToMainThread();
+
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      1.5,
+      '__et_builtin_raw_text__',
+      null,
+      ['x'],
+      [],
+    ]);
+
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('invalid handleId 1.5');
+    resetReportedErrors();
+  });
+
+  it('reports duplicate handleId on create', () => {
+    envManager.switchToMainThread();
+    const existingRef = { __isNativeRef: true, id: 'existing' } as unknown as ElementRef;
+    ElementTemplateRegistry.set(7, existingRef);
+
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      7,
+      '__et_builtin_raw_text__',
+      null,
+      ['x'],
+      [],
+    ]);
+
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('duplicate handleId 7');
     resetReportedErrors();
   });
 
@@ -344,6 +400,26 @@ describe('ElementTemplate patch stream (apply)', () => {
     `);
   });
 
+  it('normalizes undefined attribute slot values to null on create', () => {
+    envManager.switchToMainThread();
+    const createTemplateMock = globalThis.__CreateElementTemplate as unknown as {
+      mockClear: () => void;
+      mock: { calls: unknown[][] };
+    };
+    createTemplateMock.mockClear();
+
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      8,
+      '__et_builtin_raw_text__',
+      null,
+      [undefined, 'x'] as unknown as ElementTemplateUpdateCommandStream[number],
+      [],
+    ]);
+
+    expect(createTemplateMock.mock.calls[0]?.[2]).toEqual([null, 'x']);
+  });
+
   it('reports unsupported opcodes', () => {
     applyElementTemplateUpdateCommands([999 as unknown as ElementTemplateUpdateCommandStream[number]]);
 
@@ -383,10 +459,31 @@ describe('ElementTemplate patch stream (apply)', () => {
       [[11, 404], 'bad-slot' as unknown as number[]],
     ]);
 
-    expect(createTemplateMock.mock.calls[0]?.[3]).toEqual([[childRef], []]);
-
     const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
     expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('child handle 404 not found');
+    expect(createTemplateMock.mock.calls).toHaveLength(0);
     resetReportedErrors();
+  });
+
+  it('still flushes update payloads without ops so flushOptions can reach native', () => {
+    envManager.switchToMainThread();
+    installElementTemplatePatchListener();
+    mockSetAttributeOfElementTemplate.mockClear();
+    mockInsertNodeToElementTemplate.mockClear();
+    mockRemoveNodeFromElementTemplate.mockClear();
+    mockFlushElementTree.mockClear();
+
+    envManager.switchToBackground();
+    lynx.getCoreContext().dispatchEvent({
+      type: ElementTemplateLifecycleConstant.update,
+      data: { flushOptions: {} },
+    });
+    envManager.switchToMainThread();
+
+    expect(mockSetAttributeOfElementTemplate.mock.calls).toHaveLength(0);
+    expect(mockInsertNodeToElementTemplate.mock.calls).toHaveLength(0);
+    expect(mockRemoveNodeFromElementTemplate.mock.calls).toHaveLength(0);
+    expect(mockFlushElementTree.mock.calls).toHaveLength(1);
+    expect(mockFlushElementTree.mock.calls[0]?.[1]).toEqual({});
   });
 });

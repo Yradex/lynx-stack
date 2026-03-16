@@ -24,7 +24,7 @@ export interface SerializedTemplateInstance {
   templateKey: string;
   bundleUrl?: string;
   attributeSlots: SerializableValue[];
-  elementSlots: SerializedElementNode[][];
+  elementSlots: SerializedTemplateInstance[][];
   options?: RuntimeOptions;
 }
 
@@ -36,7 +36,7 @@ export interface SerializedElementTemplate {
   templateKey: string;
   bundleUrl?: string;
   attributeSlots: SerializableValue[];
-  elementSlots: SerializedElementNode[][];
+  elementSlots: SerializedTemplateInstance[][];
   options?: RuntimeOptions;
 }
 

@@ -18,13 +18,15 @@ export function installElementTemplatePatchListener(): void {
   listener = (event: { data: unknown }) => {
     const { data } = event;
     const payload = data as ElementTemplateUpdateCommitContext;
+    const hasOps = Array.isArray(payload?.ops);
     const flushOptions = payload?.flushOptions ?? {};
     const pipelineOptions = flushOptions.pipelineOptions;
     setPipeline(pipelineOptions);
     const flowIds = Array.isArray(payload?.flowIds) && payload.flowIds.length > 0
       ? payload.flowIds
       : undefined;
-    const shouldProfilePatch = !!flowIds
+    const shouldProfilePatch = hasOps
+      && !!flowIds
       && typeof lynx.performance?.profileStart === 'function'
       && typeof lynx.performance?.profileEnd === 'function';
 
@@ -36,7 +38,7 @@ export function installElementTemplatePatchListener(): void {
       });
     }
 
-    if (Array.isArray(payload?.ops)) {
+    if (hasOps) {
       markTiming('mtsRenderStart');
       markTiming('parseChangesStart');
       markTiming('parseChangesEnd');
