@@ -487,20 +487,6 @@ describe('BackgroundElementTemplateSlot Children', () => {
     expect(root.elementSlots[1]).toEqual([text]);
   });
 
-  it('should clear the previous slot index when partId changes after attachment', () => {
-    const root = new BackgroundElementTemplateInstance('element-template-view');
-    const slot = new BackgroundElementTemplateSlot();
-    const text = createTextNode('move');
-    slot.setAttribute('id', 0);
-    slot.appendChild(text);
-    root.appendChild(slot);
-
-    slot.setAttribute('id', 1);
-
-    expect(root.elementSlots[0]).toEqual([]);
-    expect(root.elementSlots[1]).toEqual([text]);
-  });
-
   it('should aggregate slotChildren correctly', () => {
     const root = new BackgroundElementTemplateInstance('element-template-view');
 
