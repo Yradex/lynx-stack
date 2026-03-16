@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { callDestroyLifetimeFun } from '../../../src/element-template/native/callDestroyLifetimeFun.js';
+const resetElementTemplateHydrationListener = vi.fn();
+
+vi.mock('../../../src/element-template/background/hydration-listener.js', () => ({
+  resetElementTemplateHydrationListener,
+}));
 
 describe('callDestroyLifetimeFun', () => {
-  it('does not throw', () => {
-    expect(() => callDestroyLifetimeFun()).not.toThrow();
+  it('resets the hydration listener', async () => {
+    const { callDestroyLifetimeFun } = await import('../../../src/element-template/native/callDestroyLifetimeFun.js');
+
+    callDestroyLifetimeFun();
+
+    expect(resetElementTemplateHydrationListener).toHaveBeenCalledTimes(1);
   });
 });

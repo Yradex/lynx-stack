@@ -41,4 +41,22 @@ describe('mts-destroy', () => {
 
     g.lynx.getNative = originalGetNative;
   });
+
+  it('does not throw when performance hooks are missing', () => {
+    const g = globalThis as typeof globalThis & {
+      lynx: typeof lynx & {
+        performance: Partial<typeof lynx.performance>;
+      };
+    };
+    const originalPerformance = g.lynx.performance;
+    const removeEventListener = vi.fn();
+
+    g.lynx.getNative = () => ({ addEventListener: vi.fn(), removeEventListener });
+    g.lynx.performance = {};
+
+    expect(() => onMtsDestruction()).not.toThrow();
+    expect(removeEventListener).toHaveBeenCalledWith('__DestroyLifetime', onMtsDestruction);
+
+    g.lynx.performance = originalPerformance;
+  });
 });

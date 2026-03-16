@@ -16,7 +16,6 @@ export function initProfileHook(): void {
   if (installed) {
     return;
   }
-  installed = true;
   // early-exit if required profiling APIs are unavailable
   let p;
   /* v8 ignore start */
@@ -30,6 +29,7 @@ export function initProfileHook(): void {
     return;
   }
   /* v8 ignore stop */
+  installed = true;
 
   const profileStart = p.profileStart.bind(p);
   const profileEnd = p.profileEnd.bind(p);

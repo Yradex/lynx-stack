@@ -9,8 +9,12 @@ export function installOnMtsDestruction(): void {
 }
 
 export function onMtsDestruction(): void {
-  lynx.performance.profileStart('ReactLynx::onMtsDestruction');
-  resetElementTemplatePatchListener();
-  lynx.performance.profileEnd();
-  lynx.getNative?.().removeEventListener('__DestroyLifetime', onMtsDestruction);
+  const performance = lynx.performance;
+  performance?.profileStart?.('ReactLynx::onMtsDestruction');
+  try {
+    resetElementTemplatePatchListener();
+  } finally {
+    performance?.profileEnd?.();
+    lynx.getNative?.().removeEventListener('__DestroyLifetime', onMtsDestruction);
+  }
 }
