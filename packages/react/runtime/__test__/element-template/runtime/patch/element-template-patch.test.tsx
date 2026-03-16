@@ -22,7 +22,7 @@ import { __root } from '../../../../src/element-template/runtime/page/root-insta
 import { applyElementTemplateUpdateCommands } from '../../../../src/element-template/runtime/patch.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
-import { registerBuiltinRawTextTemplate } from '../../test-utils/debug/registry.js';
+import { registerBuiltinRawTextTemplate, registerTemplates } from '../../test-utils/debug/registry.js';
 import { lastMock } from '../../test-utils/mock/mockNativePapi.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 
@@ -256,6 +256,19 @@ describe('ElementTemplate patch stream (apply)', () => {
     resetReportedErrors();
   });
 
+  it('reports missing child handle on removeNode', () => {
+    envManager.switchToMainThread();
+    const targetRef = { __isNativeRef: true, id: 'target' } as unknown as ElementRef;
+    ElementTemplateRegistry.set(1, targetRef);
+
+    applyElementTemplateUpdateCommands([ElementTemplateUpdateOps.removeNode, 1, 0, 999]);
+
+    expect(mockRemoveNodeFromElementTemplate.mock.calls).toHaveLength(0);
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('child handle 999 not found');
+    resetReportedErrors();
+  });
+
   it('resolves insert/remove references from registry', () => {
     envManager.switchToMainThread();
     ElementTemplateRegistry.clear();
@@ -329,5 +342,51 @@ describe('ElementTemplate patch stream (apply)', () => {
         <view />
       </page>"
     `);
+  });
+
+  it('reports unsupported opcodes', () => {
+    applyElementTemplateUpdateCommands([999 as unknown as ElementTemplateUpdateCommandStream[number]]);
+
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('opcode 999 is not supported');
+    resetReportedErrors();
+  });
+
+  it('resolves elementSlots defensively for invalid payload members', () => {
+    envManager.switchToMainThread();
+    registerTemplates([
+      {
+        templateId: '_et_patch_parent',
+        compiledTemplate: {
+          kind: 'element',
+          tag: 'view',
+          attributesArray: [],
+          children: [{ kind: 'elementSlot', tag: 'slot', elementSlotIndex: 0 }],
+        },
+      },
+    ]);
+
+    const childRef = { __isNativeRef: true, id: 'child' } as unknown as ElementRef;
+    ElementTemplateRegistry.set(11, childRef);
+    const createTemplateMock = globalThis.__CreateElementTemplate as unknown as {
+      mockClear: () => void;
+      mock: { calls: unknown[][] };
+    };
+    createTemplateMock.mockClear();
+
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      21,
+      '_et_patch_parent',
+      null,
+      [],
+      [[11, 404], 'bad-slot' as unknown as number[]],
+    ]);
+
+    expect(createTemplateMock.mock.calls[0]?.[3]).toEqual([[childRef], []]);
+
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('child handle 404 not found');
+    resetReportedErrors();
   });
 });

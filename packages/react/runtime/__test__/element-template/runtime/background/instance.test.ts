@@ -100,6 +100,17 @@ describe('BackgroundElementTemplateInstance', () => {
       expect(parent.lastChild).toBe(child);
     });
 
+    it('supports silent append on regular parents', () => {
+      const parent = new BackgroundElementTemplateInstance('view');
+      const child = new BackgroundElementTemplateInstance('text');
+      GlobalCommitContext.ops = [];
+
+      parent.insertBefore(child, null, true);
+
+      expect(parent.firstChild).toBe(child);
+      expect(GlobalCommitContext.ops).toEqual([]);
+    });
+
     it('should move existing child if re-inserted', () => {
       const parent = new BackgroundElementTemplateInstance('view');
       const child1 = new BackgroundElementTemplateInstance('text');
@@ -247,6 +258,54 @@ describe('BackgroundElementTemplateInstance', () => {
       const other = new BackgroundElementTemplateInstance('text');
       expect(() => parent.removeChild(other)).toThrow('Node is not a child of this parent');
     });
+
+    it('emits remove ops when removing from a slot container', () => {
+      const parent = new BackgroundElementTemplateInstance('view');
+      const slot = new BackgroundElementTemplateSlot();
+      slot.setAttribute('id', 0);
+      parent.appendChild(slot);
+      const child = new BackgroundElementTemplateInstance('text');
+      slot.appendChild(child);
+
+      GlobalCommitContext.ops = [];
+      slot.removeChild(child);
+
+      expect(parent.elementSlots[0]).toEqual([]);
+      expect(GlobalCommitContext.ops).toEqual([
+        4,
+        parent.instanceId,
+        0,
+        child.instanceId,
+      ]);
+    });
+
+    it('supports silent removal from a slot container', () => {
+      const parent = new BackgroundElementTemplateInstance('view');
+      const slot = new BackgroundElementTemplateSlot();
+      slot.setAttribute('id', 0);
+      parent.appendChild(slot);
+      const child = new BackgroundElementTemplateInstance('text');
+      slot.appendChild(child);
+
+      GlobalCommitContext.ops = [];
+      slot.removeChild(child, true);
+
+      expect(parent.elementSlots[0]).toEqual([]);
+      expect(GlobalCommitContext.ops).toEqual([]);
+    });
+
+    it('clears cached elementSlots when removing a slot child', () => {
+      const parent = new BackgroundElementTemplateInstance('view');
+      const slot = new BackgroundElementTemplateSlot();
+      slot.setAttribute('id', 1);
+      parent.appendChild(slot);
+
+      expect(parent.elementSlots[1]).toEqual([]);
+
+      parent.removeChild(slot, true);
+
+      expect(parent.elementSlots[1]).toEqual([]);
+    });
   });
 
   it('should be registered with manager upon creation', () => {
@@ -307,6 +366,26 @@ describe('BackgroundElementTemplateInstance', () => {
       [],
     ]);
   });
+
+  it('ignores text writes for non-raw-text instances', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    GlobalCommitContext.ops = [];
+
+    instance.text = 'ignored';
+
+    expect(instance.attributeSlots).toEqual([]);
+    expect(GlobalCommitContext.ops).toEqual([]);
+  });
+
+  it('ignores spread-like shadow keys', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.setAttribute('__spread', { id: 'ignored' });
+    instance.setAttribute('elementSlots', []);
+    instance.setAttribute('children', []);
+
+    expect(instance.attributeSlots).toEqual([]);
+    expect(instance.elementSlots).toEqual([]);
+  });
 });
 
 describe('BackgroundElementTemplateSlot', () => {
@@ -343,6 +422,24 @@ describe('Background raw-text instance', () => {
     expect(textNode.data).toBe('world');
   });
 
+  it('stringifies numeric raw-text slot values', () => {
+    const textNode = new BackgroundElementTemplateInstance(
+      BUILTIN_RAW_TEXT_TEMPLATE_KEY,
+      [1 as unknown as string],
+    );
+    expect(textNode.text).toBe('1');
+  });
+
+  it('does not emit a patch when setting the same text value', () => {
+    const textNode = createTextNode('same');
+    GlobalCommitContext.ops = [];
+
+    textNode.text = 'same';
+
+    expect(textNode.attributeSlots).toEqual(['same']);
+    expect(GlobalCommitContext.ops).toEqual([]);
+  });
+
   it('should ignore non-slot attribute writes on raw-text nodes', () => {
     const textNode = createTextNode('');
     textNode.setAttribute('style', { color: 'red' });
@@ -374,6 +471,34 @@ describe('BackgroundElementTemplateSlot Children', () => {
     const slot = new BackgroundElementTemplateSlot();
     slot.setAttribute('id', 10);
     expect(slot.partId).toBe(10);
+  });
+
+  it('should clear the previous slot index when partId changes after attachment', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const slot = new BackgroundElementTemplateSlot();
+    const text = createTextNode('move');
+    slot.setAttribute('id', 0);
+    slot.appendChild(text);
+    root.appendChild(slot);
+
+    slot.setAttribute('id', 1);
+
+    expect(root.elementSlots[0]).toEqual([]);
+    expect(root.elementSlots[1]).toEqual([text]);
+  });
+
+  it('should clear the previous slot index when partId changes after attachment', () => {
+    const root = new BackgroundElementTemplateInstance('element-template-view');
+    const slot = new BackgroundElementTemplateSlot();
+    const text = createTextNode('move');
+    slot.setAttribute('id', 0);
+    slot.appendChild(text);
+    root.appendChild(slot);
+
+    slot.setAttribute('id', 1);
+
+    expect(root.elementSlots[0]).toEqual([]);
+    expect(root.elementSlots[1]).toEqual([text]);
   });
 
   it('should aggregate slotChildren correctly', () => {

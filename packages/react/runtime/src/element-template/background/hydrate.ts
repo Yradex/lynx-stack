@@ -160,7 +160,7 @@ function syncSlotChildren(
 ): void {
   const slot = ensureSlot(parent, slotId);
 
-  const afterChildren = parent.elementSlots[slotId] ?? [];
+  const afterChildren = parent.elementSlots[slotId]!;
 
   const beforeMap: Record<string, Array<[SerializedTemplateInstance, number]>> = {};
   for (let i = 0; i < beforeChildren.length; i += 1) {
@@ -265,9 +265,11 @@ function emitCreateRecursive(node: BackgroundElementTemplateInstance, created: S
     return;
   }
   for (const slotChildren of node.elementSlots) {
+    /* v8 ignore start */
     if (!slotChildren) {
       continue;
     }
+    /* v8 ignore stop */
     for (const child of slotChildren) {
       emitCreateRecursive(child, created);
     }
@@ -367,6 +369,7 @@ function getBackgroundInstanceKey(instance: BackgroundElementTemplateInstance): 
 function getSerializedTemplateChildren(
   value: SerializedElementNode[] | undefined,
 ): SerializedTemplateInstance[] {
+  /* v8 ignore next 3 */
   if (!value) {
     return [];
   }

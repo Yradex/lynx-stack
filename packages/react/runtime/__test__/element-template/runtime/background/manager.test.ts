@@ -52,6 +52,11 @@ describe('BackgroundElementTemplateInstanceManager', () => {
       .toThrow('ElementTemplate handleId -1 is already bound.');
   });
 
+  it('rejects rebinding an unknown instance id', () => {
+    expect(() => backgroundElementTemplateInstanceManager.updateId(99999, -1))
+      .toThrow('ElementTemplate instance 99999 is not registered.');
+  });
+
   it('should clear all instances', () => {
     const instance = new BackgroundElementTemplateInstance('view');
     expect(backgroundElementTemplateInstanceManager.get(instance.instanceId)).toBe(instance);

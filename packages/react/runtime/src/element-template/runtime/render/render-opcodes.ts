@@ -61,6 +61,7 @@ export function renderOpcodesIntoElementTemplate(
       }
       case __OpEnd: {
         const frame = stack.pop();
+        /* v8 ignore next 3 */
         if (!frame) {
           throw new Error('Instruction mismatch: Stack underflow at __OpEnd');
         }

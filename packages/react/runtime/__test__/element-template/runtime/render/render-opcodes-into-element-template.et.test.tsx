@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
-import { __OpBegin, __OpEnd, __OpText } from '../../../../src/renderToOpcodes/index.js';
+import { __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../../src/renderToOpcodes/index.js';
 
 describe('renderOpcodesIntoElementTemplate', () => {
   const createElementTemplate = vi.fn();
@@ -56,6 +56,21 @@ describe('renderOpcodesIntoElementTemplate', () => {
         __OpEnd,
       ])
     ).toThrow('Template \'_et_parent\' received a text child outside of any element slot.');
+  });
+
+  it('throws when an element child is emitted outside of an element slot', () => {
+    expect(() =>
+      renderOpcodesIntoElementTemplate([
+        __OpBegin,
+        { type: '_et_parent' },
+        __OpBegin,
+        { type: '_et_child' },
+        __OpSlot,
+        0,
+        __OpEnd,
+        __OpEnd,
+      ])
+    ).toThrow('Template \'_et_parent\' received a child outside of any element slot.');
   });
 
   it('throws on unknown opcodes', () => {
