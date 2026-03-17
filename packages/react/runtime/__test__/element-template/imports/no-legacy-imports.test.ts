@@ -364,7 +364,7 @@ function collectImportSpecifiers(code: string): string[] {
 }
 
 describe('element-template import boundaries', () => {
-  it('does not reference snapshot-based runtime files transitively', () => {
+  it('does not reference forbidden legacy runtime files transitively', () => {
     for (const entry of entryFiles) {
       expect(fs.existsSync(entry)).toBe(true);
     }

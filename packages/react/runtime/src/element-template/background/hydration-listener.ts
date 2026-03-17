@@ -24,9 +24,9 @@ export function installElementTemplateHydrationListener(): void {
       profileStart('ReactLynx::hydrate');
     }
     beginPipeline(true, PipelineOrigins.reactLynxHydrate, PerformanceTimingFlags.reactLynxHydrate);
-    markTiming('hydrateParseSnapshotStart');
+    markTiming('hydrateParsePayloadStart');
     const instances = data as SerializedElementTemplate[];
-    markTiming('hydrateParseSnapshotEnd');
+    markTiming('hydrateParsePayloadEnd');
     markTiming('diffVdomStart');
 
     const root = __root as BackgroundElementTemplateInstance;

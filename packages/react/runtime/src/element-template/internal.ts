@@ -13,7 +13,8 @@ import './native/index.js';
 import { __root } from './runtime/page/root-instance.js';
 
 /**
- * @internal
+ * @internal kept only to fail fast when stale internal imports leak into the
+ * Element Template alias surface. This is not a supported ET runtime API.
  */
 export class SnapshotInstance {
   constructor(public type: string) {

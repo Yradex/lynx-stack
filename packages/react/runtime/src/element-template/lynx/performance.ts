@@ -21,8 +21,8 @@ const PerformanceTimingKeys = [
   'parseChangesEnd',
   'patchChangesStart',
   'patchChangesEnd',
-  'hydrateParseSnapshotStart',
-  'hydrateParseSnapshotEnd',
+  'hydrateParsePayloadStart',
+  'hydrateParsePayloadEnd',
   'mtsRenderStart',
   'mtsRenderEnd',
 ] as const;

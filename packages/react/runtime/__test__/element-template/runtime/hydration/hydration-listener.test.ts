@@ -162,8 +162,8 @@ describe('ElementTemplate hydration listener', () => {
     expect(bindCalls[0]).toEqual(['pipelineID', PerformanceTimingFlags.reactLynxHydrate]);
 
     expect(performance._markTiming.mock.calls).toEqual([
-      ['pipelineID', 'hydrateParseSnapshotStart'],
-      ['pipelineID', 'hydrateParseSnapshotEnd'],
+      ['pipelineID', 'hydrateParsePayloadStart'],
+      ['pipelineID', 'hydrateParsePayloadEnd'],
       ['pipelineID', 'diffVdomStart'],
       ['pipelineID', 'diffVdomEnd'],
     ]);
