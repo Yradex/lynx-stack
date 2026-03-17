@@ -13,6 +13,7 @@ import { isDirectOrDeepEqual } from '../../utils.js';
 import { ElementTemplateUpdateOps } from '../protocol/opcodes.js';
 import type {
   ElementTemplateUpdateCommandStream,
+  RuntimeOptions,
   SerializableValue,
   SerializedElementTemplate,
   SerializedTemplateInstance,
@@ -122,6 +123,7 @@ function hydrateImpl(
   if (!bindHydrationHandleId(after, handleId, before.templateKey)) {
     return;
   }
+  after.options = getSerializedRuntimeOptions(before);
   syncAttributeSlots(handleId, before.attributeSlots, after.attributeSlots);
 
   if (isRawTextTemplateKey(before.templateKey)) {
@@ -344,9 +346,13 @@ function createPlaceholder(serialized: SerializedTemplateInstance): BackgroundEl
   let node: BackgroundElementTemplateInstance;
   if (isRawTextTemplateKey(type)) {
     const text = getSerializedRawText(serialized);
-    node = new BackgroundElementTemplateInstance(BUILTIN_RAW_TEXT_TEMPLATE_KEY, [text]);
+    node = new BackgroundElementTemplateInstance(
+      BUILTIN_RAW_TEXT_TEMPLATE_KEY,
+      [text],
+      getSerializedRuntimeOptions(serialized),
+    );
   } else {
-    node = new BackgroundElementTemplateInstance(type);
+    node = new BackgroundElementTemplateInstance(type, undefined, getSerializedRuntimeOptions(serialized));
     node.attributeSlots = [...serialized.attributeSlots];
   }
   if (handleId != null) {
@@ -395,6 +401,17 @@ function getSerializedHandleId(
 ): number | undefined {
   const handleId = value?.options?.['handleId'];
   return typeof handleId === 'number' ? handleId : undefined;
+}
+
+function getSerializedRuntimeOptions(
+  value: SerializedElementTemplate | SerializedTemplateInstance | undefined,
+): RuntimeOptions | undefined {
+  if (!value?.options) {
+    return undefined;
+  }
+  return {
+    ...value.options,
+  };
 }
 
 function isValidHandleId(handleId: number | undefined): handleId is number {

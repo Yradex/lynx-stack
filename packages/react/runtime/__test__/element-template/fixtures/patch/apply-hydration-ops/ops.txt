@@ -23,6 +23,9 @@ Array [
   null,
   Array [],
   Array [],
+  Object {
+    "handleId": 9,
+  },
   3,
   -5,
   0,

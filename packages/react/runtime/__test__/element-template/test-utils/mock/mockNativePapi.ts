@@ -77,6 +77,13 @@ export function installMockNativePapi(
       writable: true,
       configurable: true,
     });
+    if (isRecord(options)) {
+      Object.defineProperty(element, '__options', {
+        value: { ...options },
+        writable: true,
+        configurable: true,
+      });
+    }
     if (isRecord(options) && typeof options['handleId'] === 'number') {
       Object.defineProperty(element, '__handleId', {
         value: options['handleId'],

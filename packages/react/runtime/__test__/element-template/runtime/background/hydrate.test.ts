@@ -19,13 +19,17 @@ function createHydrationTemplate(
   options: {
     attributeSlots?: unknown[];
     elementSlots?: SerializedTemplateInstance[][];
+    runtimeOptions?: Record<string, unknown>;
   } = {},
 ): SerializedElementTemplate {
   return {
     templateKey,
     attributeSlots: (options.attributeSlots ?? []) as SerializedElementTemplate['attributeSlots'],
     elementSlots: (options.elementSlots ?? []) as SerializedElementTemplate['elementSlots'],
-    options: { handleId },
+    options: {
+      handleId,
+      ...(options.runtimeOptions ?? {}),
+    },
   };
 }
 
@@ -35,6 +39,7 @@ function createHydrationChild(
   options: {
     attributeSlots?: unknown[];
     elementSlots?: SerializedTemplateInstance[][];
+    runtimeOptions?: Record<string, unknown>;
   } = {},
 ): SerializedTemplateInstance {
   return {
@@ -115,6 +120,34 @@ describe('hydrate', () => {
     const placeholder = backgroundElementTemplateInstanceManager.get(-2);
     expect(placeholder?.type).toBe('child');
     expect(placeholder?.attributeSlots).toEqual(['payload']);
+  });
+
+  it('copies serialized runtime options onto hydrated roots and placeholders', () => {
+    const root = new BackgroundElementTemplateInstance('root');
+
+    hydrate(
+      createHydrationTemplate(root.instanceId, 'root', {
+        runtimeOptions: { cssId: 100, entryName: 'lazy-entry' },
+        elementSlots: [[
+          createHydrationChild(-2, 'child', {
+            runtimeOptions: { cssId: 200, entryName: 'nested-entry' },
+          }),
+        ]],
+      }),
+      root,
+    );
+
+    const placeholder = backgroundElementTemplateInstanceManager.get(-2);
+    expect(root.options).toEqual({
+      handleId: root.instanceId,
+      cssId: 100,
+      entryName: 'lazy-entry',
+    });
+    expect(placeholder?.options).toEqual({
+      handleId: -2,
+      cssId: 200,
+      entryName: 'nested-entry',
+    });
   });
 
   it('ignores non-template serialized children inside element slots by design', () => {
@@ -311,12 +344,14 @@ describe('hydrate', () => {
       null,
       [],
       [],
+      { handleId: grandchild.instanceId },
       1,
       child.instanceId,
       'child',
       null,
       [],
       [[grandchild.instanceId]],
+      { handleId: child.instanceId },
       3,
       root.instanceId,
       0,

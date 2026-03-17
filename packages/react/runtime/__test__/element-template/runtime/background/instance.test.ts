@@ -364,6 +364,33 @@ describe('BackgroundElementTemplateInstance', () => {
       null,
       [null],
       [],
+      { handleId: instance.instanceId },
+    ]);
+  });
+
+  it('emits create with normalized runtime options metadata', () => {
+    const instance = new BackgroundElementTemplateInstance('view');
+    instance.setAttribute('options', {
+      cssId: 100,
+      entryName: 'lazy-entry',
+      ignored: undefined,
+    });
+    GlobalCommitContext.ops = [];
+
+    instance.emitCreate();
+
+    expect(GlobalCommitContext.ops).toEqual([
+      1,
+      instance.instanceId,
+      'view',
+      null,
+      [],
+      [],
+      {
+        handleId: instance.instanceId,
+        cssId: 100,
+        entryName: 'lazy-entry',
+      },
     ]);
   });
 

@@ -6,7 +6,7 @@ import { GlobalCommitContext } from './commit-context.js';
 import { backgroundElementTemplateInstanceManager } from './manager.js';
 import { isDirectOrDeepEqual } from '../../utils.js';
 import { ElementTemplateUpdateOps } from '../protocol/opcodes.js';
-import type { ElementTemplateUpdateCommandStream, SerializableValue } from '../protocol/types.js';
+import type { ElementTemplateUpdateCommandStream, RuntimeOptions, SerializableValue } from '../protocol/types.js';
 
 function pushOp(...items: ElementTemplateUpdateCommandStream): void {
   GlobalCommitContext.ops.push(...items);
@@ -58,6 +58,7 @@ export class BackgroundElementTemplateInstance {
   // Shadow State for Hydration
   public attributeSlots: SerializableValue[] = [];
   public elementSlots: BackgroundElementTemplateInstance[][] = [];
+  public options: RuntimeOptions | undefined;
 
   // 2. Slot State: aggregate children by slotId
   get slotChildren(): Map<number, BackgroundElementTemplateInstance[]> {
@@ -73,10 +74,15 @@ export class BackgroundElementTemplateInstance {
 
   public nodeType: number;
 
-  constructor(type: string, initialAttributeSlots?: SerializableValue[]) {
+  constructor(
+    type: string,
+    initialAttributeSlots?: SerializableValue[],
+    initialOptions?: RuntimeOptions,
+  ) {
     this.type = type;
     this.nodeType = isBuiltinRawTextTemplateKey(type) ? 3 : 1;
     this.attributeSlots = initialAttributeSlots ? normalizeAttributeSlots(initialAttributeSlots) : [];
+    this.options = normalizeRuntimeOptions(initialOptions);
     backgroundElementTemplateInstanceManager.register(this);
   }
 
@@ -93,6 +99,10 @@ export class BackgroundElementTemplateInstance {
       null,
       normalizeAttributeSlots(this.attributeSlots),
       this.elementSlots.map((children) => children.map((child) => child.instanceId)),
+      normalizeRuntimeOptions({
+        ...this.options,
+        handleId: this.instanceId,
+      }),
     );
   }
 
@@ -239,6 +249,7 @@ export class BackgroundElementTemplateInstance {
 
     this.attributeSlots = [];
     this.elementSlots = [];
+    this.options = undefined;
 
     // Remove from manager
     if (this.instanceId) {
@@ -274,6 +285,8 @@ export class BackgroundElementTemplateInstance {
         this.parent.elementSlots[previousPartId] = [];
       }
       syncElementSlotChildren(this.parent, this.partId, collectChildren(this));
+    } else if (key === 'options' && isRuntimeOptions(value)) {
+      this.options = normalizeRuntimeOptions(value);
     } else if (key === '__spread' || key === 'elementSlots' || key === 'children') {
       return;
     } else {
@@ -324,4 +337,21 @@ function collectChildren(slot: BackgroundElementTemplateSlot): BackgroundElement
 
 function normalizeAttributeSlotValue(value: SerializableValue | undefined): SerializableValue | null {
   return value === undefined ? null : value;
+}
+
+function isRuntimeOptions(value: unknown): value is RuntimeOptions {
+  return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeRuntimeOptions(
+  options: RuntimeOptions | undefined,
+): RuntimeOptions | undefined {
+  if (!options) {
+    return undefined;
+  }
+  const normalizedEntries = Object.entries(options)
+    .filter(([, value]) => value !== undefined);
+  return normalizedEntries.length > 0
+    ? Object.fromEntries(normalizedEntries) as RuntimeOptions
+    : undefined;
 }

@@ -17,6 +17,7 @@ export interface CompiledTemplateNode {
   __handleId?: number;
   __compiledTemplate?: CompiledElementNode;
   __attributeSlots?: unknown[] | null;
+  __options?: Record<string, unknown>;
 }
 
 interface CompiledAttributeDescriptor {
@@ -413,13 +414,14 @@ function serializeTemplateNode(
     }
   }
 
+  const options = isRecord(root['__options']) ? { ...root['__options'] } : undefined;
   const payload = {
     templateKey: templateId === '__et_builtin_raw_text__' ? '__et_builtin_raw_text__' : templateId,
     attributeSlots: templateId === '__et_builtin_raw_text__'
       ? [String((isRecord(root['attributes']) ? root['attributes']?.['text'] : '') ?? '')]
       : normalizeAttributeSlots(root['__attributeSlots']),
     elementSlots: serializedSlots,
-    options: { handleId },
+    options: options ?? { handleId },
   };
 
   if (kind === 'child') {
@@ -442,6 +444,8 @@ export function formatUpdateCommands(ops: unknown): unknown {
   for (let i = 0; i < ops.length;) {
     const opcode = ops[i];
     if (opcode === 1) {
+      const maybeOptions = ops[i + 6];
+      const hasOptions = maybeOptions == null || isRecord(maybeOptions);
       res.push({
         type: 'createTemplate',
         id: ops[i + 1],
@@ -449,8 +453,9 @@ export function formatUpdateCommands(ops: unknown): unknown {
         bundleUrl: ops[i + 3],
         attributeSlots: ops[i + 4],
         elementSlots: ops[i + 5],
+        ...(hasOptions ? { options: maybeOptions } : {}),
       });
-      i += 6;
+      i += hasOptions ? 7 : 6;
     } else if (opcode === 2) {
       res.push({
         type: 'setAttribute',

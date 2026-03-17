@@ -5,7 +5,7 @@
 import { ElementTemplateRegistry } from './template/registry.js';
 import { ElementTemplateUpdateOps } from '../protocol/opcodes.js';
 import type { ElementTemplateUpdateOp } from '../protocol/opcodes.js';
-import type { ElementTemplateUpdateCommandStream, SerializableValue } from '../protocol/types.js';
+import type { ElementTemplateUpdateCommandStream, RuntimeOptions, SerializableValue } from '../protocol/types.js';
 
 export type { ElementTemplateUpdateCommandStream } from '../protocol/types.js';
 
@@ -23,9 +23,18 @@ export function applyElementTemplateUpdateCommands(
         const bundleUrl = stream[i++] as string | null | undefined;
         const attributeSlots = stream[i++] as SerializableValue[] | null | undefined;
         const elementSlots = stream[i++] as number[][] | null | undefined;
+        const createOptions = getCreateTemplateOptions(stream[i]);
+        if (createOptions !== undefined || stream[i] === null) {
+          i += 1;
+        }
 
         if (__DEV__) {
-          const createError = validateCreateTemplatePayload(handleId, attributeSlots, elementSlots);
+          const createError = validateCreateTemplatePayload(
+            handleId,
+            attributeSlots,
+            elementSlots,
+            createOptions,
+          );
           if (createError) {
             lynx.reportError(createError);
             continue;
@@ -42,7 +51,10 @@ export function applyElementTemplateUpdateCommands(
           bundleUrl,
           normalizeAttributeSlots(attributeSlots),
           resolvedElementSlots.value,
-          { handleId },
+          normalizeRuntimeOptions({
+            ...(createOptions ?? {}),
+            handleId,
+          }),
         );
 
         if (nativeRef) {
@@ -148,10 +160,23 @@ function isValidHandleId(handleId: number): boolean {
   return Number.isInteger(handleId) && handleId !== 0;
 }
 
+function getCreateTemplateOptions(
+  value: ElementTemplateUpdateCommandStream[number] | undefined,
+): RuntimeOptions | null | undefined {
+  if (value == null) {
+    return value;
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value as RuntimeOptions;
+  }
+  return undefined;
+}
+
 function validateCreateTemplatePayload(
   handleId: number,
   attributeSlots: SerializableValue[] | null | undefined,
   elementSlots: number[][] | null | undefined,
+  options: RuntimeOptions | null | undefined,
 ): Error | null {
   if (!isValidHandleId(handleId)) {
     return new Error(`ElementTemplate update has invalid handleId ${String(handleId)}.`);
@@ -165,6 +190,9 @@ function validateCreateTemplatePayload(
   if (elementSlots != null && !Array.isArray(elementSlots)) {
     return new Error('ElementTemplate update create elementSlots must be an array, null, or undefined.');
   }
+  if (options != null && (typeof options !== 'object' || Array.isArray(options))) {
+    return new Error('ElementTemplate update create options must be an object, null, or undefined.');
+  }
   return null;
 }
 
@@ -175,4 +203,15 @@ function normalizeAttributeSlots(
     return attributeSlots;
   }
   return attributeSlots.map((value) => (value === undefined ? null : value));
+}
+
+function normalizeRuntimeOptions(
+  options: RuntimeOptions | null | undefined,
+): RuntimeOptions | null | undefined {
+  if (options == null) {
+    return options;
+  }
+  const normalizedEntries = Object.entries(options)
+    .filter(([, value]) => value !== undefined);
+  return Object.fromEntries(normalizedEntries) as RuntimeOptions;
 }
