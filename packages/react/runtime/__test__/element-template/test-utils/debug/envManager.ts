@@ -92,5 +92,3 @@ export class ElementTemplateEnvManager {
     this.target.__USE_ELEMENT_TEMPLATE__ = enabled;
   }
 }
-
-export const globalElementTemplateEnvManager: ElementTemplateEnvManager = new ElementTemplateEnvManager();

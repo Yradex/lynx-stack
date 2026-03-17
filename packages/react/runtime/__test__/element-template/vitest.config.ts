@@ -89,7 +89,7 @@ const config: UserConfigExport = defineConfig({
     include: ['**/__test__/element-template/**/*.{test,spec}.{js,ts,jsx,tsx}'],
     coverage: {
       include: ['src/element-template/**'],
-      exclude: ['src/element-template/lynx/env.ts', 'src/element-template/protocol/types.ts'],
+      exclude: ['src/element-template/protocol/types.ts'],
       thresholds: {
         lines: 100,
         functions: 100,

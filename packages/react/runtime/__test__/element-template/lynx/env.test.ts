@@ -105,6 +105,21 @@ describe('setupLynxEnv', () => {
     expect(globalThis.lynx.__initData).toEqual({});
   });
 
+  it('treats missing initData and updateData params as empty objects in JS env', () => {
+    envManager.resetEnv('background');
+    Object.defineProperty(globalThis.lynxCoreInject.tt, '_params', {
+      configurable: true,
+      value: {
+        initData: undefined,
+        updateData: undefined,
+      },
+    });
+
+    setupLynxEnv();
+
+    expect(globalThis.lynx.__initData).toEqual({});
+  });
+
   it('installs lepus event bridge and processData handlers', () => {
     envManager.resetEnv('main');
     g.__OnLifecycleEvent = vi.fn();
@@ -150,5 +165,38 @@ describe('setupLynxEnv', () => {
     expect(reportError).toHaveBeenCalledTimes(1);
     expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain('processor failed');
     reportError.mockClear();
+  });
+
+  it('injects i18n and extract flags only before the default processor executes once', () => {
+    envManager.resetEnv('main');
+    g.__I18N_RESOURCE_TRANSLATION__ = { hello: 'world' };
+    g.__EXTRACT_STR__ = true;
+    g.__EXTRACT_STR_IDENT_FLAG__ = '__extract__';
+
+    setupLynxEnv();
+    globalThis.lynx.registerDataProcessors?.({
+      defaultDataProcessor: (data: { value: number }) => ({ value: data.value }),
+    });
+
+    expect(g.processData?.({ value: 1 })).toEqual({
+      value: 1,
+      __I18N_RESOURCE_TRANSLATION__: { hello: 'world' },
+      _EXTRACT_STR: '__extract__',
+    });
+    expect(g.processData?.({ value: 2 })).toEqual({
+      value: 2,
+    });
+  });
+
+  it('falls back to raw data when named or default processors are missing', () => {
+    envManager.resetEnv('main');
+
+    setupLynxEnv();
+    globalThis.lynx.registerDataProcessors?.({
+      dataProcessors: {},
+    });
+
+    expect(g.processData?.({ value: 1 }, 'missing')).toEqual({ value: 1 });
+    expect(g.processData?.({ value: 2 })).toEqual({ value: 2 });
   });
 });

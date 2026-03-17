@@ -84,7 +84,6 @@ describePerf('ET perf (local): renderPage() only', () => {
   it('render-page four-layer-views', () => {
     const warmup = readIntEnv('ET_PERF_WARMUP', 3);
     const iterations = readIntEnv('ET_PERF_ITERATIONS', 10);
-    const detailedProfile = process.env['ET_PERF_PROFILE'] === '1';
 
     const perf = globalThis.lynx?.performance;
     if (!perf || typeof perf.profileStart !== 'function' || typeof perf.profileEnd !== 'function') {
@@ -95,9 +94,6 @@ describePerf('ET perf (local): renderPage() only', () => {
     const renderMainThreadMs: number[] = [];
     const renderOpcodesMs: number[] = [];
     const packInstancesMs: number[] = [];
-    const buildInitOpcodesMs: number[] = [];
-    const elementFromBinaryMs: number[] = [];
-    const createHandleMs: number[] = [];
 
     for (let i = 0; i < warmup + iterations; i++) {
       // NOTE: do NOT clearTemplatesOnCleanup here.
@@ -108,10 +104,6 @@ describePerf('ET perf (local): renderPage() only', () => {
       ElementTemplateRegistry.clear();
       resetTemplateId();
       (globalThis as { __USE_ELEMENT_TEMPLATE__?: boolean }).__USE_ELEMENT_TEMPLATE__ = true;
-
-      // Toggle fine-grained spans inside renderOpcodes loop.
-      const prevBreakdownFlag = (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__;
-      (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__ = detailedProfile;
 
       try {
         const spans = createSpanRecorder();
@@ -203,7 +195,7 @@ describePerf('ET perf (local): renderPage() only', () => {
 
         // Sanity check: renderPage should create at least one template instance.
         // This also helps ensure we don't accidentally benchmark an empty path.
-        expect(mockContext.mockElementFromBinary.mock.calls.length).toBeGreaterThan(0);
+        expect(mockContext.mockCreateElementTemplate.mock.calls.length).toBeGreaterThan(0);
 
         if (i >= warmup) {
           timesMs.push(t1 - t0);
@@ -212,20 +204,12 @@ describePerf('ET perf (local): renderPage() only', () => {
           renderOpcodesMs.push(spans.getTotalMs('ReactLynx::renderOpcodes'));
           packInstancesMs.push(spans.getTotalMs('ReactLynx::packSerializedETInstance'));
 
-          if (detailedProfile) {
-            buildInitOpcodesMs.push(spans.getTotalMs('ReactLynx::renderOpcodes::buildInitOpcodes'));
-            elementFromBinaryMs.push(spans.getTotalMs('ReactLynx::renderOpcodes::__ElementFromBinary'));
-            createHandleMs.push(spans.getTotalMs('ReactLynx::renderOpcodes::createHandle'));
-          }
-
           // Help catch accidental span disablement.
           expect(spans.getCount('ReactLynx::renderMainThread')).toBeGreaterThan(0);
           expect(spans.getCount('ReactLynx::renderOpcodes')).toBeGreaterThan(0);
           expect(spans.getCount('ReactLynx::packSerializedETInstance')).toBeGreaterThan(0);
         }
       } finally {
-        // Restore global breakdown flag to avoid leaking into other tests.
-        (globalThis as any).__ET_PROFILE_RENDER_OPCODES_BREAKDOWN__ = prevBreakdownFlag;
         (globalThis as { __USE_ELEMENT_TEMPLATE__?: boolean }).__USE_ELEMENT_TEMPLATE__ = undefined;
         mockContext.cleanup();
       }
@@ -239,10 +223,6 @@ describePerf('ET perf (local): renderPage() only', () => {
     const opMed = median(renderOpcodesMs);
     const packMed = median(packInstancesMs);
 
-    const buildMed = detailedProfile ? median(buildInitOpcodesMs) : 0;
-    const efbMed = detailedProfile ? median(elementFromBinaryMs) : 0;
-    const handleMed = detailedProfile ? median(createHandleMs) : 0;
-
     // This is a local-only benchmark. Prefer printing numbers over hard thresholds.
     // eslint-disable-next-line no-console
     console.log(
@@ -253,14 +233,5 @@ describePerf('ET perf (local): renderPage() only', () => {
           opMed.toFixed(2)
         }ms packSerializedETInstance=${packMed.toFixed(2)}ms`,
     );
-
-    if (detailedProfile) {
-      // eslint-disable-next-line no-console
-      console.log(
-        `[ET_PERF] renderOpcodes breakdown (median): buildInitOpcodes=${buildMed.toFixed(2)}ms __ElementFromBinary=${
-          efbMed.toFixed(2)
-        }ms createHandle=${handleMed.toFixed(2)}ms`,
-      );
-    }
   });
 });

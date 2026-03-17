@@ -6,10 +6,7 @@ import { afterEach, vi } from 'vitest';
 
 // removed context import
 import {
-  applyOpcodesToTemplateInstance,
-  clone,
   formatNode,
-  formatOpcodes,
   instantiateCompiledTemplate,
   isRecordForMock,
   isUnknownArrayForMock,
@@ -26,8 +23,7 @@ const isUnknownArray = isUnknownArrayForMock;
 
 export interface MockNativePapi {
   nativeLog: any[];
-  mockElementFromBinary: any;
-  mockCreateRawText: any;
+  mockCreateElementTemplate: any;
   mockSerializeElementTemplate: any;
   mockSetAttributeOfElementTemplate: any;
   mockInsertNodeToElementTemplate: any;
@@ -52,39 +48,6 @@ export function installMockNativePapi(
   const { clearTemplatesOnCleanup = false } = options;
   const nativeLog: any[] = [];
   // context setup moved to installThreadContexts
-
-  const mockElementFromBinary = vi.fn().mockImplementation((...args: unknown[]) => {
-    const tag = args[0];
-    const component = args[1];
-    const opcodes = args[2];
-    const config = args[3];
-
-    if (typeof tag !== 'string') {
-      throw new Error(`ElementTemplate: __ElementFromBinary tag must be string, got '${String(tag)}'.`);
-    }
-
-    nativeLog.push(['__ElementFromBinary', tag, component, formatOpcodes(opcodes), config]);
-
-    if (!templateRepo.has(tag)) {
-      throw new Error(
-        `ElementTemplate: Template '${tag}' not found in registry. Please register it using __REGISTER_ELEMENT_TEMPLATES__ before rendering.`,
-      );
-    }
-
-    // 1. Try to find in repo
-    const template = templateRepo.get(tag) as unknown;
-    const element = clone(template) as CompiledTemplateNode; // Deep clone base template (children, tag, static props)
-
-    applyOpcodesToTemplateInstance(element, opcodes);
-    element.templateId = tag;
-
-    return element;
-  });
-
-  const mockCreateRawText = vi.fn().mockImplementation((text: string) => {
-    nativeLog.push(['__CreateRawText', text]);
-    return { type: 'rawText', text }; // Matches existing structure
-  });
 
   const mockCreateElementTemplate = vi.fn().mockImplementation((
     templateKey: string,
@@ -207,9 +170,7 @@ export function installMockNativePapi(
     nativeLog.push(['__FlushElementTree', formatNode(element), options]);
   });
 
-  vi.stubGlobal('__ElementFromBinary', mockElementFromBinary);
   vi.stubGlobal('__CreateElementTemplate', mockCreateElementTemplate);
-  vi.stubGlobal('__CreateRawText', mockCreateRawText);
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);
   vi.stubGlobal('__SetAttributeOfElementTemplate', mockSetAttributeOfElementTemplate);
@@ -226,8 +187,7 @@ export function installMockNativePapi(
 
   const result: MockNativePapi = {
     nativeLog: nativeLog,
-    mockElementFromBinary: mockElementFromBinary,
-    mockCreateRawText: mockCreateRawText,
+    mockCreateElementTemplate: mockCreateElementTemplate,
     mockSerializeElementTemplate: mockSerializeElementTemplate,
     mockSetAttributeOfElementTemplate: mockSetAttributeOfElementTemplate,
     mockInsertNodeToElementTemplate: mockInsertNodeToElementTemplate,

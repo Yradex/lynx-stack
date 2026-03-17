@@ -6,8 +6,6 @@ function isUnknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
 }
 
-const elementTemplateParentListByNodeRef = new WeakMap<object, unknown[]>();
-
 export interface CompiledTemplateNode {
   tag?: string;
   templateId?: string;
@@ -44,173 +42,6 @@ interface CompiledElementSlotNode {
 }
 
 type CompiledTemplateChild = CompiledElementNode | CompiledElementSlotNode;
-
-function getPartId(node: Record<string, unknown>): number | undefined {
-  const attrs = node['attributes'];
-  if (isRecord(attrs)) {
-    const partId = attrs['part-id'];
-    if (typeof partId === 'string' || typeof partId === 'number') {
-      return Number(partId);
-    }
-  }
-
-  const parts = node['parts'];
-  if (isRecord(parts)) {
-    const partId = parts['part-id'];
-    if (typeof partId === 'string' || typeof partId === 'number') {
-      return Number(partId);
-    }
-  }
-
-  return undefined;
-}
-
-function getNodeAttrsForWrite(node: CompiledTemplateNode): Record<string, unknown> {
-  if (isRecord(node.attributes)) {
-    return node.attributes;
-  }
-  node.attributes = {};
-  return node.attributes;
-}
-
-function collectNodesByPartId(root: unknown): Map<number, CompiledTemplateNode> {
-  const nodesByPartId = new Map<number, CompiledTemplateNode>();
-
-  const collect = (node: unknown) => {
-    if (!isRecord(node)) {
-      return;
-    }
-
-    const partId = getPartId(node);
-    if (typeof partId === 'number') {
-      nodesByPartId.set(partId, node as CompiledTemplateNode);
-    }
-
-    if (node !== root && typeof node['templateId'] === 'string') {
-      return;
-    }
-
-    const children = node['children'];
-    if (isUnknownArray(children)) {
-      for (const child of children) {
-        collect(child);
-      }
-    }
-  };
-
-  collect(root);
-  if (!nodesByPartId.has(0) && isRecord(root)) {
-    nodesByPartId.set(0, root as CompiledTemplateNode);
-  }
-  return nodesByPartId;
-}
-
-export function applyOpcodesToTemplateInstance(root: CompiledTemplateNode, opcodes: unknown): void {
-  if (!isUnknownArray(opcodes)) {
-    return;
-  }
-
-  const nodesByPartId = collectNodesByPartId(root);
-
-  for (let i = 0; i < opcodes.length;) {
-    const opcode = opcodes[i];
-
-    if (opcode === 4) {
-      const partId = opcodes[i + 1];
-      const patch = opcodes[i + 2];
-      const target = (typeof partId === 'string' || typeof partId === 'number')
-        ? nodesByPartId.get(Number(partId))
-        : undefined;
-      if (target && isRecord(patch)) {
-        const attrs = getNodeAttrsForWrite(target);
-        for (const [key, value] of Object.entries(patch)) {
-          if (value === undefined) {
-            delete attrs[key];
-          } else {
-            attrs[key] = value;
-          }
-        }
-      }
-      i += 3;
-      continue;
-    }
-
-    if (opcode === 2) {
-      const slotId = opcodes[i + 1];
-      const beforeRef = opcodes[i + 2];
-      const childRef = opcodes[i + 3];
-
-      if (isRecord(childRef)) {
-        const previousList = elementTemplateParentListByNodeRef.get(childRef);
-        if (previousList) {
-          const previousIndex = previousList.indexOf(childRef);
-          if (previousIndex >= 0) {
-            previousList.splice(previousIndex, 1);
-          }
-        }
-      }
-
-      const slot = (typeof slotId === 'string' || typeof slotId === 'number')
-        ? nodesByPartId.get(Number(slotId))
-        : undefined;
-
-      if (!slot || slot.tag !== 'slot' || childRef == null) {
-        i += 4;
-        continue;
-      }
-
-      slot.children ??= [];
-      const list = slot.children;
-
-      const existingIndex = list.indexOf(childRef);
-      if (existingIndex >= 0) {
-        list.splice(existingIndex, 1);
-      }
-
-      if (beforeRef == null) {
-        list.push(childRef);
-      } else {
-        const beforeIndex = list.indexOf(beforeRef);
-        if (beforeIndex >= 0) {
-          list.splice(beforeIndex, 0, childRef);
-        } else {
-          list.push(childRef);
-        }
-      }
-
-      if (isRecord(childRef)) {
-        elementTemplateParentListByNodeRef.set(childRef, list);
-      }
-
-      i += 4;
-      continue;
-    }
-
-    if (opcode === 3) {
-      const slotId = opcodes[i + 1];
-      const childRef = opcodes[i + 2];
-      const slot = (typeof slotId === 'string' || typeof slotId === 'number')
-        ? nodesByPartId.get(Number(slotId))
-        : undefined;
-
-      if (slot?.tag === 'slot' && slot.children && childRef != null) {
-        const index = slot.children.indexOf(childRef);
-        if (index >= 0) {
-          slot.children.splice(index, 1);
-        }
-      }
-
-      if (isRecord(childRef)) {
-        elementTemplateParentListByNodeRef.delete(childRef);
-      }
-
-      i += 3;
-      continue;
-    }
-
-    i += 1;
-  }
-}
 
 function isCompiledElementNode(node: unknown): node is CompiledElementNode {
   return isRecord(node) && node['kind'] === 'element' && typeof node['tag'] === 'string';
@@ -470,42 +301,6 @@ function getSlotId(node: Record<string, unknown>): number | undefined {
   return undefined;
 }
 
-function getSerializedAttrsForNode(
-  node: CompiledTemplateNode,
-): Record<string, unknown> | undefined {
-  const attrs = node.attributes;
-  if (!isRecord(attrs)) {
-    return undefined;
-  }
-
-  const serialized: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(attrs)) {
-    if (key === 'part-id' || key === 'slot-id') {
-      continue;
-    }
-    serialized[key] = value;
-  }
-
-  return Object.keys(serialized).length > 0 ? serialized : undefined;
-}
-
-function collectSerializedAttrs(
-  root: CompiledTemplateNode,
-): Record<number, Record<string, unknown>> | undefined {
-  const nodesByPartId = collectNodesByPartId(root);
-  let serialized: Record<number, Record<string, unknown>> | undefined;
-
-  for (const [partId, node] of nodesByPartId) {
-    const attrs = getSerializedAttrsForNode(node);
-    if (!attrs) {
-      continue;
-    }
-    (serialized ??= {})[partId] = attrs;
-  }
-
-  return serialized;
-}
-
 function decodeDynamicAttrsForNode(
   compiledTemplate: CompiledElementNode,
   attributeSlots: unknown[],
@@ -641,40 +436,6 @@ export function serializeTemplateInstance(root: unknown): SerializedElementTempl
   return serializeTemplateNode(root, 'root') as SerializedElementTemplateForMock;
 }
 
-export function formatOpcodes(ops: unknown): unknown {
-  if (!isUnknownArray(ops)) return ops;
-  const res: unknown[] = [];
-  for (let i = 0; i < ops.length;) {
-    const opcode = ops[i];
-    if (opcode === 4) {
-      res.push({
-        type: 'setAttributes',
-        id: ops[i + 1],
-        attributes: ops[i + 2],
-      });
-      i += 3;
-    } else if (opcode === 2) {
-      res.push({
-        type: 'insertBefore',
-        id: ops[i + 1],
-        node: ops[i + 3],
-      });
-      i += 4;
-    } else if (opcode === 3) {
-      res.push({
-        type: 'removeChild',
-        id: ops[i + 1],
-        node: ops[i + 2],
-      });
-      i += 3;
-    } else {
-      res.push(opcode);
-      i += 1;
-    }
-  }
-  return res;
-}
-
 export function formatUpdateCommands(ops: unknown): unknown {
   if (!isUnknownArray(ops)) return ops;
   const res: unknown[] = [];
@@ -753,10 +514,6 @@ export function formatNode(node: unknown): string {
     }
   }
   return String(node);
-}
-
-export function clone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj)) as T;
 }
 
 export function isRecordForMock(value: unknown): value is Record<string, unknown> {

@@ -18,6 +18,7 @@ This directory contains the dedicated test suite for `src/element-template/**`.
 
 - If a test targets one source module or one small group of closely related modules, place it under the matching source-domain directory.
 - If a test validates a render, hydrate, patch, or background flow across multiple modules, prefer a fixture-based suite.
+- Prefer `case.ts` / `case.tsx` fixtures by default. Use `index.tsx` fixtures only when the test is intentionally blessing compiled output and template registration together with runtime render.
 - Put import-boundary and architecture guardrail tests in `imports/` instead of the root.
 - Avoid adding new root-level test files unless the test truly spans multiple top-level ET domains.
 
@@ -26,7 +27,8 @@ This directory contains the dedicated test suite for `src/element-template/**`.
 - Fixture directories live under `fixtures/` and should mirror the owning test domain, for example `fixtures/patch/` or `fixtures/background/render/`.
 - A fixture case is discovered when a directory contains `case.ts`, `case.tsx`, or `index.tsx`.
 - Most case-driven suites should use `runCaseModuleFixtureTests(...)` from [test-utils/debug/fixtureRunner.ts](/Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/__test__/element-template/test-utils/debug/fixtureRunner.ts).
-- Keep `runtime/render/fixtures.test.ts` separate unless the suite needs the same compile-and-register-template flow.
+- Compiled render fixtures should use [test-utils/debug/renderFixtureRunner.ts](/Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/__test__/element-template/test-utils/debug/renderFixtureRunner.ts) so compile, template blessing, and render assertions stay in one ET-specific runner instead of being reimplemented per suite.
+- Expected `lynx.reportError` calls should be declared via `reportErrorCount` on fixture case modules or asserted locally and then reset explicitly before teardown.
 
 ## Commands
 

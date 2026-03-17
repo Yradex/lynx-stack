@@ -28,9 +28,5 @@ export function injectGlobals() {
   globalThis.cancelAnimationFrame = clearTimeout;
   globalThis._ReportError = vi.fn();
 
-  globalThis.__SNAPSHOT__ = (snapshot) => {
-    return snapshot.type;
-  };
-
   console.alog = vi.fn();
 }

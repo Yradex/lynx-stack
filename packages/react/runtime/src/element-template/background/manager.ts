@@ -53,7 +53,7 @@ export const backgroundElementTemplateInstanceManager: {
 
   clear(): void {
     // Note: nextId is NOT reset to prevent ID collisions with potentially surviving instances
-    // or when the clear is partial/soft reset in some scenarios (aligned with snapshot logic).
+    // or when the clear is partial/soft reset in some scenarios.
     this.values.clear();
   },
 };

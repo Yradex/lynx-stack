@@ -39,7 +39,7 @@ export function run() {
     const afterData = backgroundRoot.firstChild;
 
     // 3. Diff
-    const stream = hydrateBackground(beforeData!, afterData!);
+    const ops = hydrateBackground(beforeData!, afterData!);
 
     // 4. Apply Patch (on Main Thread)
     context.envManager.switchToMainThread();
@@ -47,7 +47,7 @@ export function run() {
 
     return {
       files: {
-        'stream.txt': stream,
+        'ops.txt': ops,
         'before-jsx.txt': beforeJSX,
         'after-jsx.txt': afterJSX,
       },

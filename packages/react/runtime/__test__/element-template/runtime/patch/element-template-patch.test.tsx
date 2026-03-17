@@ -284,6 +284,44 @@ describe('ElementTemplate patch stream (apply)', () => {
     resetReportedErrors();
   });
 
+  it('reports invalid non-array attributeSlots on create', () => {
+    envManager.switchToMainThread();
+
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      7,
+      '__et_builtin_raw_text__',
+      null,
+      'bad-attrs' as unknown as ElementTemplateUpdateCommandStream[number],
+      [],
+    ]);
+
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain(
+      'attributeSlots must be an array, null, or undefined',
+    );
+    resetReportedErrors();
+  });
+
+  it('reports invalid non-array elementSlots on create', () => {
+    envManager.switchToMainThread();
+
+    applyElementTemplateUpdateCommands([
+      ElementTemplateUpdateOps.createTemplate,
+      8,
+      '__et_builtin_raw_text__',
+      null,
+      [],
+      'bad-slots' as unknown as ElementTemplateUpdateCommandStream[number],
+    ]);
+
+    const reportError = (globalThis.lynx as unknown as LynxWithReportErrorMock).reportError;
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain(
+      'elementSlots must be an array, null, or undefined',
+    );
+    resetReportedErrors();
+  });
+
   it('reports missing patch target', () => {
     const jsx = <view />;
     root.render(jsx);
@@ -418,6 +456,33 @@ describe('ElementTemplate patch stream (apply)', () => {
     ]);
 
     expect(createTemplateMock.mock.calls[0]?.[2]).toEqual([null, 'x']);
+  });
+
+  it('drops unresolved element slot children without reporting in prod mode', () => {
+    envManager.switchToMainThread();
+    const originalDev = globalThis.__DEV__;
+    globalThis.__DEV__ = false;
+    const createTemplateMock = globalThis.__CreateElementTemplate as unknown as {
+      mockClear: () => void;
+      mock: { calls: unknown[][] };
+    };
+    createTemplateMock.mockClear();
+
+    try {
+      applyElementTemplateUpdateCommands([
+        ElementTemplateUpdateOps.createTemplate,
+        9,
+        '__et_builtin_raw_text__',
+        null,
+        ['x'],
+        [[404]],
+      ]);
+
+      expect(createTemplateMock.mock.calls[0]?.[3]).toEqual([[]]);
+      expect((globalThis.lynx as unknown as LynxWithReportErrorMock).reportError.mock.calls).toHaveLength(0);
+    } finally {
+      globalThis.__DEV__ = originalDev;
+    }
   });
 
   it('reports unsupported opcodes', () => {

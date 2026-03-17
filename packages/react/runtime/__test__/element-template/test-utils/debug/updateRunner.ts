@@ -8,9 +8,13 @@ import { root } from '../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type {
   ElementTemplateUpdateCommandStream,
+  ElementTemplateUpdateCommitContext,
   SerializedElementTemplate,
 } from '../../../../src/element-template/protocol/types.js';
-import { applyElementTemplateUpdateCommands } from '../../../../src/element-template/runtime/patch.js';
+import {
+  installElementTemplatePatchListener,
+  resetElementTemplatePatchListener,
+} from '../../../../src/element-template/native/patch-listener.js';
 import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { ElementTemplateEnvManager } from './envManager.js';
@@ -131,7 +135,8 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
   const envManager = new ElementTemplateEnvManager();
   const nativeLog = lastMock!.nativeLog;
   const hydrationData: SerializedElementTemplate[] = [];
-
+  envManager.resetEnv('background');
+  envManager.setUseElementTemplate(true);
   const onHydrate = (event: { data: unknown }) => {
     const data = event.data;
     if (Array.isArray(data)) {
@@ -140,12 +145,18 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
       }
     }
   };
-
-  envManager.resetEnv('background');
-  envManager.setUseElementTemplate(true);
   lynx.getCoreContext().addEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
 
+  const updateEvents: ElementTemplateUpdateCommitContext[] = [];
+  envManager.switchToMainThread();
+  installElementTemplatePatchListener();
+  const onUpdate = (event: { data: unknown }) => {
+    updateEvents.push(event.data as ElementTemplateUpdateCommitContext);
+  };
+  lynx.getJSContext().addEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
+
   try {
+    envManager.switchToBackground();
     root.render(options.render());
     envManager.switchToMainThread();
     root.render(options.render());
@@ -159,11 +170,6 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
     }
 
     const backgroundRoot = __root as BackgroundElementTemplateInstance;
-    const beforeBackground = backgroundRoot.firstChild;
-    if (!beforeBackground) {
-      throw new Error('Missing background root child.');
-    }
-
     const nativeLogStart = nativeLog.length;
     options.update();
 
@@ -173,12 +179,21 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
     }
 
     const ops = hydrateBackground(before, afterBackground);
-
-    envManager.switchToMainThread();
     if (ops.length > 0) {
-      applyElementTemplateUpdateCommands(ops);
+      lynx.getCoreContext().dispatchEvent({
+        type: ElementTemplateLifecycleConstant.update,
+        data: {
+          ops,
+          flushOptions: {},
+        },
+      });
     }
 
+    envManager.switchToMainThread();
+    const updatePayload = updateEvents.at(-1);
+    if (ops.length > 0 && !updatePayload) {
+      throw new Error('Missing update event.');
+    }
     const afterPageJsx = serializeToJSX(__page);
     const updateNativeLog = nativeLog.slice(nativeLogStart);
 
@@ -187,14 +202,16 @@ export function runElementTemplateUpdate(options: UpdateRunOptions): UpdateRunRe
       afterPageJsx,
       backgroundJsx: serializeBackgroundTree(afterBackground),
       ops,
-      formattedOps: formatUpdateStream(ops),
+      formattedOps: formatUpdateStream(updatePayload?.ops ?? ops),
       updateNativeLog,
       formattedNativeLog: formatNativePatchLog(updateNativeLog),
     };
   } finally {
+    envManager.switchToMainThread();
+    lynx.getJSContext().removeEventListener(ElementTemplateLifecycleConstant.update, onUpdate);
+    resetElementTemplatePatchListener();
     envManager.switchToBackground();
     lynx.getCoreContext().removeEventListener(ElementTemplateLifecycleConstant.hydrate, onHydrate);
     envManager.setUseElementTemplate(false);
-    // cleanup is automatic
   }
 }

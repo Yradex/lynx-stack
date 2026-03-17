@@ -223,6 +223,29 @@ describe('hydrate', () => {
     (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
   });
 
+  it('fails fast in dev for missing top-level handle ids', () => {
+    const oldReportError = lynx.reportError;
+    const reportError = vi.fn();
+    lynx.reportError = reportError;
+    const root = new BackgroundElementTemplateInstance('root');
+
+    const stream = hydrate(
+      {
+        templateKey: 'root',
+        attributeSlots: [],
+        elementSlots: [],
+      } as SerializedElementTemplate,
+      root,
+    );
+
+    expect(stream).toEqual([]);
+    expect(String(reportError.mock.calls[0]?.[0]?.message ?? '')).toContain(
+      'missing handleId for \'root\'',
+    );
+    lynx.reportError = oldReportError;
+    (globalThis as { __LYNX_REPORT_ERROR_CALLS?: Error[] }).__LYNX_REPORT_ERROR_CALLS = [];
+  });
+
   it('fails fast in dev for nested move candidates without handle ids', () => {
     const oldReportError = lynx.reportError;
     const reportError = vi.fn();
@@ -300,5 +323,70 @@ describe('hydrate', () => {
       child.instanceId,
       0,
     ]);
+  });
+
+  it('keeps placeholder children when nested remove handles are missing in prod mode', () => {
+    const root = new BackgroundElementTemplateInstance('root');
+    const slot = new BackgroundElementTemplateSlot();
+    slot.setAttribute('id', 0);
+    root.appendChild(slot);
+
+    const originalDev = globalThis.__DEV__;
+    globalThis.__DEV__ = false;
+    try {
+      const stream = hydrate(
+        createHydrationTemplate(root.instanceId, 'root', {
+          elementSlots: [[
+            {
+              kind: 'templateInstance',
+              templateKey: 'child',
+              attributeSlots: [],
+              elementSlots: [],
+            } as SerializedTemplateInstance,
+          ]],
+        }),
+        root,
+      );
+
+      expect(stream).toEqual([]);
+      expect(root.elementSlots[0]?.map(child => child.type)).toEqual(['child']);
+    } finally {
+      globalThis.__DEV__ = originalDev;
+    }
+  });
+
+  it('keeps placeholder ordering when nested move handles are missing in prod mode', () => {
+    const root = new BackgroundElementTemplateInstance('root');
+    const slot = new BackgroundElementTemplateSlot();
+    slot.setAttribute('id', 0);
+    root.appendChild(slot);
+    const childB = new BackgroundElementTemplateInstance('b');
+    const childA = new BackgroundElementTemplateInstance('a');
+    slot.appendChild(childB);
+    slot.appendChild(childA);
+
+    const originalDev = globalThis.__DEV__;
+    globalThis.__DEV__ = false;
+    try {
+      const stream = hydrate(
+        createHydrationTemplate(root.instanceId, 'root', {
+          elementSlots: [[
+            {
+              kind: 'templateInstance',
+              templateKey: 'a',
+              attributeSlots: [],
+              elementSlots: [],
+            } as SerializedTemplateInstance,
+            createHydrationChild(childB.instanceId, 'b'),
+          ]],
+        }),
+        root,
+      );
+
+      expect(stream).toEqual([]);
+      expect(root.elementSlots[0]?.map(child => child.type)).toEqual(['a', 'b']);
+    } finally {
+      globalThis.__DEV__ = originalDev;
+    }
   });
 });

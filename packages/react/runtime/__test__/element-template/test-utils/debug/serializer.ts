@@ -54,7 +54,7 @@ export function serializeBackgroundTree(node: any, indent = ''): string {
 
   let attrStr = '';
 
-  // Surface slot ids in background tree snapshots to keep slot ordering/debugging readable.
+  // Surface slot ids in background tree output to keep slot ordering/debugging readable.
   if (typeof node.partId === 'number' && node.partId !== -1) {
     attrStr += ` id=${node.partId}`;
   }

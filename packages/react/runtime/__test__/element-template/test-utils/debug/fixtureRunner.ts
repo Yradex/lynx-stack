@@ -206,6 +206,7 @@ export function expectReportErrorCount(expectedCount: number): void {
   if (expectedCount === 0) {
     expect(mockCalls.length).toBe(0);
     expect(globalErrors.length).toBe(0);
+    resetReportErrorState();
     return;
   }
 
@@ -215,6 +216,14 @@ export function expectReportErrorCount(expectedCount: number): void {
   const actual = candidates.length > 0 ? Math.max(...candidates) : 0;
 
   expect(actual).toBe(expectedCount);
+  resetReportErrorState();
+}
+
+export function resetReportErrorState(): void {
+  const reportError = (globalThis as unknown as { lynx?: { reportError?: { mockClear?: () => void } } })
+    .lynx?.reportError;
+  reportError?.mockClear?.();
+  (globalThis as unknown as { __LYNX_REPORT_ERROR_CALLS?: unknown[] }).__LYNX_REPORT_ERROR_CALLS = [];
 }
 
 function normalizeCaseFixtureResult(result: unknown): CaseFixtureResult {

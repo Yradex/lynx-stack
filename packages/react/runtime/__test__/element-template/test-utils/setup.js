@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, expect } from 'vitest';
 
 import { injectGlobals } from './mock/globals.js';
+import { resetReportErrorState } from './debug/fixtureRunner.ts';
 import { registerTemplates } from './debug/registry.ts';
 import { installMockNativePapi } from './mock/mockNativePapi.ts';
 import { installThreadContexts } from './mock/mockNativePapi/context.ts';
@@ -44,8 +45,8 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  // Reset global error collection for current test
-  globalThis.__LYNX_REPORT_ERROR_CALLS = [];
+  // Reset reportError state for current test.
+  resetReportErrorState();
 
   // Ensure mocks are installed and fresh for each test
   installMockNativePapi();
