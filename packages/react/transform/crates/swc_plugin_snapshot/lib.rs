@@ -1329,6 +1329,18 @@ where
     )
   }
 
+  fn element_template_root_metadata_slot_descriptor(
+    &self,
+    key: &str,
+    attr_slot_index: i32,
+  ) -> Expr {
+    quote!(
+      r#"{ kind: "attribute", key: $key, binding: "slot", attrSlotIndex: $attr_slot_index }"# as Expr,
+      key: Expr = self.element_template_string_expr(key),
+      attr_slot_index: Expr = i32_to_expr(&attr_slot_index),
+    )
+  }
+
   fn element_template_element_slot(&self, element_slot_index: i32) -> Expr {
     quote!(
       r#"{ kind: "elementSlot", tag: "slot", elementSlotIndex: $element_slot_index }"# as Expr,
@@ -1384,7 +1396,12 @@ where
           ));
         }
         JSXElementChild::JSXElement(el) => {
-          out.push(self.element_template_from_jsx_element(el, attr_slot_index, element_slot_index));
+          out.push(self.element_template_from_jsx_element_impl(
+            el,
+            attr_slot_index,
+            element_slot_index,
+            false,
+          ));
         }
         JSXElementChild::JSXFragment(frag) => {
           out.extend(self.element_template_from_jsx_children(
@@ -1421,6 +1438,16 @@ where
     n: &JSXElement,
     attr_slot_index: &mut i32,
     element_slot_index: &mut i32,
+  ) -> Expr {
+    self.element_template_from_jsx_element_impl(n, attr_slot_index, element_slot_index, true)
+  }
+
+  fn element_template_from_jsx_element_impl(
+    &self,
+    n: &JSXElement,
+    attr_slot_index: &mut i32,
+    element_slot_index: &mut i32,
+    inject_root_metadata: bool,
   ) -> Expr {
     let tag_expr = jsx_name(n.opening.name.clone());
     let tag_value = match *tag_expr {
@@ -1484,6 +1511,20 @@ where
           *attr_slot_index += 1;
           attribute_descriptors.push(self.element_template_spread_slot_descriptor(idx));
         }
+      }
+    }
+
+    if inject_root_metadata {
+      if let Some(css_id_expr) = &self.css_id_value {
+        attribute_descriptors
+          .push(self.element_template_static_attribute_descriptor("css-id", css_id_expr.clone()));
+      }
+
+      if matches!(self.cfg.is_dynamic_component, Some(true)) {
+        let idx = *attr_slot_index;
+        *attr_slot_index += 1;
+        attribute_descriptors
+          .push(self.element_template_root_metadata_slot_descriptor("entry-name", idx));
       }
     }
 
@@ -1957,6 +1998,15 @@ where
       let mut element_slot_index: i32 = 0;
       let template_expr =
         self.element_template_from_jsx_element(node, &mut attr_slot_index, &mut element_slot_index);
+
+      if matches!(self.cfg.is_dynamic_component, Some(true)) {
+        snapshot_values.push(Some(ExprOrSpread {
+          spread: None,
+          expr: Box::new(quote!("globDynamicComponentEntry" as Expr)),
+        }));
+        snapshot_values_has_attr = true;
+      }
+
       let suffix = snapshot_uid
         .strip_prefix("_et_")
         .unwrap_or(snapshot_uid.as_str());

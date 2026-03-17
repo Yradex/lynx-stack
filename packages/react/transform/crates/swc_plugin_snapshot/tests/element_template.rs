@@ -1012,3 +1012,32 @@ fn should_collect_element_templates_for_dynamic_component_in_element_template_mo
     assert!(!template.template_id.contains(':'));
   }
 }
+
+test!(
+  module,
+  Syntax::Es(EsSyntax {
+    jsx: true,
+    ..Default::default()
+  }),
+  |t| visit_mut_pass(JSXTransformer::new(
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      is_dynamic_component: Some(true),
+      ..Default::default()
+    },
+    Some(t.comments.clone()),
+    TransformMode::Test,
+    None,
+  )),
+  should_append_entry_name_to_attribute_slots_for_dynamic_component_in_element_template_mode,
+  // Input codes
+  r#"
+/**
+ * @jsxCSSId 100
+ */
+  <view id={dynamicId}>
+    <text>Hello</text>
+  </view>
+  "#
+);

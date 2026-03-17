@@ -15,6 +15,7 @@ fn transform_to_templates(input: &str, cfg: JSXTransformerConfig) -> Vec<Element
   GLOBALS.set(&Globals::new(), || {
     let cm: Arc<SourceMap> = Arc::new(SourceMap::default());
     let fm = cm.new_source_file(FileName::Anon.into(), input.to_string());
+    let comments = SingleThreadedComments::default();
 
     let lexer = Lexer::new(
       Syntax::Es(EsSyntax {
@@ -23,13 +24,11 @@ fn transform_to_templates(input: &str, cfg: JSXTransformerConfig) -> Vec<Element
       }),
       Default::default(),
       StringInput::from(&*fm),
-      None,
+      Some(&comments),
     );
 
     let mut parser = Parser::new_from(lexer);
     let mut module = parser.parse_module().expect("Failed to parse module");
-
-    let comments = SingleThreadedComments::default();
     let element_templates = Rc::new(RefCell::new(vec![]));
 
     let mut transformer = JSXTransformer::new(
@@ -56,14 +55,18 @@ fn transform_to_templates(input: &str, cfg: JSXTransformerConfig) -> Vec<Element
 }
 
 fn first_user_template_json(input: &str) -> Value {
-  let templates = transform_to_templates(
+  first_user_template_json_with_cfg(
     input,
     JSXTransformerConfig {
       preserve_jsx: true,
       experimental_enable_element_template: true,
       ..Default::default()
     },
-  );
+  )
+}
+
+fn first_user_template_json_with_cfg(input: &str, cfg: JSXTransformerConfig) -> Value {
+  let templates = transform_to_templates(input, cfg);
 
   templates
     .into_iter()
@@ -72,6 +75,75 @@ fn first_user_template_json(input: &str) -> Value {
       serde_json::to_value(template.compiled_template).expect("compiled template to json")
     })
     .expect("should collect a user template")
+}
+
+#[test]
+fn should_inject_root_static_css_id_attr_for_element_template() {
+  let template = first_user_template_json(
+    r#"
+      /**
+       * @jsxCSSId 100
+       */
+      <view>
+        <text>Hello</text>
+      </view>
+    "#,
+  );
+
+  let attrs = template["attributesArray"]
+    .as_array()
+    .expect("attributesArray");
+  let css_id_attr = attrs
+    .iter()
+    .find(|attr| attr["key"] == "css-id")
+    .expect("root css-id attr");
+
+  assert_eq!(css_id_attr["kind"], "attribute");
+  assert_eq!(css_id_attr["binding"], "static");
+  assert_eq!(css_id_attr["value"].as_f64(), Some(100.0));
+
+  let children = template["children"].as_array().expect("children array");
+  let first_child_attrs = children[0]["attributesArray"]
+    .as_array()
+    .expect("child attributesArray");
+  assert!(
+    first_child_attrs
+      .iter()
+      .all(|attr| attr["key"] != "css-id" && attr["key"] != "entry-name"),
+    "nested static elements should not receive css scope attrs",
+  );
+}
+
+#[test]
+fn should_inject_root_entry_name_slot_attr_for_dynamic_component_element_template() {
+  let template = first_user_template_json_with_cfg(
+    r#"
+      /**
+       * @jsxCSSId 100
+       */
+      <view id={dynamicId}>
+        <text>Hello</text>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      is_dynamic_component: Some(true),
+      ..Default::default()
+    },
+  );
+
+  let attrs = template["attributesArray"]
+    .as_array()
+    .expect("attributesArray");
+  let entry_name_attr = attrs
+    .iter()
+    .find(|attr| attr["key"] == "entry-name")
+    .expect("root entry-name attr");
+
+  assert_eq!(entry_name_attr["kind"], "attribute");
+  assert_eq!(entry_name_attr["binding"], "slot");
+  assert!(entry_name_attr["attrSlotIndex"].as_f64().is_some());
 }
 
 #[test]

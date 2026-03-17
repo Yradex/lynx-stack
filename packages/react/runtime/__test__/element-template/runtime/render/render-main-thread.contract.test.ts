@@ -42,6 +42,8 @@ describe('renderMainThread contract', () => {
           tag: 'view',
           attributesArray: [
             { kind: 'attribute', key: 'id', binding: 'slot', attrSlotIndex: 0 },
+            { kind: 'attribute', key: 'css-id', binding: 'static', value: 100 },
+            { kind: 'attribute', key: 'entry-name', binding: 'slot', attrSlotIndex: 1 },
           ],
           children: [
             { kind: 'elementSlot', tag: 'slot', elementSlotIndex: 0 },
@@ -77,7 +79,7 @@ describe('renderMainThread contract', () => {
       { type: '_et_contract_root' },
       __OpAttr,
       'attributeSlots',
-      ['main'],
+      ['main', 'lazy-entry'],
       __OpSlot,
       0,
       __OpText,
@@ -100,7 +102,7 @@ describe('renderMainThread contract', () => {
       '__CreateElementTemplate',
       '_et_contract_root',
       null,
-      ['main'],
+      ['main', 'lazy-entry'],
       [[expect.any(Object)]],
       { handleId: -2 },
     ]);
@@ -113,8 +115,16 @@ describe('renderMainThread contract', () => {
     const [rootSerialized] = dispatched!.data as Array<Record<string, unknown>>;
     expect(rootSerialized).toMatchObject({
       templateKey: '_et_contract_root',
-      attributeSlots: ['main'],
+      attributeSlots: ['main', 'lazy-entry'],
       options: { handleId: -2 },
+    });
+
+    expect(ElementTemplateRegistry.get(-2)).toMatchObject({
+      attributes: {
+        id: 'main',
+        'css-id': 100,
+        'entry-name': 'lazy-entry',
+      },
     });
 
     const slotChildren = rootSerialized['elementSlots'] as unknown[][];
