@@ -17,14 +17,19 @@ export function createElementTemplateWithHandle(
   bundleUrl: string | null | undefined,
   attributeSlots: SerializableValue[] | null | undefined,
   elementSlots: ElementRef[][] | null | undefined,
+  options?: RuntimeOptions,
 ): ElementRef {
   const handleId = nextId--;
+  const runtimeOptions = normalizeRuntimeOptions({
+    ...options,
+    handleId,
+  });
   const nativeRef = __CreateElementTemplate(
     templateKey,
     bundleUrl,
     attributeSlots,
     elementSlots,
-    { handleId },
+    runtimeOptions,
   );
   setElementTemplateNativeRef(handleId, nativeRef);
   return nativeRef;
@@ -37,4 +42,12 @@ export function resetTemplateId(): void {
 export function destroyElementTemplateId(id: number): void {
   deleteElementTemplateNativeRef(id);
   // __ReleaseElement(nativeRef);
+}
+
+function normalizeRuntimeOptions(
+  options: RuntimeOptions,
+): RuntimeOptions {
+  const normalizedEntries = Object.entries(options)
+    .filter(([, value]) => value !== undefined);
+  return Object.fromEntries(normalizedEntries) as RuntimeOptions;
 }

@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
-import type { SerializableValue } from '../../protocol/types.js';
+import type { RuntimeOptions, SerializableValue } from '../../protocol/types.js';
 import { createElementTemplateWithHandle } from '../template/handle.js';
 
 const BUILTIN_RAW_TEXT_TEMPLATE_KEY = '__et_builtin_raw_text__';
@@ -17,6 +17,9 @@ interface Frame {
 
   // Collected dynamic children keyed by elementSlotIndex.
   elementSlots: ElementRef[][] | undefined;
+
+  // Create-time metadata forwarded into __CreateElementTemplate options.
+  options: RuntimeOptions | undefined;
 
   // Current active slot id, -1 means none
   activeSlotId: number;
@@ -39,6 +42,7 @@ export function renderOpcodesIntoElementTemplate(
       templateKey: null,
       attributeSlots: undefined,
       elementSlots: undefined,
+      options: undefined,
       activeSlotId: -1,
       activeElementSlot: undefined,
     },
@@ -53,6 +57,7 @@ export function renderOpcodesIntoElementTemplate(
           templateKey: vnode.type,
           attributeSlots: undefined,
           elementSlots: undefined,
+          options: undefined,
           activeSlotId: -1,
           activeElementSlot: undefined,
         });
@@ -86,6 +91,7 @@ export function renderOpcodesIntoElementTemplate(
           null,
           frame.attributeSlots ?? null,
           frame.elementSlots ?? null,
+          frame.options,
         );
 
         // Append to parent
@@ -106,10 +112,14 @@ export function renderOpcodesIntoElementTemplate(
       }
       case __OpAttr: {
         const name = opcodes[i + 1] as string;
-        const value = opcodes[i + 2] as SerializableValue[];
+        const value = opcodes[i + 2] as SerializableValue;
         const frame = stack[stack.length - 1];
-        if (frame && name === 'attributeSlots') {
-          frame.attributeSlots = value;
+        if (frame) {
+          if (name === 'attributeSlots') {
+            frame.attributeSlots = value as SerializableValue[];
+          } else if (name === 'options') {
+            frame.options = value as RuntimeOptions;
+          }
         }
         i += 3;
         break;
@@ -132,6 +142,7 @@ export function renderOpcodesIntoElementTemplate(
             null,
             [String(text)],
             [],
+            undefined,
           );
 
           if (frame.templateKey === null) {

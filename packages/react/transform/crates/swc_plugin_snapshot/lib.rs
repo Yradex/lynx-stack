@@ -1107,6 +1107,7 @@ where
   runtime_components_ident: Ident,
   runtime_components_module_item: Option<ModuleItem>,
   css_id_value: Option<Expr>,
+  has_explicit_css_id: bool,
   pub element_templates: Option<Rc<RefCell<Vec<ElementTemplateAsset>>>>,
   snapshot_counter: u32,
   current_snapshot_defs: Vec<ModuleItem>,
@@ -1148,6 +1149,7 @@ where
       element_templates,
       cfg,
       css_id_value: None,
+      has_explicit_css_id: false,
       snapshot_counter: 0,
       current_snapshot_defs: vec![],
       current_snapshot_id: None,
@@ -1188,6 +1190,7 @@ where
                     .expect("should have numeric cssId")
                     .into(),
                 )));
+                self.has_explicit_css_id = true;
               }
             }
           }
@@ -1325,18 +1328,6 @@ where
   fn element_template_spread_slot_descriptor(&self, attr_slot_index: i32) -> Expr {
     quote!(
       r#"{ kind: "spread", binding: "slot", attrSlotIndex: $attr_slot_index }"# as Expr,
-      attr_slot_index: Expr = i32_to_expr(&attr_slot_index),
-    )
-  }
-
-  fn element_template_root_metadata_slot_descriptor(
-    &self,
-    key: &str,
-    attr_slot_index: i32,
-  ) -> Expr {
-    quote!(
-      r#"{ kind: "attribute", key: $key, binding: "slot", attrSlotIndex: $attr_slot_index }"# as Expr,
-      key: Expr = self.element_template_string_expr(key),
       attr_slot_index: Expr = i32_to_expr(&attr_slot_index),
     )
   }
@@ -1514,19 +1505,7 @@ where
       }
     }
 
-    if inject_root_metadata {
-      if let Some(css_id_expr) = &self.css_id_value {
-        attribute_descriptors
-          .push(self.element_template_static_attribute_descriptor("css-id", css_id_expr.clone()));
-      }
-
-      if matches!(self.cfg.is_dynamic_component, Some(true)) {
-        let idx = *attr_slot_index;
-        *attr_slot_index += 1;
-        attribute_descriptors
-          .push(self.element_template_root_metadata_slot_descriptor("entry-name", idx));
-      }
-    }
+    let _ = inject_root_metadata;
 
     // Optimization for text tags:
     // If <text> (or similar) has only one static text child, use `text` attribute instead of checking children.
@@ -1999,12 +1978,33 @@ where
       let template_expr =
         self.element_template_from_jsx_element(node, &mut attr_slot_index, &mut element_slot_index);
 
+      let mut option_props: Vec<PropOrSpread> = vec![];
+      if self.has_explicit_css_id {
+        if let Some(css_id_expr) = &self.css_id_value {
+          option_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+            key: PropName::Ident(IdentName::new("cssId".into(), DUMMY_SP)),
+            value: Box::new(css_id_expr.clone()),
+          }))));
+        }
+      }
       if matches!(self.cfg.is_dynamic_component, Some(true)) {
-        snapshot_values.push(Some(ExprOrSpread {
-          spread: None,
-          expr: Box::new(quote!("globDynamicComponentEntry" as Expr)),
+        option_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+          key: PropName::Ident(IdentName::new("entryName".into(), DUMMY_SP)),
+          value: Box::new(quote!("globDynamicComponentEntry" as Expr)),
+        }))));
+      }
+      if !option_props.is_empty() {
+        snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
+          span: DUMMY_SP,
+          name: JSXAttrName::Ident(IdentName::new("options".into(), DUMMY_SP)),
+          value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+            span: DUMMY_SP,
+            expr: JSXExpr::Expr(Box::new(Expr::Object(ObjectLit {
+              span: DUMMY_SP,
+              props: option_props,
+            }))),
+          })),
         }));
-        snapshot_values_has_attr = true;
       }
 
       let suffix = snapshot_uid

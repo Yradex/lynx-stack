@@ -78,7 +78,7 @@ fn first_user_template_json_with_cfg(input: &str, cfg: JSXTransformerConfig) -> 
 }
 
 #[test]
-fn should_inject_root_static_css_id_attr_for_element_template() {
+fn should_not_inject_root_css_scope_attrs_for_element_template() {
   let template = first_user_template_json(
     r#"
       /**
@@ -93,14 +93,12 @@ fn should_inject_root_static_css_id_attr_for_element_template() {
   let attrs = template["attributesArray"]
     .as_array()
     .expect("attributesArray");
-  let css_id_attr = attrs
-    .iter()
-    .find(|attr| attr["key"] == "css-id")
-    .expect("root css-id attr");
-
-  assert_eq!(css_id_attr["kind"], "attribute");
-  assert_eq!(css_id_attr["binding"], "static");
-  assert_eq!(css_id_attr["value"].as_f64(), Some(100.0));
+  assert!(
+    attrs
+      .iter()
+      .all(|attr| attr["key"] != "css-id" && attr["key"] != "entry-name"),
+    "root element should no longer carry css scope attrs once metadata moves to options",
+  );
 
   let children = template["children"].as_array().expect("children array");
   let first_child_attrs = children[0]["attributesArray"]
@@ -115,7 +113,7 @@ fn should_inject_root_static_css_id_attr_for_element_template() {
 }
 
 #[test]
-fn should_inject_root_entry_name_slot_attr_for_dynamic_component_element_template() {
+fn should_not_inject_root_entry_name_attr_for_dynamic_component_element_template() {
   let template = first_user_template_json_with_cfg(
     r#"
       /**
@@ -136,14 +134,12 @@ fn should_inject_root_entry_name_slot_attr_for_dynamic_component_element_templat
   let attrs = template["attributesArray"]
     .as_array()
     .expect("attributesArray");
-  let entry_name_attr = attrs
-    .iter()
-    .find(|attr| attr["key"] == "entry-name")
-    .expect("root entry-name attr");
-
-  assert_eq!(entry_name_attr["kind"], "attribute");
-  assert_eq!(entry_name_attr["binding"], "slot");
-  assert!(entry_name_attr["attrSlotIndex"].as_f64().is_some());
+  assert!(
+    attrs
+      .iter()
+      .all(|attr| attr["key"] != "entry-name" && attr["key"] != "css-id"),
+    "dynamic component root should no longer encode css scope metadata in attrs",
+  );
 }
 
 #[test]

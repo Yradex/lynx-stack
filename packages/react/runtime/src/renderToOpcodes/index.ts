@@ -312,6 +312,15 @@ function _renderToString(
       opcodes.push(__OpAttr, 'attributeSlots', attributeSlots);
     }
 
+    const runtimeOptions = props.options;
+    if (
+      runtimeOptions != null
+      && runtimeOptions !== false
+      && typeof runtimeOptions !== 'function'
+    ) {
+      opcodes.push(__OpAttr, 'options', runtimeOptions);
+    }
+
     const etChildren = props.children;
     if (etChildren != null && etChildren !== false && etChildren !== true) {
       _renderToString(etChildren, context, false, selectValue, vnode, opcodes, opcodes.length);

@@ -42,8 +42,6 @@ describe('renderMainThread contract', () => {
           tag: 'view',
           attributesArray: [
             { kind: 'attribute', key: 'id', binding: 'slot', attrSlotIndex: 0 },
-            { kind: 'attribute', key: 'css-id', binding: 'static', value: 100 },
-            { kind: 'attribute', key: 'entry-name', binding: 'slot', attrSlotIndex: 1 },
           ],
           children: [
             { kind: 'elementSlot', tag: 'slot', elementSlotIndex: 0 },
@@ -80,6 +78,9 @@ describe('renderMainThread contract', () => {
       __OpAttr,
       'attributeSlots',
       ['main', 'lazy-entry'],
+      __OpAttr,
+      'options',
+      { cssId: 100, entryName: 'lazy-entry' },
       __OpSlot,
       0,
       __OpText,
@@ -104,7 +105,7 @@ describe('renderMainThread contract', () => {
       null,
       ['main', 'lazy-entry'],
       [[expect.any(Object)]],
-      { handleId: -2 },
+      { handleId: -2, cssId: 100, entryName: 'lazy-entry' },
     ]);
 
     const dispatched = dispatchEvent.mock.calls[0]?.[0] as { type: string; data: unknown[] } | undefined;
@@ -116,14 +117,12 @@ describe('renderMainThread contract', () => {
     expect(rootSerialized).toMatchObject({
       templateKey: '_et_contract_root',
       attributeSlots: ['main', 'lazy-entry'],
-      options: { handleId: -2 },
+      options: { handleId: -2, cssId: 100, entryName: 'lazy-entry' },
     });
 
     expect(ElementTemplateRegistry.get(-2)).toMatchObject({
       attributes: {
         id: 'main',
-        'css-id': 100,
-        'entry-name': 'lazy-entry',
       },
     });
 

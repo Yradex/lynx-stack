@@ -13,7 +13,7 @@ import { resetTemplateId } from '../../../../src/element-template/runtime/templa
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { renderToString } from '../../../../src/renderToOpcodes/index.js';
 import { clearTemplates, registerBuiltinRawTextTemplate, registerTemplates } from '../../test-utils/debug/registry.js';
-import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
+import { installMockNativePapi, lastMock } from '../../test-utils/mock/mockNativePapi.js';
 
 interface CompileOptions {
   isDynamicComponent?: boolean;
@@ -21,6 +21,14 @@ interface CompileOptions {
 
 interface RenderResult {
   rootRef: ElementRef;
+}
+
+function findUserTemplateCreateLog(): unknown[] | undefined {
+  return lastMock!.nativeLog.find((entry) =>
+    Array.isArray(entry)
+    && entry[0] === '__CreateElementTemplate'
+    && entry[1] !== '__et_builtin_raw_text__'
+  ) as unknown[];
 }
 
 function registerCompiledTemplates(
@@ -128,7 +136,7 @@ describe('render transform contract', () => {
     resetTemplateId();
   });
 
-  it('materializes css-id on the runtime root from transformed source', async () => {
+  it('passes css-id through create options instead of root attrs', async () => {
     const { rootRef } = await compileAndRender(`
       /**
        * @jsxCSSId 100
@@ -146,12 +154,23 @@ describe('render transform contract', () => {
       tag: 'view',
       attributes: {
         id: 'main',
-        'css-id': 100,
       },
+      __handleId: -1,
     });
+    expect(ElementTemplateRegistry.get(-1)).toMatchObject({
+      attributes: { id: 'main' },
+    });
+    expect(findUserTemplateCreateLog()).toEqual([
+      '__CreateElementTemplate',
+      '_et_7079c_test_1',
+      null,
+      null,
+      null,
+      { handleId: -1, cssId: 100 },
+    ]);
   });
 
-  it('materializes entry-name on the runtime root for dynamic component output', async () => {
+  it('passes entry-name through create options instead of root attrs for dynamic component output', async () => {
     vi.stubGlobal('globDynamicComponentEntry', 'lazy-entry');
 
     const { rootRef } = await compileAndRender(
@@ -173,9 +192,19 @@ describe('render transform contract', () => {
       tag: 'view',
       attributes: {
         id: 'lazy',
-        'css-id': 0,
-        'entry-name': 'lazy-entry',
       },
+      __handleId: -1,
     });
+    expect(ElementTemplateRegistry.get(-1)).toMatchObject({
+      attributes: { id: 'lazy' },
+    });
+    expect(findUserTemplateCreateLog()).toEqual([
+      '__CreateElementTemplate',
+      'lazy-entry:_et_7079c_test_1',
+      null,
+      null,
+      null,
+      { handleId: -1, entryName: 'lazy-entry' },
+    ]);
   });
 });
