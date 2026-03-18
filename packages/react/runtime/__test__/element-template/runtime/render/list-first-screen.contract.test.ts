@@ -131,7 +131,33 @@ describe('ET list first-screen contract', () => {
         data: expect.any(Array),
       }),
     );
-    // Match the Snapshot list baseline: the container exists first, cells are pulled by native callbacks.
+    expect(mockNativePapi.nativeLog).toContainEqual([
+      '__SetAttribute',
+      '<list />',
+      'update-list-info',
+      {
+        insertAction: [
+          {
+            position: 0,
+            type: expect.any(String),
+            'item-key': 'Ada',
+            'full-span': true,
+            'sticky-top': true,
+          },
+          {
+            position: 1,
+            type: expect.any(String),
+            'item-key': 'Linus',
+            'full-span': false,
+            'sticky-top': false,
+          },
+        ],
+        removeAction: [],
+        updateAction: [],
+      },
+    ]);
+    // Match the Snapshot list baseline: the container exists first, cells are described through update-list-info,
+    // while concrete cells are still pulled by native callbacks.
     expect(serializeToJSX(listElement)).toBe('<list />');
 
     mockNativePapi.triggerComponentAtIndex(listElement, 0, 11);
@@ -171,7 +197,29 @@ describe('ET list first-screen contract', () => {
     `);
 
     expect(mockNativePapi.nativeLog.some(([name]) => name === '__CreateList')).toBe(true);
-    // Match the Snapshot list baseline: the container exists first, cells are pulled by native callbacks.
+    expect(mockNativePapi.nativeLog).toContainEqual([
+      '__SetAttribute',
+      '<list />',
+      'update-list-info',
+      {
+        insertAction: [
+          {
+            position: 0,
+            type: expect.any(String),
+            'item-key': 'Ada',
+          },
+          {
+            position: 1,
+            type: expect.any(String),
+            'item-key': 'Linus',
+          },
+        ],
+        removeAction: [],
+        updateAction: [],
+      },
+    ]);
+    // Match the Snapshot list baseline: the container exists first, cells are described through update-list-info,
+    // while concrete cells are still pulled by native callbacks.
     expect(serializeToJSX(listElement)).toBe('<list />');
 
     mockNativePapi.triggerComponentAtIndexes(listElement, [0, 1], [11, 22], false, true);
@@ -327,7 +375,29 @@ describe('ET list first-screen contract', () => {
     `);
 
     expect(mockNativePapi.nativeLog.some(([name]) => name === '__CreateList')).toBe(true);
-    // Match the Snapshot list baseline: the container exists first, cells are pulled by native callbacks.
+    expect(mockNativePapi.nativeLog).toContainEqual([
+      '__SetAttribute',
+      '<list />',
+      'update-list-info',
+      {
+        insertAction: [
+          {
+            position: 0,
+            type: expect.any(String),
+            'item-key': 'Ada',
+          },
+          {
+            position: 1,
+            type: expect.any(String),
+            'item-key': 'Linus',
+          },
+        ],
+        removeAction: [],
+        updateAction: [],
+      },
+    ]);
+    // Match the Snapshot list baseline: the container exists first, cells are described through update-list-info,
+    // while concrete cells are still pulled by native callbacks.
     expect(serializeToJSX(listElement)).toBe('<list />');
 
     mockNativePapi.triggerComponentAtIndex(listElement, 0, 11);

@@ -50,6 +50,15 @@ type ElementTemplateAttributeDescriptor =
   };
 
 type SerializableRecord = Record<string, SerializableValue | undefined>;
+type ListInsertAction = Record<string, unknown> & {
+  position: number;
+  type: string;
+};
+interface ListOperations {
+  insertAction: ListInsertAction[];
+  removeAction: number[];
+  updateAction: Record<string, unknown>[];
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -298,6 +307,30 @@ function extractListItemPlatformInfo(cell: ElementRef): Record<string, unknown> 
   return Object.keys(platformInfo).length > 0 ? platformInfo : undefined;
 }
 
+function getListCellType(cell: ElementRef): string {
+  if (isRecord(cell)) {
+    if (typeof cell['templateId'] === 'string') {
+      return cell['templateId'];
+    }
+    if (typeof cell['tag'] === 'string') {
+      return cell['tag'];
+    }
+  }
+  return 'unknown';
+}
+
+function createInitialListUpdateInfo(cells: ElementRef[]): ListOperations {
+  return {
+    insertAction: cells.map((cell, position) => ({
+      position,
+      type: getListCellType(cell),
+      ...(extractListItemPlatformInfo(cell) ?? {}),
+    })),
+    removeAction: [],
+    updateAction: [],
+  };
+}
+
 function applyListItemPlatformInfo(cell: ElementRef): void {
   const platformInfo = extractListItemPlatformInfo(cell);
   if (!platformInfo) {
@@ -434,6 +467,7 @@ export function createElementTemplateListWithHandle(
   );
   const listID = __GetElementUniqueID(list);
   applyListAttributes(list, attributeDescriptors, attributeSlots);
+  __SetAttribute(list, 'update-list-info', createInitialListUpdateInfo(cells));
   const [componentAtIndex, componentAtIndexes] = createListCallbacks(list, listID, cells);
 
   __UpdateListCallbacks(

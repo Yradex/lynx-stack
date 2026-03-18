@@ -1876,6 +1876,27 @@
     true
   ],
   [
+    "__SetAttribute",
+    "<list />",
+    "update-list-info",
+    {
+      "insertAction": [
+        {
+          "position": 0,
+          "type": "_et_7a8c6_test_8",
+          "item-key": "1"
+        },
+        {
+          "position": 1,
+          "type": "_et_7a8c6_test_8",
+          "item-key": "2"
+        }
+      ],
+      "removeAction": [],
+      "updateAction": []
+    }
+  ],
+  [
     "__UpdateListCallbacks",
     "<list />",
     true,

@@ -91,6 +91,23 @@ export function installMockNativePapi(
     return node['__mockNativeId'];
   };
 
+  const getListUpdateInfoHistory = (list: unknown): unknown[] => {
+    if (!isRecord(list) || !Array.isArray(list['__updateListInfo'])) {
+      return [];
+    }
+    return list['__updateListInfo'];
+  };
+
+  const hasDescribedCellIndex = (list: unknown, cellIndex: number): boolean => {
+    const history = getListUpdateInfoHistory(list);
+    return history.some((entry) => {
+      if (!isRecord(entry) || !Array.isArray(entry['insertAction'])) {
+        return false;
+      }
+      return entry['insertAction'].some((action) => isRecord(action) && action['position'] === cellIndex);
+    });
+  };
+
   const setListCallbacks = (
     list: unknown,
     componentAtIndex: unknown,
@@ -230,6 +247,17 @@ export function installMockNativePapi(
   const mockSetAttribute = vi.fn().mockImplementation((element: unknown, name: string, value: unknown) => {
     nativeLog.push(['__SetAttribute', formatNode(element), name, value]);
     if (!isRecord(element)) {
+      return;
+    }
+
+    if (name === 'update-list-info') {
+      const history = getListUpdateInfoHistory(element);
+      history.push(value);
+      Object.defineProperty(element, '__updateListInfo', {
+        value: history,
+        writable: true,
+        configurable: true,
+      });
       return;
     }
 
@@ -415,6 +443,9 @@ export function installMockNativePapi(
     if (!isRecord(list) || typeof list['__componentAtIndex'] !== 'function') {
       throw new Error('MockNativePapi: componentAtIndex callback is not installed.');
     }
+    if (!hasDescribedCellIndex(list, cellIndex)) {
+      throw new Error(`MockNativePapi: update-list-info does not describe cellIndex ${cellIndex}.`);
+    }
     return list['__componentAtIndex'](
       list,
       getElementUniqueID(list),
@@ -433,6 +464,11 @@ export function installMockNativePapi(
   ) => {
     if (!isRecord(list) || typeof list['__componentAtIndexes'] !== 'function') {
       throw new Error('MockNativePapi: componentAtIndexes callback is not installed.');
+    }
+    for (const cellIndex of cellIndexes) {
+      if (!hasDescribedCellIndex(list, cellIndex)) {
+        throw new Error(`MockNativePapi: update-list-info does not describe cellIndex ${cellIndex}.`);
+      }
     }
     return list['__componentAtIndexes'](
       list,

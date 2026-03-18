@@ -283,6 +283,32 @@
     true
   ],
   [
+    "__SetAttribute",
+    "<list />",
+    "update-list-info",
+    {
+      "insertAction": [
+        {
+          "position": 0,
+          "type": "_et_7a8c6_test_1",
+          "item-key": "1"
+        },
+        {
+          "position": 1,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "2"
+        },
+        {
+          "position": 2,
+          "type": "_et_7a8c6_test_3",
+          "item-key": "3"
+        }
+      ],
+      "removeAction": [],
+      "updateAction": []
+    }
+  ],
+  [
     "__UpdateListCallbacks",
     "<list />",
     true,

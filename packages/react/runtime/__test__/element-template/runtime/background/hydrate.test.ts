@@ -205,6 +205,26 @@ describe('hydrate', () => {
     expect(stream).toEqual([]);
   });
 
+  it('treats null serialized attributeSlots and elementSlots as empty', () => {
+    const root = new BackgroundElementTemplateInstance('root');
+
+    const stream = hydrate(
+      {
+        templateKey: 'root',
+        attributeSlots: null,
+        elementSlots: null,
+        options: {
+          handleId: root.instanceId,
+        },
+      } as unknown as SerializedElementTemplate,
+      root,
+    );
+
+    expect(stream).toEqual([]);
+    expect(root.attributeSlots).toEqual([]);
+    expect(root.elementSlots).toEqual([]);
+  });
+
   it('skips sparse background slot indexes when checking trailing slots', () => {
     const root = new BackgroundElementTemplateInstance('root');
     const slot = new BackgroundElementTemplateSlot();

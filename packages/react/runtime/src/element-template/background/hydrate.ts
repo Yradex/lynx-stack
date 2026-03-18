@@ -124,22 +124,23 @@ function hydrateImpl(
     return;
   }
   after.options = getSerializedRuntimeOptions(before);
-  syncAttributeSlots(handleId, before.attributeSlots, after.attributeSlots);
+  syncAttributeSlots(handleId, getSerializedAttributeSlots(before), after.attributeSlots);
 
   if (isRawTextTemplateKey(before.templateKey)) {
     return;
   }
 
+  const beforeElementSlots = getSerializedElementSlots(before);
   const slotIds = new Set<number>();
-  for (let slotId = 0; slotId < before.elementSlots.length; slotId += 1) {
-    if (!before.elementSlots[slotId]) {
+  for (let slotId = 0; slotId < beforeElementSlots.length; slotId += 1) {
+    if (!beforeElementSlots[slotId]) {
       continue;
     }
     slotIds.add(slotId);
   }
 
   for (const slotId of slotIds) {
-    syncSlotChildren(after, slotId, getSerializedTemplateChildren(before.elementSlots[slotId]), created);
+    syncSlotChildren(after, slotId, getSerializedTemplateChildren(beforeElementSlots[slotId]), created);
   }
 
   for (let slotId = 0; slotId < after.elementSlots.length; slotId += 1) {
@@ -353,7 +354,7 @@ function createPlaceholder(serialized: SerializedTemplateInstance): BackgroundEl
     );
   } else {
     node = new BackgroundElementTemplateInstance(type, undefined, getSerializedRuntimeOptions(serialized));
-    node.attributeSlots = [...serialized.attributeSlots];
+    node.attributeSlots = [...getSerializedAttributeSlots(serialized)];
   }
   if (handleId != null) {
     bindHydrationHandleId(node, handleId, serialized.templateKey);
@@ -394,6 +395,18 @@ function getSerializedTemplateChildren(
     }
   }
   return children;
+}
+
+function getSerializedAttributeSlots(
+  value: SerializedElementTemplate | SerializedTemplateInstance | undefined,
+): SerializableValue[] {
+  return Array.isArray(value?.attributeSlots) ? value.attributeSlots : [];
+}
+
+function getSerializedElementSlots(
+  value: SerializedElementTemplate | SerializedTemplateInstance | undefined,
+): SerializedTemplateInstance[][] {
+  return Array.isArray(value?.elementSlots) ? value.elementSlots : [];
 }
 
 function getSerializedHandleId(

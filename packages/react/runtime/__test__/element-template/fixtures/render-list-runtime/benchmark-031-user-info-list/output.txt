@@ -1,0 +1,71 @@
+"<list custom-list-name=\"list-container\" experimental-disable-platform-implementation=\"true\" list-type=\"single\" style=\"height:100%;width:100%\">
+  <list-item item-key=\"1\">
+    <view class=\"card\">
+      <view class=\"card-container\">
+        <view class=\"card-left-container\">
+          <text class=\"card-index\" style={{\"item-key\":\"1\"}}>
+            <raw-text text=\"1\" />
+          </text>
+          <image alt=\"Card Header\" class=\"avatar\" downsampling=\"true\" mode=\"aspectFill\" src={{\"color\":\"#F7283D\"}} />
+          <view class=\"user-container\">
+            <text class=\"user-name\">
+              <raw-text text=\"Ada\" />
+            </text>
+            <text class=\"user-subtitle\">
+              <raw-text text=\"1.2 million people are watching\" />
+            </text>
+          </view>
+        </view>
+        <text class=\"card-left-title\">
+          <raw-text text=\"30 M+\" />
+        </text>
+      </view>
+    </view>
+  </list-item>
+  <list-item item-key=\"2\">
+    <view class=\"card\">
+      <view class=\"card-container\">
+        <view class=\"card-left-container\">
+          <text class=\"card-index\" style={{\"item-key\":\"2\"}}>
+            <raw-text text=\"2\" />
+          </text>
+          <image alt=\"Card Header\" class=\"avatar\" downsampling=\"true\" mode=\"aspectFill\" src={{\"color\":\"#F76A4F\"}} />
+          <view class=\"user-container\">
+            <text class=\"user-name\">
+              <raw-text text=\"Linus\" />
+            </text>
+            <text class=\"user-subtitle\">
+              <raw-text text=\"2.4 million people are watching\" />
+            </text>
+          </view>
+        </view>
+        <text class=\"card-left-title\">
+          <raw-text text=\"28 M+\" />
+        </text>
+      </view>
+    </view>
+  </list-item>
+  <list-item item-key=\"3\">
+    <view class=\"card\">
+      <view class=\"card-container\">
+        <view class=\"card-left-container\">
+          <text class=\"card-index\" style={{\"item-key\":\"3\"}}>
+            <raw-text text=\"3\" />
+          </text>
+          <image alt=\"Card Header\" class=\"avatar\" downsampling=\"true\" mode=\"aspectFill\" src={{\"color\":\"#F4CB5F\"}} />
+          <view class=\"user-container\">
+            <text class=\"user-name\">
+              <raw-text text=\"Grace\" />
+            </text>
+            <text class=\"user-subtitle\">
+              <raw-text text=\"3.6 million people are watching\" />
+            </text>
+          </view>
+        </view>
+        <text class=\"card-left-title\">
+          <raw-text text=\"45 M+\" />
+        </text>
+      </view>
+    </view>
+  </list-item>
+</list>"

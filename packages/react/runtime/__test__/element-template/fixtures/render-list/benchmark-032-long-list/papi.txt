@@ -270,6 +270,47 @@
     true
   ],
   [
+    "__SetAttribute",
+    "<list />",
+    "update-list-info",
+    {
+      "insertAction": [
+        {
+          "position": 0,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "0"
+        },
+        {
+          "position": 1,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "1"
+        },
+        {
+          "position": 2,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "2"
+        },
+        {
+          "position": 3,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "3"
+        },
+        {
+          "position": 4,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "4"
+        },
+        {
+          "position": 5,
+          "type": "_et_7a8c6_test_2",
+          "item-key": "5"
+        }
+      ],
+      "removeAction": [],
+      "updateAction": []
+    }
+  ],
+  [
     "__UpdateListCallbacks",
     "<list />",
     true,
