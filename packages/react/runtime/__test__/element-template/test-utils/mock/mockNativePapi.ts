@@ -24,6 +24,8 @@ const isUnknownArray = isUnknownArrayForMock;
 export interface MockNativePapi {
   nativeLog: any[];
   mockCreateElementTemplate: any;
+  mockCreateList: any;
+  mockUpdateListCallbacks: any;
   mockSerializeElementTemplate: any;
   mockSetAttributeOfElementTemplate: any;
   mockInsertNodeToElementTemplate: any;
@@ -32,6 +34,19 @@ export interface MockNativePapi {
   mockFlushElementTree: any;
   mockCreatePage: any;
   mockAppendElement: any;
+  triggerComponentAtIndex: (
+    list: unknown,
+    cellIndex: number,
+    operationID?: number,
+    enableReuseNotification?: boolean,
+  ) => unknown;
+  triggerComponentAtIndexes: (
+    list: unknown,
+    cellIndexes: number[],
+    operationIDs: number[],
+    enableReuseNotification?: boolean,
+    asyncFlush?: boolean,
+  ) => unknown;
   cleanup: () => void;
 }
 
@@ -47,7 +62,60 @@ export function installMockNativePapi(
 ): MockNativePapi {
   const { clearTemplatesOnCleanup = false } = options;
   const nativeLog: any[] = [];
+  let nextElementId = 1;
   // context setup moved to installThreadContexts
+
+  const attachMockNativeId = (node: unknown): void => {
+    if (!isRecord(node)) {
+      return;
+    }
+
+    Object.defineProperty(node, '__mockNativeId', {
+      value: nextElementId,
+      writable: true,
+      configurable: true,
+    });
+    nextElementId += 1;
+  };
+
+  const getElementUniqueID = (node: unknown): number => {
+    if (!isRecord(node) || typeof node['__mockNativeId'] !== 'number') {
+      throw new Error('MockNativePapi: element does not have a native id.');
+    }
+    return node['__mockNativeId'];
+  };
+
+  const setListCallbacks = (
+    list: unknown,
+    componentAtIndex: unknown,
+    enqueueComponent: unknown,
+    componentAtIndexes: unknown,
+  ): void => {
+    if (!isRecord(list)) {
+      return;
+    }
+
+    Object.defineProperties(list, {
+      __componentAtIndex: {
+        enumerable: false,
+        configurable: true,
+        value: componentAtIndex,
+        writable: true,
+      },
+      __enqueueComponent: {
+        enumerable: false,
+        configurable: true,
+        value: enqueueComponent,
+        writable: true,
+      },
+      __componentAtIndexes: {
+        enumerable: false,
+        configurable: true,
+        value: componentAtIndexes,
+        writable: true,
+      },
+    });
+  };
 
   const mockCreateElementTemplate = vi.fn().mockImplementation((
     templateKey: string,
@@ -66,6 +134,7 @@ export function installMockNativePapi(
 
     const template = templateRepo.get(templateKey) as unknown;
     const element = instantiateCompiledTemplate(template, attributeSlots, elementSlots);
+    attachMockNativeId(element);
     element.templateId = templateKey;
     Object.defineProperty(element, '__compiledTemplate', {
       value: template,
@@ -107,7 +176,35 @@ export function installMockNativePapi(
 
   const mockCreatePage = vi.fn().mockImplementation((id: string, cssId: number) => {
     nativeLog.push(['__CreatePage', id, cssId]);
-    return { type: 'page', id, cssId };
+    const page = { type: 'page', id, cssId };
+    attachMockNativeId(page);
+    return page;
+  });
+
+  const mockCreateList = vi.fn().mockImplementation((
+    parentComponentUniqueId: number,
+    componentAtIndex: unknown,
+    enqueueComponent: unknown,
+    infoOrComponentAtIndexes: unknown,
+    maybeComponentAtIndexes?: unknown,
+  ) => {
+    const componentAtIndexes = maybeComponentAtIndexes ?? infoOrComponentAtIndexes;
+    const list = {
+      tag: 'list',
+      attributes: {},
+      children: [] as unknown[],
+      parentComponentUniqueId,
+    };
+    attachMockNativeId(list);
+    setListCallbacks(list, componentAtIndex, enqueueComponent, componentAtIndexes);
+    nativeLog.push([
+      '__CreateList',
+      parentComponentUniqueId,
+      typeof componentAtIndex === 'function',
+      typeof enqueueComponent === 'function',
+      typeof componentAtIndexes === 'function',
+    ]);
+    return list;
   });
 
   const mockAppendElement = vi.fn().mockImplementation((parent: unknown, child: unknown) => {
@@ -177,14 +274,71 @@ export function installMockNativePapi(
     nativeLog.push(['__FlushElementTree', formatNode(element), options]);
   });
 
+  const mockUpdateListCallbacks = vi.fn().mockImplementation((
+    list: unknown,
+    componentAtIndex: unknown,
+    enqueueComponent: unknown,
+    componentAtIndexes: unknown,
+  ) => {
+    nativeLog.push([
+      '__UpdateListCallbacks',
+      formatNode(list),
+      typeof componentAtIndex === 'function',
+      typeof enqueueComponent === 'function',
+      typeof componentAtIndexes === 'function',
+    ]);
+    setListCallbacks(list, componentAtIndex, enqueueComponent, componentAtIndexes);
+  });
+
+  const triggerComponentAtIndex: MockNativePapi['triggerComponentAtIndex'] = (
+    list,
+    cellIndex,
+    operationID = 0,
+    enableReuseNotification = false,
+  ) => {
+    if (!isRecord(list) || typeof list['__componentAtIndex'] !== 'function') {
+      throw new Error('MockNativePapi: componentAtIndex callback is not installed.');
+    }
+    return list['__componentAtIndex'](
+      list,
+      getElementUniqueID(list),
+      cellIndex,
+      operationID,
+      enableReuseNotification,
+    );
+  };
+
+  const triggerComponentAtIndexes: MockNativePapi['triggerComponentAtIndexes'] = (
+    list,
+    cellIndexes,
+    operationIDs,
+    enableReuseNotification = false,
+    asyncFlush = false,
+  ) => {
+    if (!isRecord(list) || typeof list['__componentAtIndexes'] !== 'function') {
+      throw new Error('MockNativePapi: componentAtIndexes callback is not installed.');
+    }
+    return list['__componentAtIndexes'](
+      list,
+      getElementUniqueID(list),
+      cellIndexes,
+      operationIDs,
+      enableReuseNotification,
+      asyncFlush,
+    );
+  };
+
   vi.stubGlobal('__CreateElementTemplate', mockCreateElementTemplate);
+  vi.stubGlobal('__CreateList', mockCreateList);
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);
+  vi.stubGlobal('__GetElementUniqueID', vi.fn().mockImplementation(getElementUniqueID));
   vi.stubGlobal('__SetAttributeOfElementTemplate', mockSetAttributeOfElementTemplate);
   vi.stubGlobal('__InsertNodeToElementTemplate', mockInsertNodeToElementTemplate);
   vi.stubGlobal('__RemoveNodeFromElementTemplate', mockRemoveNodeFromElementTemplate);
   vi.stubGlobal('__SerializeElementTemplate', mockSerializeElementTemplate);
   vi.stubGlobal('__FlushElementTree', mockFlushElementTree);
+  vi.stubGlobal('__UpdateListCallbacks', mockUpdateListCallbacks);
   const currentLynx = (globalThis as unknown as { lynx?: any }).lynx;
   const baseLynx = (currentLynx && typeof currentLynx === 'object') ? currentLynx : {};
   vi.stubGlobal('lynx', {
@@ -195,6 +349,8 @@ export function installMockNativePapi(
   const result: MockNativePapi = {
     nativeLog: nativeLog,
     mockCreateElementTemplate: mockCreateElementTemplate,
+    mockCreateList: mockCreateList,
+    mockUpdateListCallbacks: mockUpdateListCallbacks,
     mockSerializeElementTemplate: mockSerializeElementTemplate,
     mockSetAttributeOfElementTemplate: mockSetAttributeOfElementTemplate,
     mockInsertNodeToElementTemplate: mockInsertNodeToElementTemplate,
@@ -203,6 +359,8 @@ export function installMockNativePapi(
     mockFlushElementTree: mockFlushElementTree,
     mockCreatePage: mockCreatePage,
     mockAppendElement: mockAppendElement,
+    triggerComponentAtIndex,
+    triggerComponentAtIndexes,
     cleanup: (): void => {
       const errorCalls = mockReportError.mock.calls;
       if (clearTemplatesOnCleanup) {
