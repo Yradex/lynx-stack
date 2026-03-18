@@ -1,0 +1,297 @@
+[
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Card one"
+    ],
+    [],
+    {
+      "handleId": -1
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "1.2 million people are searching"
+    ],
+    [],
+    {
+      "handleId": -2
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      {
+        "item-key": "1"
+      },
+      "https://example.com/cover-1.png"
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Card one"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "1.2 million people are searching"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -3
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Second benchmark list card"
+    ],
+    [],
+    {
+      "handleId": -4
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Linus 18 comments 2025-01-02"
+    ],
+    [],
+    {
+      "handleId": -5
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "2"
+      },
+      "https://example.com/cover-2.png"
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Second benchmark list card"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Linus 18 comments 2025-01-02"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -6
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Third benchmark list card"
+    ],
+    [],
+    {
+      "handleId": -7
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_4",
+    null,
+    [
+      "https://example.com/cover-3.png"
+    ],
+    null,
+    {
+      "handleId": -8
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_4",
+    null,
+    [
+      "https://example.com/cover-3.png"
+    ],
+    null,
+    {
+      "handleId": -9
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_4",
+    null,
+    [
+      "https://example.com/cover-3.png"
+    ],
+    null,
+    {
+      "handleId": -10
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "62 shares 2025-01-03"
+    ],
+    [],
+    {
+      "handleId": -11
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      {
+        "item-key": "3"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Third benchmark list card"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "image",
+          "attributes": {
+            "src": "https://example.com/cover-3.png",
+            "alt": "Card Header",
+            "class": "card3-image",
+            "mode": "aspectFill",
+            "downsampling": true
+          },
+          "children": [],
+          "templateId": "_et_7a8c6_test_4"
+        },
+        {
+          "tag": "image",
+          "attributes": {
+            "src": "https://example.com/cover-3.png",
+            "alt": "Card Header",
+            "class": "card3-image",
+            "mode": "aspectFill",
+            "downsampling": true
+          },
+          "children": [],
+          "templateId": "_et_7a8c6_test_4"
+        },
+        {
+          "tag": "image",
+          "attributes": {
+            "src": "https://example.com/cover-3.png",
+            "alt": "Card Header",
+            "class": "card3-image",
+            "mode": "aspectFill",
+            "downsampling": true
+          },
+          "children": [],
+          "templateId": "_et_7a8c6_test_4"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "62 shares 2025-01-03"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -12
+    }
+  ],
+  [
+    "__CreateList",
+    0,
+    true,
+    true,
+    true
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "list-type",
+    "single"
+  ],
+  [
+    "__SetInlineStyles",
+    "<list />",
+    "height:100%;width:100%"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "custom-list-name",
+    "list-container"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "experimental-disable-platform-implementation",
+    true
+  ],
+  [
+    "__UpdateListCallbacks",
+    "<list />",
+    true,
+    true,
+    true
+  ],
+  [
+    "__AppendElement",
+    "0",
+    "<_et_7a8c6_test_5 />"
+  ]
+]

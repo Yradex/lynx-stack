@@ -1,0 +1,308 @@
+[
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "0"
+    ],
+    [],
+    {
+      "handleId": -1
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "0"
+      },
+      {
+        "backgroundColor": "#FF0033",
+        "height": "16.8px"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "0"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -2
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "1"
+    ],
+    [],
+    {
+      "handleId": -3
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "1"
+      },
+      {
+        "backgroundColor": "#F76A4F",
+        "height": "16.8px"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "1"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -4
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "2"
+    ],
+    [],
+    {
+      "handleId": -5
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "2"
+      },
+      {
+        "backgroundColor": "#F4CB5F",
+        "height": "16.8px"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "2"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -6
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "3"
+    ],
+    [],
+    {
+      "handleId": -7
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "3"
+      },
+      {
+        "backgroundColor": "#AEADB2",
+        "height": "16.8px"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "3"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -8
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "4"
+    ],
+    [],
+    {
+      "handleId": -9
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "4"
+      },
+      {
+        "backgroundColor": "#00A6FF",
+        "height": "16.8px"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "4"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -10
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "5"
+    ],
+    [],
+    {
+      "handleId": -11
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    [
+      {
+        "item-key": "5"
+      },
+      {
+        "backgroundColor": "#33CC66",
+        "height": "16.8px"
+      }
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "5"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -12
+    }
+  ],
+  [
+    "__CreateList",
+    0,
+    true,
+    true,
+    true
+  ],
+  [
+    "__SetInlineStyles",
+    "<list />",
+    "height:100%;width:100%"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "custom-list-name",
+    "list-container"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "experimental-disable-platform-implementation",
+    true
+  ],
+  [
+    "__UpdateListCallbacks",
+    "<list />",
+    true,
+    true,
+    true
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_3",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "list",
+          "attributes": {
+            "style": "height:100%;width:100%",
+            "custom-list-name": "list-container",
+            "experimental-disable-platform-implementation": true
+          },
+          "children": [],
+          "parentComponentUniqueId": 0,
+          "templateId": "_et_7a8c6_test_1"
+        }
+      ]
+    ],
+    {
+      "handleId": -14
+    }
+  ],
+  [
+    "__AppendElement",
+    "0",
+    "<_et_7a8c6_test_3 />"
+  ]
+]

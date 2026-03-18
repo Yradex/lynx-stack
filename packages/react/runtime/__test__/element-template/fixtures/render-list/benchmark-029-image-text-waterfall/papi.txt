@@ -1,0 +1,1890 @@
+[
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Waterfall card one"
+    ],
+    [],
+    {
+      "handleId": -1
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Ada"
+    ],
+    [],
+    {
+      "handleId": -2
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      "https://example.com/avatar-1.png"
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Ada"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -3
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    null,
+    null,
+    {
+      "handleId": -4
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "1.2M"
+    ],
+    [],
+    {
+      "handleId": -5
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      "heart-icon liked"
+    ],
+    [
+      [
+        {
+          "tag": "text",
+          "attributes": {
+            "text": "❤️"
+          },
+          "children": [],
+          "templateId": "_et_7a8c6_test_2"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "1.2M"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -6
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_4",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "author-info"
+          },
+          "children": [
+            {
+              "tag": "image",
+              "attributes": {
+                "src": "https://example.com/avatar-1.png",
+                "alt": "Author Avatar",
+                "class": "author-avatar",
+                "mode": "aspectFill",
+                "downsampling": true
+              },
+              "children": []
+            },
+            {
+              "tag": "view",
+              "attributes": {
+                "class": "author-text-info"
+              },
+              "children": [
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "author-name"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "raw-text",
+                          "attributes": {
+                            "text": "Ada"
+                          },
+                          "children": [],
+                          "templateId": "__et_builtin_raw_text__"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_1"
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "card-stats"
+          },
+          "children": [
+            {
+              "tag": "view",
+              "attributes": {
+                "class": "heart-icon liked"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 0
+                  },
+                  "children": [
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "text": "❤️"
+                      },
+                      "children": [],
+                      "templateId": "_et_7a8c6_test_2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "likes-count"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 1
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "1.2M"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_3"
+        }
+      ]
+    ],
+    {
+      "handleId": -7
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "react"
+    ],
+    [],
+    {
+      "handleId": -8
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_6",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "react"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -9
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "lynx"
+    ],
+    [],
+    {
+      "handleId": -10
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_6",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "lynx"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -11
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_5",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "text",
+          "attributes": {
+            "class": "tag"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "react"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_6"
+        },
+        {
+          "tag": "text",
+          "attributes": {
+            "class": "tag"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "lynx"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_6"
+        }
+      ]
+    ],
+    {
+      "handleId": -12
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Benchmark waterfall content one"
+    ],
+    [],
+    {
+      "handleId": -13
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "2025-01-01"
+    ],
+    [],
+    {
+      "handleId": -14
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_7",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Waterfall card one"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "card-bottom-info"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "author-info"
+                  },
+                  "children": [
+                    {
+                      "tag": "image",
+                      "attributes": {
+                        "src": "https://example.com/avatar-1.png",
+                        "alt": "Author Avatar",
+                        "class": "author-avatar",
+                        "mode": "aspectFill",
+                        "downsampling": true
+                      },
+                      "children": []
+                    },
+                    {
+                      "tag": "view",
+                      "attributes": {
+                        "class": "author-text-info"
+                      },
+                      "children": [
+                        {
+                          "tag": "text",
+                          "attributes": {
+                            "class": "author-name"
+                          },
+                          "children": [
+                            {
+                              "tag": "slot",
+                              "attributes": {
+                                "slot-id": 0
+                              },
+                              "children": [
+                                {
+                                  "tag": "raw-text",
+                                  "attributes": {
+                                    "text": "Ada"
+                                  },
+                                  "children": [],
+                                  "templateId": "__et_builtin_raw_text__"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_1"
+                },
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "card-stats"
+                  },
+                  "children": [
+                    {
+                      "tag": "view",
+                      "attributes": {
+                        "class": "heart-icon liked"
+                      },
+                      "children": [
+                        {
+                          "tag": "slot",
+                          "attributes": {
+                            "slot-id": 0
+                          },
+                          "children": [
+                            {
+                              "tag": "text",
+                              "attributes": {
+                                "text": "❤️"
+                              },
+                              "children": [],
+                              "templateId": "_et_7a8c6_test_2"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "class": "likes-count"
+                      },
+                      "children": [
+                        {
+                          "tag": "slot",
+                          "attributes": {
+                            "slot-id": 1
+                          },
+                          "children": [
+                            {
+                              "tag": "raw-text",
+                              "attributes": {
+                                "text": "1.2M"
+                              },
+                              "children": [],
+                              "templateId": "__et_builtin_raw_text__"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_3"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_4"
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "tags-section"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "tag"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "raw-text",
+                          "attributes": {
+                            "text": "react"
+                          },
+                          "children": [],
+                          "templateId": "__et_builtin_raw_text__"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_6"
+                },
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "tag"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "raw-text",
+                          "attributes": {
+                            "text": "lynx"
+                          },
+                          "children": [],
+                          "templateId": "__et_builtin_raw_text__"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_6"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_5"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Benchmark waterfall content one"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "2025-01-01"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -15
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_8",
+    null,
+    [
+      {
+        "item-key": "1"
+      },
+      "https://example.com/cover-1.png"
+    ],
+    [
+      [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "card-body"
+          },
+          "children": [
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "card-title"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 0
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "Waterfall card one"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 1
+              },
+              "children": [
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "card-bottom-info"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "view",
+                          "attributes": {
+                            "class": "author-info"
+                          },
+                          "children": [
+                            {
+                              "tag": "image",
+                              "attributes": {
+                                "src": "https://example.com/avatar-1.png",
+                                "alt": "Author Avatar",
+                                "class": "author-avatar",
+                                "mode": "aspectFill",
+                                "downsampling": true
+                              },
+                              "children": []
+                            },
+                            {
+                              "tag": "view",
+                              "attributes": {
+                                "class": "author-text-info"
+                              },
+                              "children": [
+                                {
+                                  "tag": "text",
+                                  "attributes": {
+                                    "class": "author-name"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "slot",
+                                      "attributes": {
+                                        "slot-id": 0
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "raw-text",
+                                          "attributes": {
+                                            "text": "Ada"
+                                          },
+                                          "children": [],
+                                          "templateId": "__et_builtin_raw_text__"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_1"
+                        },
+                        {
+                          "tag": "view",
+                          "attributes": {
+                            "class": "card-stats"
+                          },
+                          "children": [
+                            {
+                              "tag": "view",
+                              "attributes": {
+                                "class": "heart-icon liked"
+                              },
+                              "children": [
+                                {
+                                  "tag": "slot",
+                                  "attributes": {
+                                    "slot-id": 0
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "text",
+                                      "attributes": {
+                                        "text": "❤️"
+                                      },
+                                      "children": [],
+                                      "templateId": "_et_7a8c6_test_2"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "text",
+                              "attributes": {
+                                "class": "likes-count"
+                              },
+                              "children": [
+                                {
+                                  "tag": "slot",
+                                  "attributes": {
+                                    "slot-id": 1
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "raw-text",
+                                      "attributes": {
+                                        "text": "1.2M"
+                                      },
+                                      "children": [],
+                                      "templateId": "__et_builtin_raw_text__"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_3"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_4"
+                },
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "tags-section"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "text",
+                          "attributes": {
+                            "class": "tag"
+                          },
+                          "children": [
+                            {
+                              "tag": "slot",
+                              "attributes": {
+                                "slot-id": 0
+                              },
+                              "children": [
+                                {
+                                  "tag": "raw-text",
+                                  "attributes": {
+                                    "text": "react"
+                                  },
+                                  "children": [],
+                                  "templateId": "__et_builtin_raw_text__"
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_6"
+                        },
+                        {
+                          "tag": "text",
+                          "attributes": {
+                            "class": "tag"
+                          },
+                          "children": [
+                            {
+                              "tag": "slot",
+                              "attributes": {
+                                "slot-id": 0
+                              },
+                              "children": [
+                                {
+                                  "tag": "raw-text",
+                                  "attributes": {
+                                    "text": "lynx"
+                                  },
+                                  "children": [],
+                                  "templateId": "__et_builtin_raw_text__"
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_6"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_5"
+                }
+              ]
+            },
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "card-content"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 2
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "Benchmark waterfall content one"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "creation-date"
+              },
+              "children": [
+                {
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "Posted on: "
+                  },
+                  "children": []
+                },
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 3
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "2025-01-01"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_7"
+        }
+      ]
+    ],
+    {
+      "handleId": -16
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Waterfall card two"
+    ],
+    [],
+    {
+      "handleId": -17
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Linus"
+    ],
+    [],
+    {
+      "handleId": -18
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_1",
+    null,
+    [
+      "https://example.com/avatar-2.png"
+    ],
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Linus"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -19
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_2",
+    null,
+    null,
+    null,
+    {
+      "handleId": -20
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "980K"
+    ],
+    [],
+    {
+      "handleId": -21
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_3",
+    null,
+    [
+      "heart-icon "
+    ],
+    [
+      [
+        {
+          "tag": "text",
+          "attributes": {
+            "text": "❤️"
+          },
+          "children": [],
+          "templateId": "_et_7a8c6_test_2"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "980K"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -22
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_4",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "author-info"
+          },
+          "children": [
+            {
+              "tag": "image",
+              "attributes": {
+                "src": "https://example.com/avatar-2.png",
+                "alt": "Author Avatar",
+                "class": "author-avatar",
+                "mode": "aspectFill",
+                "downsampling": true
+              },
+              "children": []
+            },
+            {
+              "tag": "view",
+              "attributes": {
+                "class": "author-text-info"
+              },
+              "children": [
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "author-name"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "raw-text",
+                          "attributes": {
+                            "text": "Linus"
+                          },
+                          "children": [],
+                          "templateId": "__et_builtin_raw_text__"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_1"
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "card-stats"
+          },
+          "children": [
+            {
+              "tag": "view",
+              "attributes": {
+                "class": "heart-icon "
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 0
+                  },
+                  "children": [
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "text": "❤️"
+                      },
+                      "children": [],
+                      "templateId": "_et_7a8c6_test_2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "likes-count"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 1
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "980K"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_3"
+        }
+      ]
+    ],
+    {
+      "handleId": -23
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "et"
+    ],
+    [],
+    {
+      "handleId": -24
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_6",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "et"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -25
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "snapshot"
+    ],
+    [],
+    {
+      "handleId": -26
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_6",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "snapshot"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -27
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_5",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "text",
+          "attributes": {
+            "class": "tag"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "et"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_6"
+        },
+        {
+          "tag": "text",
+          "attributes": {
+            "class": "tag"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "snapshot"
+                  },
+                  "children": [],
+                  "templateId": "__et_builtin_raw_text__"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_6"
+        }
+      ]
+    ],
+    {
+      "handleId": -28
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "Benchmark waterfall content two"
+    ],
+    [],
+    {
+      "handleId": -29
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "__et_builtin_raw_text__",
+    null,
+    [
+      "2025-01-02"
+    ],
+    [],
+    {
+      "handleId": -30
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_7",
+    null,
+    null,
+    [
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Waterfall card two"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "card-bottom-info"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "author-info"
+                  },
+                  "children": [
+                    {
+                      "tag": "image",
+                      "attributes": {
+                        "src": "https://example.com/avatar-2.png",
+                        "alt": "Author Avatar",
+                        "class": "author-avatar",
+                        "mode": "aspectFill",
+                        "downsampling": true
+                      },
+                      "children": []
+                    },
+                    {
+                      "tag": "view",
+                      "attributes": {
+                        "class": "author-text-info"
+                      },
+                      "children": [
+                        {
+                          "tag": "text",
+                          "attributes": {
+                            "class": "author-name"
+                          },
+                          "children": [
+                            {
+                              "tag": "slot",
+                              "attributes": {
+                                "slot-id": 0
+                              },
+                              "children": [
+                                {
+                                  "tag": "raw-text",
+                                  "attributes": {
+                                    "text": "Linus"
+                                  },
+                                  "children": [],
+                                  "templateId": "__et_builtin_raw_text__"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_1"
+                },
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "card-stats"
+                  },
+                  "children": [
+                    {
+                      "tag": "view",
+                      "attributes": {
+                        "class": "heart-icon "
+                      },
+                      "children": [
+                        {
+                          "tag": "slot",
+                          "attributes": {
+                            "slot-id": 0
+                          },
+                          "children": [
+                            {
+                              "tag": "text",
+                              "attributes": {
+                                "text": "❤️"
+                              },
+                              "children": [],
+                              "templateId": "_et_7a8c6_test_2"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "text",
+                      "attributes": {
+                        "class": "likes-count"
+                      },
+                      "children": [
+                        {
+                          "tag": "slot",
+                          "attributes": {
+                            "slot-id": 1
+                          },
+                          "children": [
+                            {
+                              "tag": "raw-text",
+                              "attributes": {
+                                "text": "980K"
+                              },
+                              "children": [],
+                              "templateId": "__et_builtin_raw_text__"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_3"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_4"
+        },
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "tags-section"
+          },
+          "children": [
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 0
+              },
+              "children": [
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "tag"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "raw-text",
+                          "attributes": {
+                            "text": "et"
+                          },
+                          "children": [],
+                          "templateId": "__et_builtin_raw_text__"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_6"
+                },
+                {
+                  "tag": "text",
+                  "attributes": {
+                    "class": "tag"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "raw-text",
+                          "attributes": {
+                            "text": "snapshot"
+                          },
+                          "children": [],
+                          "templateId": "__et_builtin_raw_text__"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_6"
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_5"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "Benchmark waterfall content two"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ],
+      [
+        {
+          "tag": "raw-text",
+          "attributes": {
+            "text": "2025-01-02"
+          },
+          "children": [],
+          "templateId": "__et_builtin_raw_text__"
+        }
+      ]
+    ],
+    {
+      "handleId": -31
+    }
+  ],
+  [
+    "__CreateElementTemplate",
+    "_et_7a8c6_test_8",
+    null,
+    [
+      {
+        "item-key": "2"
+      },
+      "https://example.com/cover-2.png"
+    ],
+    [
+      [
+        {
+          "tag": "view",
+          "attributes": {
+            "class": "card-body"
+          },
+          "children": [
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "card-title"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 0
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "Waterfall card two"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "slot",
+              "attributes": {
+                "slot-id": 1
+              },
+              "children": [
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "card-bottom-info"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "view",
+                          "attributes": {
+                            "class": "author-info"
+                          },
+                          "children": [
+                            {
+                              "tag": "image",
+                              "attributes": {
+                                "src": "https://example.com/avatar-2.png",
+                                "alt": "Author Avatar",
+                                "class": "author-avatar",
+                                "mode": "aspectFill",
+                                "downsampling": true
+                              },
+                              "children": []
+                            },
+                            {
+                              "tag": "view",
+                              "attributes": {
+                                "class": "author-text-info"
+                              },
+                              "children": [
+                                {
+                                  "tag": "text",
+                                  "attributes": {
+                                    "class": "author-name"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "slot",
+                                      "attributes": {
+                                        "slot-id": 0
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "raw-text",
+                                          "attributes": {
+                                            "text": "Linus"
+                                          },
+                                          "children": [],
+                                          "templateId": "__et_builtin_raw_text__"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_1"
+                        },
+                        {
+                          "tag": "view",
+                          "attributes": {
+                            "class": "card-stats"
+                          },
+                          "children": [
+                            {
+                              "tag": "view",
+                              "attributes": {
+                                "class": "heart-icon "
+                              },
+                              "children": [
+                                {
+                                  "tag": "slot",
+                                  "attributes": {
+                                    "slot-id": 0
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "text",
+                                      "attributes": {
+                                        "text": "❤️"
+                                      },
+                                      "children": [],
+                                      "templateId": "_et_7a8c6_test_2"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "text",
+                              "attributes": {
+                                "class": "likes-count"
+                              },
+                              "children": [
+                                {
+                                  "tag": "slot",
+                                  "attributes": {
+                                    "slot-id": 1
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "raw-text",
+                                      "attributes": {
+                                        "text": "980K"
+                                      },
+                                      "children": [],
+                                      "templateId": "__et_builtin_raw_text__"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_3"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_4"
+                },
+                {
+                  "tag": "view",
+                  "attributes": {
+                    "class": "tags-section"
+                  },
+                  "children": [
+                    {
+                      "tag": "slot",
+                      "attributes": {
+                        "slot-id": 0
+                      },
+                      "children": [
+                        {
+                          "tag": "text",
+                          "attributes": {
+                            "class": "tag"
+                          },
+                          "children": [
+                            {
+                              "tag": "slot",
+                              "attributes": {
+                                "slot-id": 0
+                              },
+                              "children": [
+                                {
+                                  "tag": "raw-text",
+                                  "attributes": {
+                                    "text": "et"
+                                  },
+                                  "children": [],
+                                  "templateId": "__et_builtin_raw_text__"
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_6"
+                        },
+                        {
+                          "tag": "text",
+                          "attributes": {
+                            "class": "tag"
+                          },
+                          "children": [
+                            {
+                              "tag": "slot",
+                              "attributes": {
+                                "slot-id": 0
+                              },
+                              "children": [
+                                {
+                                  "tag": "raw-text",
+                                  "attributes": {
+                                    "text": "snapshot"
+                                  },
+                                  "children": [],
+                                  "templateId": "__et_builtin_raw_text__"
+                                }
+                              ]
+                            }
+                          ],
+                          "templateId": "_et_7a8c6_test_6"
+                        }
+                      ]
+                    }
+                  ],
+                  "templateId": "_et_7a8c6_test_5"
+                }
+              ]
+            },
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "card-content"
+              },
+              "children": [
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 2
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "Benchmark waterfall content two"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "text",
+              "attributes": {
+                "class": "creation-date"
+              },
+              "children": [
+                {
+                  "tag": "raw-text",
+                  "attributes": {
+                    "text": "Posted on: "
+                  },
+                  "children": []
+                },
+                {
+                  "tag": "slot",
+                  "attributes": {
+                    "slot-id": 3
+                  },
+                  "children": [
+                    {
+                      "tag": "raw-text",
+                      "attributes": {
+                        "text": "2025-01-02"
+                      },
+                      "children": [],
+                      "templateId": "__et_builtin_raw_text__"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "templateId": "_et_7a8c6_test_7"
+        }
+      ]
+    ],
+    {
+      "handleId": -32
+    }
+  ],
+  [
+    "__CreateList",
+    0,
+    true,
+    true,
+    true
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "list-type",
+    "waterfall"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "column-count",
+    2
+  ],
+  [
+    "__SetInlineStyles",
+    "<list />",
+    "height:100%;width:100%"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "custom-list-name",
+    "list-container"
+  ],
+  [
+    "__SetAttribute",
+    "<list />",
+    "experimental-disable-platform-implementation",
+    true
+  ],
+  [
+    "__UpdateListCallbacks",
+    "<list />",
+    true,
+    true,
+    true
+  ],
+  [
+    "__AppendElement",
+    "0",
+    "<_et_7a8c6_test_9 />"
+  ]
+]
