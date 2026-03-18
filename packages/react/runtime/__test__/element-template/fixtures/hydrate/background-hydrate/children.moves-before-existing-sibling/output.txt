@@ -18,6 +18,9 @@ Object {
     null,
     Array [],
     Array [],
+    Object {
+      "handleId": 4,
+    },
     3,
     -4,
     0,
@@ -29,6 +32,9 @@ Object {
     null,
     Array [],
     Array [],
+    Object {
+      "handleId": 5,
+    },
     3,
     -4,
     0,
@@ -40,6 +46,9 @@ Object {
     null,
     Array [],
     Array [],
+    Object {
+      "handleId": 6,
+    },
     3,
     -4,
     0,

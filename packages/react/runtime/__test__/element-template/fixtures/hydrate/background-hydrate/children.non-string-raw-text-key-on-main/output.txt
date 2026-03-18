@@ -12,6 +12,9 @@ Object {
       2,
     ],
     Array [],
+    Object {
+      "handleId": 6,
+    },
     1,
     4,
     "_et_a94a8_test_42",
@@ -22,6 +25,9 @@ Object {
         6,
       ],
     ],
+    Object {
+      "handleId": 4,
+    },
     3,
     -3,
     0,

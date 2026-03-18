@@ -8,6 +8,9 @@ Object {
       "NEW",
     ],
     Array [],
+    Object {
+      "handleId": 6,
+    },
     1,
     4,
     "card",
@@ -22,6 +25,9 @@ Object {
         6,
       ],
     ],
+    Object {
+      "handleId": 4,
+    },
     3,
     -1,
     0,

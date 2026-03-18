@@ -10,6 +10,9 @@ Object {
     null,
     Array [],
     Array [],
+    Object {
+      "handleId": 10,
+    },
     3,
     -4,
     0,
