@@ -102,7 +102,7 @@ export class BackgroundElementTemplateInstance {
       normalizeRuntimeOptions({
         ...this.options,
         handleId: this.instanceId,
-      }),
+      }) ?? null,
     );
   }
 

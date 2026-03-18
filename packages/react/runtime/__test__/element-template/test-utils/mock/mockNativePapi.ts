@@ -26,6 +26,12 @@ export interface MockNativePapi {
   mockCreateElementTemplate: any;
   mockCreateList: any;
   mockUpdateListCallbacks: any;
+  mockSetClasses: any;
+  mockSetInlineStyles: any;
+  mockSetID: any;
+  mockAddDataset: any;
+  mockSetDataset: any;
+  mockSetAttribute: any;
   mockSerializeElementTemplate: any;
   mockSetAttributeOfElementTemplate: any;
   mockInsertNodeToElementTemplate: any;
@@ -221,6 +227,116 @@ export function installMockNativePapi(
     }
   });
 
+  const mockSetAttribute = vi.fn().mockImplementation((element: unknown, name: string, value: unknown) => {
+    nativeLog.push(['__SetAttribute', formatNode(element), name, value]);
+    if (!isRecord(element)) {
+      return;
+    }
+
+    const attributes = element['attributes'];
+    if (isRecord(attributes)) {
+      if (value === undefined || value === null) {
+        delete attributes[name];
+        return;
+      }
+      attributes[name] = value;
+      return;
+    }
+
+    if (value !== undefined && value !== null) {
+      element['attributes'] = { [name]: value };
+    }
+  });
+
+  const mockSetClasses = vi.fn().mockImplementation((element: unknown, value: unknown) => {
+    nativeLog.push(['__SetClasses', formatNode(element), value]);
+    if (!isRecord(element)) {
+      return;
+    }
+
+    const attributes = element['attributes'];
+    if (isRecord(attributes)) {
+      attributes['class'] = value;
+      return;
+    }
+
+    element['attributes'] = { class: value };
+  });
+
+  const mockSetInlineStyles = vi.fn().mockImplementation((element: unknown, value: unknown) => {
+    nativeLog.push(['__SetInlineStyles', formatNode(element), value]);
+    if (!isRecord(element)) {
+      return;
+    }
+
+    const attributes = element['attributes'];
+    if (isRecord(attributes)) {
+      attributes['style'] = value;
+      return;
+    }
+
+    element['attributes'] = { style: value };
+  });
+
+  const mockSetID = vi.fn().mockImplementation((element: unknown, value: unknown) => {
+    nativeLog.push(['__SetID', formatNode(element), value]);
+    if (!isRecord(element)) {
+      return;
+    }
+
+    const attributes = element['attributes'];
+    if (isRecord(attributes)) {
+      if (value === undefined || value === null) {
+        delete attributes['id'];
+        return;
+      }
+      attributes['id'] = value;
+      return;
+    }
+
+    if (value !== undefined && value !== null) {
+      element['attributes'] = { id: value };
+    }
+  });
+
+  const mockAddDataset = vi.fn().mockImplementation((element: unknown, key: string, value: unknown) => {
+    nativeLog.push(['__AddDataset', formatNode(element), key, value]);
+    if (!isRecord(element)) {
+      return;
+    }
+
+    const datasetKey = `data-${key}`;
+    const attributes = element['attributes'];
+    if (isRecord(attributes)) {
+      attributes[datasetKey] = value;
+      return;
+    }
+
+    element['attributes'] = { [datasetKey]: value };
+  });
+
+  const mockSetDataset = vi.fn().mockImplementation((element: unknown, value: unknown) => {
+    nativeLog.push(['__SetDataset', formatNode(element), value]);
+    if (!isRecord(element)) {
+      return;
+    }
+
+    const nextDataset = isRecord(value) ? value : {};
+    const attributes = isRecord(element['attributes']) ? element['attributes'] : {};
+
+    Object.keys(attributes)
+      .filter((key) => key.startsWith('data-'))
+      .forEach((key) => {
+        delete attributes[key];
+      });
+
+    Object.entries(nextDataset).forEach(([key, datasetValue]) => {
+      attributes[`data-${key}`] = datasetValue;
+    });
+
+    element['attributes'] = attributes;
+  });
+
   const mockSetAttributeOfElementTemplate = vi.fn().mockImplementation(
     (nativeRef: unknown, attrSlotIndex: number, value: unknown, options: unknown) => {
       nativeLog.push([
@@ -332,6 +448,12 @@ export function installMockNativePapi(
   vi.stubGlobal('__CreateList', mockCreateList);
   vi.stubGlobal('__CreatePage', mockCreatePage);
   vi.stubGlobal('__AppendElement', mockAppendElement);
+  vi.stubGlobal('__AddDataset', mockAddDataset);
+  vi.stubGlobal('__SetDataset', mockSetDataset);
+  vi.stubGlobal('__SetAttribute', mockSetAttribute);
+  vi.stubGlobal('__SetClasses', mockSetClasses);
+  vi.stubGlobal('__SetInlineStyles', mockSetInlineStyles);
+  vi.stubGlobal('__SetID', mockSetID);
   vi.stubGlobal('__GetElementUniqueID', vi.fn().mockImplementation(getElementUniqueID));
   vi.stubGlobal('__SetAttributeOfElementTemplate', mockSetAttributeOfElementTemplate);
   vi.stubGlobal('__InsertNodeToElementTemplate', mockInsertNodeToElementTemplate);
@@ -351,6 +473,12 @@ export function installMockNativePapi(
     mockCreateElementTemplate: mockCreateElementTemplate,
     mockCreateList: mockCreateList,
     mockUpdateListCallbacks: mockUpdateListCallbacks,
+    mockSetClasses: mockSetClasses,
+    mockSetInlineStyles: mockSetInlineStyles,
+    mockSetID: mockSetID,
+    mockAddDataset: mockAddDataset,
+    mockSetDataset: mockSetDataset,
+    mockSetAttribute: mockSetAttribute,
     mockSerializeElementTemplate: mockSerializeElementTemplate,
     mockSetAttributeOfElementTemplate: mockSetAttributeOfElementTemplate,
     mockInsertNodeToElementTemplate: mockInsertNodeToElementTemplate,

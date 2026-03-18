@@ -12,6 +12,19 @@ use swc_plugins_shared::transform_mode::TransformMode;
 const BUILTIN_RAW_TEXT_TEMPLATE_ID: &str = "__et_builtin_raw_text__";
 
 fn transform_to_templates(input: &str, cfg: JSXTransformerConfig) -> Vec<ElementTemplateAsset> {
+  let (templates, _) = transform_fixture(input, cfg);
+  templates
+}
+
+fn transform_to_code(input: &str, cfg: JSXTransformerConfig) -> String {
+  let (_, code) = transform_fixture(input, cfg);
+  code
+}
+
+fn transform_fixture(
+  input: &str,
+  cfg: JSXTransformerConfig,
+) -> (Vec<ElementTemplateAsset>, String) {
   GLOBALS.set(&Globals::new(), || {
     let cm: Arc<SourceMap> = Arc::new(SourceMap::default());
     let fm = cm.new_source_file(FileName::Anon.into(), input.to_string());
@@ -50,7 +63,10 @@ fn transform_to_templates(input: &str, cfg: JSXTransformerConfig) -> Vec<Element
     emitter.emit_module(&module).expect("Failed to emit module");
 
     let templates = element_templates.borrow_mut().drain(..).collect();
-    templates
+    (
+      templates,
+      String::from_utf8(sink).expect("transform output should be valid utf8"),
+    )
   })
 }
 
@@ -259,6 +275,106 @@ fn should_collect_element_template_assets_for_list_children_in_et_mode() {
   assert_eq!(list_children[0]["kind"], "elementSlot");
   assert_eq!(list_children[0]["tag"], "slot");
   assert_eq!(list_children[0]["elementSlotIndex"].as_f64(), Some(0.0));
+}
+
+#[test]
+fn should_not_opt_deferred_list_item_trees_into_et_list_fast_path() {
+  let code = transform_to_code(
+    r#"
+      <view>
+        <list>
+          <list-item defer item-key="Ada">
+            <text>Ada</text>
+          </list-item>
+        </list>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+  );
+
+  assert!(
+    !code.contains("__elementTemplateList: true"),
+    "deferred list-item trees should not be marked for ET list fast-path, got: {code}"
+  );
+}
+
+#[test]
+fn should_keep_et_list_fast_path_for_list_item_defer_false() {
+  let code = transform_to_code(
+    r#"
+      <view>
+        <list>
+          <list-item defer={false} item-key="Ada">
+            <text>Ada</text>
+          </list-item>
+        </list>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+  );
+
+  assert!(
+    code.contains("__elementTemplateList: true"),
+    "non-deferred list-item trees should keep ET list fast-path, got: {code}"
+  );
+}
+
+#[test]
+fn should_not_keep_et_list_fast_path_for_list_item_defer_string_literal() {
+  let code = transform_to_code(
+    r#"
+      <view>
+        <list>
+          <list-item defer="false" item-key="Ada">
+            <text>Ada</text>
+          </list-item>
+        </list>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+  );
+
+  assert!(
+    !code.contains("__elementTemplateList: true"),
+    "string-literal defer should match deferred list-item semantics, got: {code}"
+  );
+}
+
+#[test]
+fn should_not_keep_et_list_fast_path_for_list_root_spread_props() {
+  let code = transform_to_code(
+    r#"
+      <view>
+        <list {...props}>
+          <list-item item-key="Ada">
+            <text>Ada</text>
+          </list-item>
+        </list>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+  );
+
+  assert!(
+    !code.contains("__elementTemplateList: true"),
+    "list roots with spread props should not keep the ET list fast-path, got: {code}"
+  );
 }
 
 fn find_list_node<'a>(value: &'a Value) -> Option<&'a Value> {

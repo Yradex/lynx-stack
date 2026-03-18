@@ -266,4 +266,244 @@ describe('render transform contract', () => {
       },
     ]);
   });
+
+  it('only marks non-deferred list roots for the ET fast-path', async () => {
+    const deferredResult = await transformReactLynx(
+      `
+      export function App() {
+        return (
+          <view>
+            <list>
+              <list-item defer item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    const nonDeferredResult = await transformReactLynx(
+      `
+      export function App() {
+        return (
+          <view>
+            <list>
+              <list-item defer={false} item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    const stringLiteralDeferredResult = await transformReactLynx(
+      `
+      export function App() {
+        return (
+          <view>
+            <list>
+              <list-item defer="false" item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    const behavioralAttrResult = await transformReactLynx(
+      `
+      export function App() {
+        const handleTap = () => {};
+        return (
+          <view>
+            <list bindtap={handleTap}>
+              <list-item item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    const spreadBehavioralAttrResult = await transformReactLynx(
+      `
+      export function App() {
+        const props = { bindtap: () => {} };
+        return (
+          <view>
+            <list {...props}>
+              <list-item item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    const spreadRefResult = await transformReactLynx(
+      `
+      export function App() {
+        const props = { ref: () => {} };
+        return (
+          <view>
+            <list {...props}>
+              <list-item item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    expect(deferredResult.code).not.toContain('__elementTemplateList: true');
+    expect(nonDeferredResult.code).toContain('__elementTemplateList: true');
+    expect(stringLiteralDeferredResult.code).not.toContain('__elementTemplateList: true');
+    expect(behavioralAttrResult.code).not.toContain('__elementTemplateList: true');
+    expect(spreadBehavioralAttrResult.code).not.toContain('__elementTemplateList: true');
+    expect(spreadRefResult.code).not.toContain('__elementTemplateList: true');
+  });
 });

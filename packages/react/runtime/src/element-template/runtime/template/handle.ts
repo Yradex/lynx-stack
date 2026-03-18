@@ -31,6 +31,7 @@ export function createElementTemplateWithHandle(
     elementSlots,
     runtimeOptions,
   );
+  annotateTemplateHandle(nativeRef, templateKey, handleId, attributeSlots, runtimeOptions);
   setElementTemplateNativeRef(handleId, nativeRef);
   return nativeRef;
 }
@@ -50,4 +51,43 @@ function normalizeRuntimeOptions(
   const normalizedEntries = Object.entries(options)
     .filter(([, value]) => value !== undefined);
   return Object.fromEntries(normalizedEntries) as RuntimeOptions;
+}
+
+function annotateTemplateHandle(
+  nativeRef: ElementRef,
+  templateKey: string,
+  handleId: number,
+  attributeSlots: SerializableValue[] | null | undefined,
+  options: RuntimeOptions,
+): void {
+  if (typeof nativeRef !== 'object' || nativeRef === null) {
+    return;
+  }
+
+  Object.defineProperties(nativeRef, {
+    templateId: {
+      configurable: true,
+      enumerable: true,
+      value: templateKey,
+      writable: true,
+    },
+    __handleId: {
+      configurable: true,
+      enumerable: false,
+      value: handleId,
+      writable: true,
+    },
+    __attributeSlots: {
+      configurable: true,
+      enumerable: false,
+      value: attributeSlots ?? null,
+      writable: true,
+    },
+    __options: {
+      configurable: true,
+      enumerable: false,
+      value: options,
+      writable: true,
+    },
+  });
 }

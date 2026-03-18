@@ -91,6 +91,7 @@ export function renderOpcodesIntoElementTemplate(
           ? createElementTemplateListWithHandle(
             templateKey,
             frame.elementSlots ?? null,
+            frame.attributeSlots ?? null,
             frame.options,
           )
           : createElementTemplateWithHandle(

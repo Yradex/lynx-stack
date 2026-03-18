@@ -16,7 +16,7 @@ use swc_core::{
   ecma::{
     ast::{JSXExpr, *},
     utils::{is_literal, prepend_stmt, private_ident},
-    visit::{VisitMut, VisitMutWith},
+    visit::{Visit, VisitMut, VisitMutWith, VisitWith},
   },
   quote, quote_expr,
 };
@@ -115,6 +115,114 @@ static NO_FLATTEN_ATTRIBUTES: Lazy<HashSet<String>> = Lazy::new(|| {
     "exposure-id".to_string(),
   ])
 });
+
+struct DeferredListItemDetector {
+  found: bool,
+}
+
+fn jsx_element_name_matches(name: &JSXElementName, expected: &str) -> bool {
+  match name {
+    JSXElementName::Ident(ident) => ident.sym == *expected,
+    JSXElementName::JSXMemberExpr(member) => member.prop.sym == *expected,
+    _ => false,
+  }
+}
+
+fn jsx_attr_is_truthy(value: &Option<JSXAttrValue>) -> bool {
+  match value {
+    None => true,
+    Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+      expr: JSXExpr::Expr(expr),
+      ..
+    })) => match &**expr {
+      Expr::Lit(Lit::Bool(bool_value)) => bool_value.value,
+      _ => true,
+    },
+    Some(JSXAttrValue::Str(_)) => true,
+    _ => true,
+  }
+}
+
+fn element_template_attributes_contain_spread(value: Option<&serde_json::Value>) -> bool {
+  value
+    .and_then(serde_json::Value::as_array)
+    .map(|attrs| {
+      attrs
+        .iter()
+        .any(|attr| attr.get("kind").and_then(serde_json::Value::as_str) == Some("spread"))
+    })
+    .unwrap_or(false)
+}
+
+fn jsx_list_root_has_unsupported_et_runtime_attrs(n: &JSXElement) -> bool {
+  n.opening.attrs.iter().any(|attr_or_spread| {
+    if matches!(attr_or_spread, JSXAttrOrSpread::SpreadElement(_)) {
+      return true;
+    }
+
+    let JSXAttrOrSpread::JSXAttr(attr) = attr_or_spread else {
+      return false;
+    };
+
+    let attr_name = match &attr.name {
+      JSXAttrName::Ident(name) => AttrName::from(name.sym.as_ref().to_string()),
+      JSXAttrName::JSXNamespacedName(JSXNamespacedName { ns, name, .. }) => {
+        AttrName::from_ns(ns.clone().into(), name.clone().into())
+      }
+    };
+
+    matches!(
+      attr_name,
+      AttrName::Event(..)
+        | AttrName::WorkletEvent(..)
+        | AttrName::Ref
+        | AttrName::WorkletRef(..)
+        | AttrName::Gesture(..)
+    )
+  })
+}
+
+fn jsx_is_deferred_list_item(n: &JSXElement) -> bool {
+  if jsx_element_name_matches(&n.opening.name, "DeferredListItem") {
+    return true;
+  }
+
+  if !jsx_is_list_item(n) {
+    return false;
+  }
+
+  n.opening.attrs.iter().any(|attr| {
+    let JSXAttrOrSpread::JSXAttr(attr) = attr else {
+      return false;
+    };
+    let JSXAttrName::Ident(name) = &attr.name else {
+      return false;
+    };
+
+    name.sym == "defer" && jsx_attr_is_truthy(&attr.value)
+  })
+}
+
+impl Visit for DeferredListItemDetector {
+  fn visit_jsx_element(&mut self, n: &JSXElement) {
+    if self.found {
+      return;
+    }
+
+    if jsx_is_deferred_list_item(n) {
+      self.found = true;
+      return;
+    }
+
+    n.visit_children_with(self);
+  }
+}
+
+fn jsx_contains_deferred_list_item(n: &JSXElement) -> bool {
+  let mut detector = DeferredListItemDetector { found: false };
+  n.visit_with(&mut detector);
+  detector.found
+}
 
 #[derive(Debug)]
 pub enum DynamicPart {
@@ -1381,6 +1489,40 @@ where
     }
   }
 
+  fn element_template_json_to_expr(&self, value: &serde_json::Value) -> Expr {
+    match value {
+      serde_json::Value::Null => Expr::Lit(Lit::Null(Null { span: DUMMY_SP })),
+      serde_json::Value::Bool(value) => Expr::Lit(Lit::Bool(Bool {
+        span: DUMMY_SP,
+        value: *value,
+      })),
+      serde_json::Value::Number(value) => Expr::Lit(Lit::Num(Number {
+        span: DUMMY_SP,
+        value: value.as_f64().unwrap_or_default(),
+        raw: None,
+      })),
+      serde_json::Value::String(value) => self.element_template_string_expr(value),
+      serde_json::Value::Array(items) => self.element_template_array_expr(
+        items
+          .iter()
+          .map(|item| self.element_template_json_to_expr(item))
+          .collect(),
+      ),
+      serde_json::Value::Object(items) => Expr::Object(ObjectLit {
+        span: DUMMY_SP,
+        props: items
+          .iter()
+          .map(|(key, value)| {
+            PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+              key: PropName::Ident(IdentName::new(key.clone().into(), DUMMY_SP)),
+              value: Box::new(self.element_template_json_to_expr(value)),
+            })))
+          })
+          .collect(),
+      }),
+    }
+  }
+
   fn element_template_from_jsx_children(
     &self,
     children: &[JSXElementChild],
@@ -1632,6 +1774,10 @@ where
       *jsx_name(node.opening.name.clone()),
       Expr::Lit(Lit::Str(ref s)) if s.value.to_string_lossy().as_ref() == "list"
     );
+    let list_can_use_et_runtime = use_element_template
+      && is_list_root
+      && !jsx_contains_deferred_list_item(node)
+      && !jsx_list_root_has_unsupported_et_runtime_attrs(node);
     let snapshot_uid_prefix = if use_element_template {
       "_et"
     } else {
@@ -2001,6 +2147,7 @@ where
       let mut element_slot_index: i32 = 0;
       let template_expr =
         self.element_template_from_jsx_element(node, &mut attr_slot_index, &mut element_slot_index);
+      let compiled_template = self.element_template_to_json(&template_expr);
 
       let mut option_props: Vec<PropOrSpread> = vec![];
       if self.has_explicit_css_id {
@@ -2017,7 +2164,9 @@ where
           value: Box::new(quote!("globDynamicComponentEntry" as Expr)),
         }))));
       }
-      if is_list_root {
+      let list_can_use_et_runtime = list_can_use_et_runtime
+        && !element_template_attributes_contain_spread(compiled_template.get("attributesArray"));
+      if list_can_use_et_runtime {
         option_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
           key: PropName::Ident(IdentName::new("__elementTemplateList".into(), DUMMY_SP)),
           value: Box::new(Expr::Lit(Lit::Bool(Bool {
@@ -2025,6 +2174,15 @@ where
             value: true,
           }))),
         }))));
+        if let Some(attributes_expr) = compiled_template.get("attributesArray") {
+          option_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+            key: PropName::Ident(IdentName::new(
+              "__elementTemplateAttributes".into(),
+              DUMMY_SP,
+            )),
+            value: Box::new(self.element_template_json_to_expr(attributes_expr)),
+          }))));
+        }
       }
       if !option_props.is_empty() {
         snapshot_attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
@@ -2045,7 +2203,6 @@ where
         .unwrap_or(snapshot_uid.as_str());
 
       if let Some(element_templates) = &self.element_templates {
-        let compiled_template = self.element_template_to_json(&template_expr);
         element_templates.borrow_mut().push(ElementTemplateAsset {
           template_id: format!("_et_{suffix}"),
           compiled_template,

@@ -109,7 +109,11 @@ describe('ET list first-screen contract', () => {
           <view>
             <list>
               {users.map((name) => (
-                <list-item item-key={name}>
+                <list-item
+                  item-key={name}
+                  full-span={name === 'Ada'}
+                  sticky-top={name === 'Ada'}
+                >
                   <text>{name}</text>
                 </list-item>
               ))}
@@ -132,6 +136,9 @@ describe('ET list first-screen contract', () => {
 
     mockNativePapi.triggerComponentAtIndex(listElement, 0, 11);
     expect(serializeToJSX(listElement).match(/<list-item/g)?.length ?? 0).toBe(1);
+    expect(serializeToJSX(listElement)).toContain('item-key="Ada"');
+    expect(serializeToJSX(listElement)).toContain('full-span="true"');
+    expect(serializeToJSX(listElement)).toContain('sticky-top="true"');
     mockNativePapi.triggerComponentAtIndex(listElement, 0, 12);
     expect(serializeToJSX(listElement).match(/<list-item/g)?.length ?? 0).toBe(1);
 
@@ -167,13 +174,134 @@ describe('ET list first-screen contract', () => {
     // Match the Snapshot list baseline: the container exists first, cells are pulled by native callbacks.
     expect(serializeToJSX(listElement)).toBe('<list />');
 
-    mockNativePapi.triggerComponentAtIndex(listElement, 0, 11);
-    mockNativePapi.triggerComponentAtIndex(listElement, 1, 22);
+    mockNativePapi.triggerComponentAtIndexes(listElement, [0, 1], [11, 22], false, true);
 
     const listJsx = serializeToJSX(listElement);
     expect(listJsx.match(/<list-item/g)?.length ?? 0).toBe(2);
     expect(listJsx).toContain('text="Ada"');
     expect(listJsx).toContain('text="Linus"');
+    expect(
+      mockNativePapi.nativeLog.some(([name, _node, options]) =>
+        name === '__FlushElementTree'
+        && typeof options === 'object'
+        && options !== null
+        && 'asyncFlush' in options
+        && options.asyncFlush === true
+      ),
+    ).toBe(true);
+  });
+
+  it('flushes synchronous batch requests through the list container only once', async () => {
+    const { listElement } = await compileAndRender(`
+      export function App() {
+        const users = ['Ada', 'Linus'];
+        return (
+          <view>
+            <list>
+              {users.map((name) => (
+                <list-item item-key={name}>
+                  <text>{name}</text>
+                </list-item>
+              ))}
+            </list>
+          </view>
+        );
+      }
+    `);
+
+    const beforeFlushLogIndex = mockNativePapi.nativeLog.length;
+    mockNativePapi.triggerComponentAtIndexes(listElement, [0, 1], [11, 22], false, false);
+
+    const flushLogs = mockNativePapi.nativeLog
+      .slice(beforeFlushLogIndex)
+      .filter(([name]) => name === '__FlushElementTree');
+
+    expect(flushLogs).toHaveLength(1);
+    expect(
+      flushLogs.some(([, _node, options]) =>
+        typeof options === 'object'
+        && options !== null
+        && 'operationIDs' in options
+        && Array.isArray(options.operationIDs)
+        && options.operationIDs[0] === 11
+        && options.operationIDs[1] === 22
+      ),
+    ).toBe(true);
+    expect(
+      flushLogs.every(([, _node, options]) =>
+        typeof options === 'object'
+        && options !== null
+        && !('operationID' in options)
+        && !('elementID' in options)
+      ),
+    ).toBe(true);
+  });
+
+  it('replays list root attributes onto the native list container', async () => {
+    const { listElement } = await compileAndRender(`
+      export function App() {
+        const cls = 'shell';
+        const style = { color: 'red' };
+        return (
+          <view>
+            <list id="user-list" className={cls} style={style} data-scene="benchmark" role="feed">
+              {[1].map((id) => (
+                <list-item item-key={String(id)}>
+                  <text>{id}</text>
+                </list-item>
+              ))}
+            </list>
+          </view>
+        );
+      }
+    `);
+    const serializedList = mockNativePapi.mockSerializeElementTemplate(listElement) as {
+      attributeSlots?: unknown[];
+    };
+
+    expect(serializeToJSX(listElement)).toContain('id="user-list"');
+    expect(serializeToJSX(listElement)).toContain('class="shell"');
+    expect(serializeToJSX(listElement)).toContain('data-scene="benchmark"');
+    expect(serializeToJSX(listElement)).toContain('role="feed"');
+    expect(serializeToJSX(listElement)).toContain('style={{"color":"red"}}');
+    expect(serializedList.attributeSlots).toEqual([
+      'shell',
+      { color: 'red' },
+    ]);
+    expect(mockNativePapi.nativeLog).toContainEqual(['__SetID', '<list />', 'user-list']);
+    expect(mockNativePapi.nativeLog).toContainEqual(['__SetClasses', '<list />', 'shell']);
+    expect(mockNativePapi.nativeLog).toContainEqual(['__SetInlineStyles', '<list />', { color: 'red' }]);
+    expect(mockNativePapi.nativeLog).toContainEqual(['__SetDataset', '<list />', { scene: 'benchmark' }]);
+    expect(mockNativePapi.nativeLog).toContainEqual(['__SetAttribute', '<list />', 'role', 'feed']);
+  });
+
+  it('lets explicit nullish attrs clear earlier spread values on the list root', async () => {
+    const { listElement } = await compileAndRender(`
+      export function App() {
+        const rest = {
+          id: 'spread-id',
+          className: 'spread-class',
+          role: 'feed',
+          'data-scene': 'spread-scene',
+        };
+        return (
+          <view>
+            <list {...rest} id={undefined} className={null} role={undefined} data-scene={undefined}>
+              {[1].map((id) => (
+                <list-item item-key={String(id)}>
+                  <text>{id}</text>
+                </list-item>
+              ))}
+            </list>
+          </view>
+        );
+      }
+    `);
+
+    expect(serializeToJSX(listElement)).not.toContain('id="spread-id"');
+    expect(serializeToJSX(listElement)).not.toContain('class="spread-class"');
+    expect(serializeToJSX(listElement)).not.toContain('role="feed"');
+    expect(serializeToJSX(listElement)).not.toContain('data-scene="spread-scene"');
   });
 
   it('skips null branches while preserving remaining list-item order', async () => {
@@ -210,6 +338,104 @@ describe('ET list first-screen contract', () => {
     expect(listJsx).toContain('text="Ada"');
     expect(listJsx).toContain('text="Linus"');
     expect(listJsx).not.toContain('text="Skip"');
+  });
+
+  it('reapplies only list-item platform info when spread props are present', async () => {
+    const { listElement } = await compileAndRender(`
+      export function App() {
+        const users = [
+          {
+            key: 'Ada',
+            fullSpan: true,
+            extra: {
+              title: 'user-card',
+              'data-track': 'tracked',
+            },
+          },
+        ];
+        return (
+          <view>
+            <list>
+              {users.map((user) => (
+                <list-item item-key={user.key} full-span={user.fullSpan} {...user.extra}>
+                  <text>{user.key}</text>
+                </list-item>
+              ))}
+            </list>
+          </view>
+        );
+      }
+    `);
+
+    mockNativePapi.triggerComponentAtIndex(listElement, 0, 11);
+
+    const platformAttrKeys = mockNativePapi.nativeLog
+      .filter(([name]) => name === '__SetAttribute')
+      .map(([, , key]) => key);
+
+    expect(platformAttrKeys).toContain('item-key');
+    expect(platformAttrKeys).toContain('full-span');
+    expect(platformAttrKeys).not.toContain('__spread');
+    expect(platformAttrKeys).not.toContain('title');
+    expect(platformAttrKeys).not.toContain('data-track');
+  });
+
+  it('does not emit reuse-notification payloads while first-screen cells are newly created', async () => {
+    const { listElement } = await compileAndRender(`
+      export function App() {
+        const users = ['Ada', 'Linus'];
+        return (
+          <view>
+            <list>
+              {users.map((name) => (
+                <list-item item-key={name}>
+                  <text>{name}</text>
+                </list-item>
+              ))}
+            </list>
+          </view>
+        );
+      }
+    `);
+
+    mockNativePapi.triggerComponentAtIndex(listElement, 0, 11, true);
+    mockNativePapi.triggerComponentAtIndexes(listElement, [1], [22], true, true);
+
+    expect(
+      mockNativePapi.nativeLog.some(([name, _node, options]) =>
+        name === '__FlushElementTree'
+        && typeof options === 'object'
+        && options !== null
+        && 'listReuseNotification' in options
+      ),
+    ).toBe(false);
+  });
+
+  it('does not emit reuse-notification payloads for literal item-key values during first-screen creation', async () => {
+    const { listElement } = await compileAndRender(`
+      export function App() {
+        return (
+          <view>
+            <list>
+              <list-item item-key="Ada">
+                <text>Ada</text>
+              </list-item>
+            </list>
+          </view>
+        );
+      }
+    `);
+
+    mockNativePapi.triggerComponentAtIndex(listElement, 0, 11, true);
+
+    expect(
+      mockNativePapi.nativeLog.some(([name, _node, options]) =>
+        name === '__FlushElementTree'
+        && typeof options === 'object'
+        && options !== null
+        && 'listReuseNotification' in options
+      ),
+    ).toBe(false);
   });
 
   async function compileAndRender(source: string): Promise<RenderedListFixture> {
