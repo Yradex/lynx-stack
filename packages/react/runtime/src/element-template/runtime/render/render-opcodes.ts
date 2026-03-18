@@ -2,6 +2,7 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { createElementTemplateListWithHandle, isElementTemplateList } from './list.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
 import type { RuntimeOptions, SerializableValue } from '../../protocol/types.js';
 import { createElementTemplateWithHandle } from '../template/handle.js';
@@ -86,13 +87,19 @@ export function renderOpcodesIntoElementTemplate(
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
-        const elementRef = createElementTemplateWithHandle(
-          templateKey,
-          null,
-          frame.attributeSlots ?? null,
-          frame.elementSlots ?? null,
-          frame.options,
-        );
+        const elementRef = isElementTemplateList(frame.options)
+          ? createElementTemplateListWithHandle(
+            templateKey,
+            frame.elementSlots ?? null,
+            frame.options,
+          )
+          : createElementTemplateWithHandle(
+            templateKey,
+            null,
+            frame.attributeSlots ?? null,
+            frame.elementSlots ?? null,
+            frame.options,
+          );
 
         // Append to parent
         const parentFrame = stack[stack.length - 1];

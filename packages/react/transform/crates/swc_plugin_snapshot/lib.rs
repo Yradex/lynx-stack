@@ -483,6 +483,20 @@ where
       }
     }
 
+    if self.enable_element_template && self.parent_element.is_some() && jsx_is_list(n) {
+      n.visit_mut_with(self.dynamic_part_visitor);
+
+      let element_slot_index = self.next_children_slot_index();
+      self.dynamic_parts.push(DynamicPart::Children(
+        Expr::JSXElement(Box::new(n.take())),
+        element_slot_index,
+      ));
+
+      *n = WRAPPER_NODE.clone();
+      n.visit_mut_with(self);
+      return;
+    }
+
     if !jsx_is_custom(n) {
       match Lazy::<Ident>::get(&self.page_id) {
         Some(_) => {}
@@ -1614,6 +1628,10 @@ where
     self.snapshot_counter += 1;
 
     let use_element_template = self.cfg.experimental_enable_element_template;
+    let is_list_root = matches!(
+      *jsx_name(node.opening.name.clone()),
+      Expr::Lit(Lit::Str(ref s)) if s.value.to_string_lossy().as_ref() == "list"
+    );
     let snapshot_uid_prefix = if use_element_template {
       "_et"
     } else {
@@ -1997,6 +2015,15 @@ where
         option_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
           key: PropName::Ident(IdentName::new("entryName".into(), DUMMY_SP)),
           value: Box::new(quote!("globDynamicComponentEntry" as Expr)),
+        }))));
+      }
+      if is_list_root {
+        option_props.push(PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+          key: PropName::Ident(IdentName::new("__elementTemplateList".into(), DUMMY_SP)),
+          value: Box::new(Expr::Lit(Lit::Bool(Bool {
+            span: DUMMY_SP,
+            value: true,
+          }))),
         }))));
       }
       if !option_props.is_empty() {

@@ -207,4 +207,63 @@ describe('render transform contract', () => {
       { handleId: -1, entryName: 'lazy-entry' },
     ]);
   });
+
+  it('hoists list into its own ET template and tags list roots with runtime create options', async () => {
+    const result = await transformReactLynx(
+      `
+      export function App() {
+        const users = ['Ada', 'Linus'];
+        return (
+          <view>
+            <list>
+              {users.map((name) => (
+                <list-item item-key={name}>
+                  <text>{name}</text>
+                </list-item>
+              ))}
+            </list>
+          </view>
+        );
+      }
+    `,
+      {
+        mode: 'test',
+        pluginName: 'runtime-transform-contract',
+        filename: 'source.tsx',
+        sourcemap: false,
+        cssScope: false,
+        snapshot: {
+          preserveJsx: false,
+          runtimePkg: '@lynx-js/react/element-template/internal',
+          jsxImportSource: '@lynx-js/react',
+          filename: 'source.tsx',
+          target: 'LEPUS',
+          experimentalEnableElementTemplate: true,
+          isDynamicComponent: false,
+        },
+        shake: false,
+        compat: true,
+        directiveDCE: false,
+        defineDCE: false,
+        worklet: false,
+        refresh: false,
+      },
+    ) as TransformNodiffOutput;
+
+    expect(result.code).toContain('__elementTemplateList: true');
+
+    const templates = result.elementTemplates ?? [];
+    const listTemplate = templates.find((template) => (template.compiledTemplate as { tag?: string }).tag === 'list');
+    const viewTemplate = templates.find((template) => (template.compiledTemplate as { tag?: string }).tag === 'view');
+
+    expect(listTemplate).toBeDefined();
+    expect(viewTemplate).toBeDefined();
+    expect((viewTemplate?.compiledTemplate as { children?: unknown[] }).children).toEqual([
+      {
+        kind: 'elementSlot',
+        tag: 'slot',
+        elementSlotIndex: 0,
+      },
+    ]);
+  });
 });

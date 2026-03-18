@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { resetElementTemplatePatchListener } from '../../../../src/element-template/native/patch-listener.js';
 import { setupPage } from '../../../../src/element-template/runtime/page/page.js';
 import { setRoot } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { renderMainThread } from '../../../../src/element-template/runtime/render/render-main-thread.js';
@@ -92,6 +93,7 @@ describe('ET list first-screen contract', () => {
   });
 
   afterEach(() => {
+    resetElementTemplatePatchListener();
     clearTemplates();
     ElementTemplateRegistry.clear();
     resetTemplateId();
@@ -232,14 +234,18 @@ describe('ET list first-screen contract', () => {
       const module = (await import(
         `${pathToFileURL(tempImportPath).href}?t=${Date.now()}`
       )) as { App: unknown };
-      const dispatchEvent = vi.fn();
+      const jsContext = globalThis.lynx?.getJSContext?.();
+      const dispatchEvent = vi.fn((event: unknown) => jsContext?.dispatchEvent?.(event as never));
       const page = { type: 'page' as const, id: '0', children: [] as unknown[] };
       setRoot({ __jsx: { type: module.App, props: {}, key: null, ref: null } });
       setupPage(page as unknown as FiberElement);
       globalThis.lynx = {
         ...(globalThis.lynx ?? {}),
         reportError: vi.fn(),
-        getJSContext: vi.fn(() => ({ dispatchEvent })),
+        getJSContext: vi.fn(() => ({
+          ...(jsContext ?? {}),
+          dispatchEvent,
+        })),
       } as typeof lynx;
 
       renderMainThread();
