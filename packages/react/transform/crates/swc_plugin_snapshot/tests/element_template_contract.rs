@@ -200,3 +200,73 @@ fn should_keep_element_slot_indices_stable_for_mixed_dynamic_children() {
   assert_eq!(children[3]["elementSlotIndex"].as_f64(), Some(1.0));
   assert_eq!(children[3]["tag"], "slot");
 }
+
+#[test]
+fn should_collect_element_template_assets_for_list_children_in_et_mode() {
+  let templates = transform_to_templates(
+    r#"
+      <view>
+        <list>
+          {items.map((item) => (
+            <list-item item-key={item.id}>
+              <text>{item.name}</text>
+            </list-item>
+          ))}
+        </list>
+      </view>
+    "#,
+    JSXTransformerConfig {
+      preserve_jsx: true,
+      experimental_enable_element_template: true,
+      ..Default::default()
+    },
+  );
+
+  assert!(
+    templates.len() >= 3,
+    "expected root, list-item, and list templates to be collected, got {}",
+    templates.len()
+  );
+
+  let template_jsons: Vec<_> = templates
+    .iter()
+    .map(|template| {
+      serde_json::to_value(&template.compiled_template).expect("compiled template to json")
+    })
+    .collect();
+
+  let list_template = template_jsons
+    .iter()
+    .find_map(find_list_node)
+    .unwrap_or_else(|| {
+      let template_tags: Vec<_> = template_jsons
+        .iter()
+        .map(|template| template["tag"].as_str().unwrap_or("<unknown>").to_string())
+        .collect();
+      panic!(
+        "should collect a list element in compiled templates, got root tags: {template_tags:?}"
+      );
+    });
+
+  let list_children = list_template["children"]
+    .as_array()
+    .expect("list children array");
+  assert_eq!(
+    list_children.len(),
+    1,
+    "list should expose one element slot for dynamic children"
+  );
+  assert_eq!(list_children[0]["kind"], "elementSlot");
+  assert_eq!(list_children[0]["tag"], "slot");
+  assert_eq!(list_children[0]["elementSlotIndex"].as_f64(), Some(0.0));
+}
+
+fn find_list_node<'a>(value: &'a Value) -> Option<&'a Value> {
+  if value["tag"] == "list" {
+    return Some(value);
+  }
+
+  value["children"]
+    .as_array()
+    .and_then(|children| children.iter().find_map(find_list_node))
+}

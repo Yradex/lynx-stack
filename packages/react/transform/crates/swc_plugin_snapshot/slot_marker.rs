@@ -157,6 +157,10 @@ impl VisitMut for WrapperMarker {
         })];
       }
 
+      if self.enable_element_template && is_list {
+        return;
+      }
+
       if should_wrap_element {
         self.dynamic_part_count += 1;
         *n = jsx_wrapped(INTERNAL_SLOT_STR, n.take());

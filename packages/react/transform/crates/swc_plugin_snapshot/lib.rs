@@ -935,6 +935,12 @@ where
           let children_expr = jsx_children_to_expr(n.children.take());
           let element_slot_index = self.next_children_slot_index();
           if is_list {
+            if self.enable_element_template {
+              n.children = vec![JSXElementChild::JSXExprContainer(JSXExprContainer {
+                span: DUMMY_SP,
+                expr: JSXExpr::Expr(Box::new(Expr::Lit(Lit::Null(Null { span: DUMMY_SP })))),
+              })];
+            }
             self
               .dynamic_parts
               .push(DynamicPart::ListChildren(children_expr, element_slot_index));
