@@ -4,11 +4,7 @@
 
 import type { RuntimeOptions, SerializableValue } from '../../protocol/types.js';
 import { __page } from '../page/page.js';
-import {
-  getElementTemplateHandleMetadata,
-  reserveElementTemplateId,
-  setElementTemplateHandleMetadata,
-} from '../template/handle.js';
+import { reserveElementTemplateId } from '../template/handle.js';
 import { setElementTemplateNativeRef } from '../template/registry.js';
 
 export const ELEMENT_TEMPLATE_LIST_OPTION = '__elementTemplateList';
@@ -151,14 +147,6 @@ function annotateListHandle(
     return;
   }
 
-  setElementTemplateHandleMetadata(list, {
-    templateId: templateKey,
-    handleId,
-    attributeSlots: attributeSlots ?? null,
-    options,
-  });
-
-  // Reuse the same sidecar metadata mechanism as regular ET template instances.
   try {
     Object.defineProperties(list, {
       templateId: {
@@ -187,7 +175,7 @@ function annotateListHandle(
       },
     });
   } catch {
-    // The sidecar metadata attached by reserve/create helpers is authoritative on native refs.
+    // Native refs may be host objects that do not reliably preserve arbitrary JS properties.
   }
 }
 
@@ -210,18 +198,11 @@ function normalizeListCells(
   elementSlots: Array<Array<ElementRef | ElementTemplateListCellRef>> | null | undefined,
 ): ElementTemplateListCellRef[] {
   const cells = elementSlots?.[0] ?? [];
-  return cells.map((cell) => {
-    if (isElementTemplateListCellRef(cell)) {
-      return cell;
+  return cells.map((cell, index) => {
+    if (!isElementTemplateListCellRef(cell)) {
+      throw new Error(`ElementTemplate list expected a wrapped cell at index ${index}.`);
     }
-
-    const metadata = getElementTemplateHandleMetadata(cell);
-    return createElementTemplateListCellRef(
-      cell,
-      metadata?.templateId ?? 'unknown',
-      metadata?.attributeSlots ?? null,
-      null,
-    );
+    return cell;
   });
 }
 
@@ -392,11 +373,7 @@ function extractListItemPlatformInfo(cell: ElementTemplateListCellRef): Record<s
     return cell.platformInfo;
   }
 
-  const attributeSlots = cell.attributeSlots
-    ?? getElementTemplateHandleMetadata(cell.nativeRef)?.attributeSlots
-    ?? (isRecord(cell.nativeRef) && Array.isArray(cell.nativeRef['__attributeSlots'])
-      ? cell.nativeRef['__attributeSlots']
-      : null);
+  const attributeSlots = cell.attributeSlots;
   if (!Array.isArray(attributeSlots)) {
     return undefined;
   }
