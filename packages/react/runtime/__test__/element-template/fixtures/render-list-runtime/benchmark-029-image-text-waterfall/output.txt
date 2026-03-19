@@ -1,7 +1,7 @@
 "<list column-count=\"2\" custom-list-name=\"list-container\" experimental-disable-platform-implementation=\"true\" list-type=\"waterfall\" style=\"height:100%;width:100%\">
   <list-item item-key=\"1\">
     <view class=\"card\">
-      <image alt=\"Card Header\" class=\"header-image\" downsampling=\"true\" mode=\"aspectFill\" src={{\"item-key\":\"1\"}} />
+      <image alt=\"Card Header\" class=\"header-image\" downsampling=\"true\" mode=\"aspectFill\" src=\"https://example.com/cover-1.png\" />
       <view class=\"card-body\">
         <text class=\"card-title\">
           <raw-text text=\"Waterfall card one\" />
@@ -44,7 +44,7 @@
   </list-item>
   <list-item item-key=\"2\">
     <view class=\"card\">
-      <image alt=\"Card Header\" class=\"header-image\" downsampling=\"true\" mode=\"aspectFill\" src={{\"item-key\":\"2\"}} />
+      <image alt=\"Card Header\" class=\"header-image\" downsampling=\"true\" mode=\"aspectFill\" src=\"https://example.com/cover-2.png\" />
       <view class=\"card-body\">
         <text class=\"card-title\">
           <raw-text text=\"Waterfall card two\" />

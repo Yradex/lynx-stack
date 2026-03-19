@@ -2,7 +2,12 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { createElementTemplateListWithHandle, isElementTemplateList } from './list.js';
+import {
+  createElementTemplateListCellRef,
+  createElementTemplateListWithHandle,
+  isElementTemplateList,
+  splitListItemAttributeSlots,
+} from './list.js';
 import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
 import type { RuntimeOptions, SerializableValue } from '../../protocol/types.js';
 import { createElementTemplateWithHandle } from '../template/handle.js';
@@ -17,7 +22,7 @@ interface Frame {
   attributeSlots: SerializableValue[] | undefined;
 
   // Collected dynamic children keyed by elementSlotIndex.
-  elementSlots: ElementRef[][] | undefined;
+  elementSlots: Array<Array<ElementRef | ReturnType<typeof createElementTemplateListCellRef>>> | undefined;
 
   // Create-time metadata forwarded into __CreateElementTemplate options.
   options: RuntimeOptions | undefined;
@@ -87,23 +92,34 @@ export function renderOpcodesIntoElementTemplate(
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
+        const parentFrame = stack[stack.length - 1];
+        const isListCell = Boolean(parentFrame && isElementTemplateList(parentFrame.options));
+        const {
+          templateAttributeSlots,
+          platformInfo,
+        } = isListCell
+          ? splitListItemAttributeSlots(frame.attributeSlots ?? null)
+          : {
+            templateAttributeSlots: frame.attributeSlots ?? null,
+            platformInfo: null,
+          };
+
         const elementRef = isElementTemplateList(frame.options)
           ? createElementTemplateListWithHandle(
             templateKey,
             frame.elementSlots ?? null,
-            frame.attributeSlots ?? null,
+            templateAttributeSlots,
             frame.options,
           )
           : createElementTemplateWithHandle(
             templateKey,
             null,
-            frame.attributeSlots ?? null,
+            templateAttributeSlots,
             frame.elementSlots ?? null,
             frame.options,
           );
 
         // Append to parent
-        const parentFrame = stack[stack.length - 1];
         if (parentFrame) {
           if (parentFrame.templateKey === null) {
             rootRefs.push(elementRef);
@@ -111,7 +127,18 @@ export function renderOpcodesIntoElementTemplate(
             if (!parentFrame.activeElementSlot) {
               throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
             }
-            parentFrame.activeElementSlot.push(elementRef);
+            if (isElementTemplateList(parentFrame.options)) {
+              parentFrame.activeElementSlot.push(
+                createElementTemplateListCellRef(
+                  elementRef,
+                  templateKey,
+                  templateAttributeSlots,
+                  platformInfo,
+                ),
+              );
+            } else {
+              parentFrame.activeElementSlot.push(elementRef);
+            }
           }
         }
 

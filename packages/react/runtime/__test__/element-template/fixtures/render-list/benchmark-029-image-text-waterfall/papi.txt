@@ -617,9 +617,6 @@
     "_et_7a8c6_test_8",
     null,
     [
-      {
-        "item-key": "1"
-      },
       "https://example.com/cover-1.png"
     ],
     [
@@ -1537,9 +1534,6 @@
     "_et_7a8c6_test_8",
     null,
     [
-      {
-        "item-key": "2"
-      },
       "https://example.com/cover-2.png"
     ],
     [

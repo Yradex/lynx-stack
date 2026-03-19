@@ -53,9 +53,6 @@
     null,
     [
       {
-        "item-key": "1"
-      },
-      {
         "color": "#F7283D"
       },
       "https://example.com/cover-1.png"
@@ -160,9 +157,6 @@
     null,
     [
       {
-        "item-key": "2"
-      },
-      {
         "color": "#F76A4F"
       },
       "https://example.com/cover-2.png"
@@ -266,9 +260,6 @@
     "_et_7a8c6_test_1",
     null,
     [
-      {
-        "item-key": "3"
-      },
       {
         "color": "#F4CB5F"
       },

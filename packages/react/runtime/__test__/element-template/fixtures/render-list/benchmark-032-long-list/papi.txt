@@ -17,9 +17,6 @@
     null,
     [
       {
-        "item-key": "0"
-      },
-      {
         "backgroundColor": "#FF0033",
         "height": "16.8px"
       }
@@ -57,9 +54,6 @@
     "_et_7a8c6_test_2",
     null,
     [
-      {
-        "item-key": "1"
-      },
       {
         "backgroundColor": "#F76A4F",
         "height": "16.8px"
@@ -99,9 +93,6 @@
     null,
     [
       {
-        "item-key": "2"
-      },
-      {
         "backgroundColor": "#F4CB5F",
         "height": "16.8px"
       }
@@ -139,9 +130,6 @@
     "_et_7a8c6_test_2",
     null,
     [
-      {
-        "item-key": "3"
-      },
       {
         "backgroundColor": "#AEADB2",
         "height": "16.8px"
@@ -181,9 +169,6 @@
     null,
     [
       {
-        "item-key": "4"
-      },
-      {
         "backgroundColor": "#00A6FF",
         "height": "16.8px"
       }
@@ -221,9 +206,6 @@
     "_et_7a8c6_test_2",
     null,
     [
-      {
-        "item-key": "5"
-      },
       {
         "backgroundColor": "#33CC66",
         "height": "16.8px"

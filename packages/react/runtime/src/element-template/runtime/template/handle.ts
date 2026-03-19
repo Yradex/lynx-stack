@@ -7,6 +7,15 @@ import { deleteElementTemplateNativeRef, setElementTemplateNativeRef } from './r
 // Main-thread IFR allocates ids as consecutive negative integers.
 let nextId = -1;
 
+export interface ElementTemplateHandleMetadata {
+  templateId: string;
+  handleId: number;
+  attributeSlots: SerializableValue[] | null;
+  options: RuntimeOptions;
+}
+
+const elementTemplateMetadataStore = new WeakMap<object, ElementTemplateHandleMetadata>();
+
 export function reserveElementTemplateId(): number {
   const id = nextId--;
   return id;
@@ -45,6 +54,27 @@ export function destroyElementTemplateId(id: number): void {
   // __ReleaseElement(nativeRef);
 }
 
+export function getElementTemplateHandleMetadata(
+  nativeRef: ElementRef,
+): ElementTemplateHandleMetadata | undefined {
+  if (typeof nativeRef !== 'object' || nativeRef === null) {
+    return undefined;
+  }
+
+  return elementTemplateMetadataStore.get(nativeRef);
+}
+
+export function setElementTemplateHandleMetadata(
+  nativeRef: ElementRef,
+  metadata: ElementTemplateHandleMetadata,
+): void {
+  if (typeof nativeRef !== 'object' || nativeRef === null) {
+    return;
+  }
+
+  elementTemplateMetadataStore.set(nativeRef, metadata);
+}
+
 function normalizeRuntimeOptions(
   options: RuntimeOptions,
 ): RuntimeOptions {
@@ -64,30 +94,44 @@ function annotateTemplateHandle(
     return;
   }
 
-  Object.defineProperties(nativeRef, {
-    templateId: {
-      configurable: true,
-      enumerable: true,
-      value: templateKey,
-      writable: true,
-    },
-    __handleId: {
-      configurable: true,
-      enumerable: false,
-      value: handleId,
-      writable: true,
-    },
-    __attributeSlots: {
-      configurable: true,
-      enumerable: false,
-      value: attributeSlots ?? null,
-      writable: true,
-    },
-    __options: {
-      configurable: true,
-      enumerable: false,
-      value: options,
-      writable: true,
-    },
-  });
+  const metadata: ElementTemplateHandleMetadata = {
+    templateId: templateKey,
+    handleId,
+    attributeSlots: attributeSlots ?? null,
+    options,
+  };
+  setElementTemplateHandleMetadata(nativeRef, metadata);
+
+  // Native refs may be host objects that do not reliably preserve arbitrary JS properties.
+  // Keep the legacy annotations as a best-effort path for mocks/tests only.
+  try {
+    Object.defineProperties(nativeRef, {
+      templateId: {
+        configurable: true,
+        enumerable: true,
+        value: templateKey,
+        writable: true,
+      },
+      __handleId: {
+        configurable: true,
+        enumerable: false,
+        value: handleId,
+        writable: true,
+      },
+      __attributeSlots: {
+        configurable: true,
+        enumerable: false,
+        value: attributeSlots ?? null,
+        writable: true,
+      },
+      __options: {
+        configurable: true,
+        enumerable: false,
+        value: options,
+        writable: true,
+      },
+    });
+  } catch {
+    // Ignore host object annotation failures; sidecar metadata is the source of truth.
+  }
 }

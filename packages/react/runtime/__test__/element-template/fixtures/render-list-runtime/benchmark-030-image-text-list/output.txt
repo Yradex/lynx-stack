@@ -13,7 +13,7 @@
             </text>
           </view>
         </view>
-        <image alt=\"Card Header\" class=\"card1-image\" downsampling=\"true\" mode=\"aspectFill\" src={{\"item-key\":\"1\"}} />
+        <image alt=\"Card Header\" class=\"card1-image\" downsampling=\"true\" mode=\"aspectFill\" src=\"https://example.com/cover-1.png\" />
       </view>
     </view>
   </list-item>
@@ -23,7 +23,7 @@
         <text class=\"card2-title\">
           <raw-text text=\"Second benchmark list card\" />
         </text>
-        <image alt=\"Card Header\" class=\"card2-image\" downsampling=\"true\" mode=\"aspectFill\" src={{\"item-key\":\"2\"}} />
+        <image alt=\"Card Header\" class=\"card2-image\" downsampling=\"true\" mode=\"aspectFill\" src=\"https://example.com/cover-2.png\" />
         <text class=\"card2-bottom\">
           <raw-text text=\"Linus 18 comments 2025-01-02\" />
         </text>

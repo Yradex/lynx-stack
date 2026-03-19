@@ -4,7 +4,11 @@
 
 import type { RuntimeOptions, SerializableValue } from '../../protocol/types.js';
 import { __page } from '../page/page.js';
-import { reserveElementTemplateId } from '../template/handle.js';
+import {
+  getElementTemplateHandleMetadata,
+  reserveElementTemplateId,
+  setElementTemplateHandleMetadata,
+} from '../template/handle.js';
 import { setElementTemplateNativeRef } from '../template/registry.js';
 
 export const ELEMENT_TEMPLATE_LIST_OPTION = '__elementTemplateList';
@@ -50,6 +54,14 @@ type ElementTemplateAttributeDescriptor =
   };
 
 type SerializableRecord = Record<string, SerializableValue | undefined>;
+export interface ElementTemplateListCellRef {
+  __elementTemplateListCell: true;
+  nativeRef: ElementRef;
+  templateId: string;
+  attributeSlots: SerializableValue[] | null;
+  platformInfo: Record<string, unknown> | null;
+}
+
 type ListInsertAction = Record<string, unknown> & {
   position: number;
   type: string;
@@ -64,6 +76,70 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function isElementTemplateListCellRef(value: unknown): value is ElementTemplateListCellRef {
+  return isRecord(value)
+    && value['__elementTemplateListCell'] === true
+    && 'nativeRef' in value
+    && typeof value['templateId'] === 'string';
+}
+
+export function createElementTemplateListCellRef(
+  nativeRef: ElementRef,
+  templateId: string,
+  attributeSlots: SerializableValue[] | null | undefined,
+  platformInfo: Record<string, unknown> | null | undefined = null,
+): ElementTemplateListCellRef {
+  return {
+    __elementTemplateListCell: true,
+    nativeRef,
+    templateId,
+    attributeSlots: attributeSlots ?? null,
+    platformInfo: platformInfo ?? null,
+  };
+}
+
+export function splitListItemAttributeSlots(
+  attributeSlots: SerializableValue[] | null | undefined,
+): {
+  templateAttributeSlots: SerializableValue[] | null;
+  platformInfo: Record<string, unknown> | null;
+} {
+  if (!Array.isArray(attributeSlots)) {
+    return {
+      templateAttributeSlots: attributeSlots ?? null,
+      platformInfo: null,
+    };
+  }
+
+  const templateAttributeSlots: SerializableValue[] = [];
+  const platformInfo: Record<string, unknown> = {};
+
+  for (const slotValue of attributeSlots) {
+    if (!isRecord(slotValue)) {
+      templateAttributeSlots.push(slotValue);
+      continue;
+    }
+
+    const templateSlotValue: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(slotValue)) {
+      if (LIST_ITEM_PLATFORM_INFO_KEYS.has(key)) {
+        platformInfo[key] = value;
+      } else {
+        templateSlotValue[key] = value;
+      }
+    }
+
+    if (Object.keys(templateSlotValue).length > 0) {
+      templateAttributeSlots.push(templateSlotValue as SerializableValue);
+    }
+  }
+
+  return {
+    templateAttributeSlots,
+    platformInfo: Object.keys(platformInfo).length > 0 ? platformInfo : null,
+  };
+}
+
 function annotateListHandle(
   list: ElementRef,
   templateKey: string,
@@ -75,32 +151,44 @@ function annotateListHandle(
     return;
   }
 
-  Object.defineProperties(list, {
-    templateId: {
-      configurable: true,
-      enumerable: true,
-      value: templateKey,
-      writable: true,
-    },
-    __handleId: {
-      configurable: true,
-      enumerable: false,
-      value: handleId,
-      writable: true,
-    },
-    __attributeSlots: {
-      configurable: true,
-      enumerable: false,
-      value: attributeSlots ?? null,
-      writable: true,
-    },
-    __options: {
-      configurable: true,
-      enumerable: false,
-      value: options,
-      writable: true,
-    },
+  setElementTemplateHandleMetadata(list, {
+    templateId: templateKey,
+    handleId,
+    attributeSlots: attributeSlots ?? null,
+    options,
   });
+
+  // Reuse the same sidecar metadata mechanism as regular ET template instances.
+  try {
+    Object.defineProperties(list, {
+      templateId: {
+        configurable: true,
+        enumerable: true,
+        value: templateKey,
+        writable: true,
+      },
+      __handleId: {
+        configurable: true,
+        enumerable: false,
+        value: handleId,
+        writable: true,
+      },
+      __attributeSlots: {
+        configurable: true,
+        enumerable: false,
+        value: attributeSlots ?? null,
+        writable: true,
+      },
+      __options: {
+        configurable: true,
+        enumerable: false,
+        value: options,
+        writable: true,
+      },
+    });
+  } catch {
+    // The sidecar metadata attached by reserve/create helpers is authoritative on native refs.
+  }
 }
 
 function stripInternalListOption(
@@ -119,9 +207,22 @@ function stripInternalListOption(
 }
 
 function normalizeListCells(
-  elementSlots: ElementRef[][] | null | undefined,
-): ElementRef[] {
-  return [...(elementSlots?.[0] ?? [])];
+  elementSlots: Array<Array<ElementRef | ElementTemplateListCellRef>> | null | undefined,
+): ElementTemplateListCellRef[] {
+  const cells = elementSlots?.[0] ?? [];
+  return cells.map((cell) => {
+    if (isElementTemplateListCellRef(cell)) {
+      return cell;
+    }
+
+    const metadata = getElementTemplateHandleMetadata(cell);
+    return createElementTemplateListCellRef(
+      cell,
+      metadata?.templateId ?? 'unknown',
+      metadata?.attributeSlots ?? null,
+      null,
+    );
+  });
 }
 
 function toAttributeDescriptors(
@@ -286,13 +387,22 @@ function applyListAttributes(
   }
 }
 
-function extractListItemPlatformInfo(cell: ElementRef): Record<string, unknown> | undefined {
-  if (!isRecord(cell) || !Array.isArray(cell['__attributeSlots'])) {
+function extractListItemPlatformInfo(cell: ElementTemplateListCellRef): Record<string, unknown> | undefined {
+  if (cell.platformInfo) {
+    return cell.platformInfo;
+  }
+
+  const attributeSlots = cell.attributeSlots
+    ?? getElementTemplateHandleMetadata(cell.nativeRef)?.attributeSlots
+    ?? (isRecord(cell.nativeRef) && Array.isArray(cell.nativeRef['__attributeSlots'])
+      ? cell.nativeRef['__attributeSlots']
+      : null);
+  if (!Array.isArray(attributeSlots)) {
     return undefined;
   }
 
   const platformInfo: Record<string, unknown> = {};
-  for (const slotValue of cell['__attributeSlots']) {
+  for (const slotValue of attributeSlots) {
     if (!isRecord(slotValue)) {
       continue;
     }
@@ -307,19 +417,11 @@ function extractListItemPlatformInfo(cell: ElementRef): Record<string, unknown> 
   return Object.keys(platformInfo).length > 0 ? platformInfo : undefined;
 }
 
-function getListCellType(cell: ElementRef): string {
-  if (isRecord(cell)) {
-    if (typeof cell['templateId'] === 'string') {
-      return cell['templateId'];
-    }
-    if (typeof cell['tag'] === 'string') {
-      return cell['tag'];
-    }
-  }
-  return 'unknown';
+function getListCellType(cell: ElementTemplateListCellRef): string {
+  return cell.templateId;
 }
 
-function createInitialListUpdateInfo(cells: ElementRef[]): ListOperations {
+function createInitialListUpdateInfo(cells: ElementTemplateListCellRef[]): ListOperations {
   return {
     insertAction: cells.map((cell, position) => ({
       position,
@@ -331,7 +433,7 @@ function createInitialListUpdateInfo(cells: ElementRef[]): ListOperations {
   };
 }
 
-function applyListItemPlatformInfo(cell: ElementRef): void {
+function applyListItemPlatformInfo(cell: ElementTemplateListCellRef): void {
   const platformInfo = extractListItemPlatformInfo(cell);
   if (!platformInfo) {
     return;
@@ -341,7 +443,7 @@ function applyListItemPlatformInfo(cell: ElementRef): void {
     if (LIST_ITEM_PLATFORM_INFO_VIRTUAL_KEYS.has(key)) {
       continue;
     }
-    __SetAttribute(cell as FiberElement, key, value);
+    __SetAttribute(cell.nativeRef as FiberElement, key, value);
   }
 }
 
@@ -356,7 +458,7 @@ function getPageUniqueId(): number {
 function createListCallbacks(
   list: FiberElement,
   listID: number,
-  cells: ElementRef[],
+  cells: ElementTemplateListCellRef[],
 ): readonly [ComponentAtIndexCallback, ComponentAtIndexesCallback] {
   const mounted = new Set<number>();
 
@@ -371,17 +473,17 @@ function createListCallbacks(
       throw new Error(`ElementTemplate list cell not found at index ${cellIndex}.`);
     }
 
-    const sign = __GetElementUniqueID(cell);
+    const sign = __GetElementUniqueID(cell.nativeRef);
     if (!mounted.has(cellIndex)) {
       applyListItemPlatformInfo(cell);
-      __AppendElement(list, cell as FiberElement);
+      __AppendElement(list, cell.nativeRef as FiberElement);
       mounted.add(cellIndex);
       if (enableBatchRender && asyncFlush) {
-        __FlushElementTree(cell, {
+        __FlushElementTree(cell.nativeRef as FiberElement, {
           asyncFlush: true,
         });
       } else if (!enableBatchRender) {
-        __FlushElementTree(cell, {
+        __FlushElementTree(cell.nativeRef as FiberElement, {
           triggerLayout: true,
           operationID,
           elementID: sign,
@@ -448,7 +550,7 @@ export function isElementTemplateList(
 
 export function createElementTemplateListWithHandle(
   templateKey: string,
-  elementSlots: ElementRef[][] | null | undefined,
+  elementSlots: Array<Array<ElementRef | ElementTemplateListCellRef>> | null | undefined,
   attributeSlots: SerializableValue[] | null | undefined,
   options?: RuntimeOptions,
 ): ElementRef {
@@ -467,7 +569,8 @@ export function createElementTemplateListWithHandle(
   );
   const listID = __GetElementUniqueID(list);
   applyListAttributes(list, attributeDescriptors, attributeSlots);
-  __SetAttribute(list, 'update-list-info', createInitialListUpdateInfo(cells));
+  const initialListUpdateInfo = createInitialListUpdateInfo(cells);
+  __SetAttribute(list, 'update-list-info', initialListUpdateInfo);
   const [componentAtIndex, componentAtIndexes] = createListCallbacks(list, listID, cells);
 
   __UpdateListCallbacks(
