@@ -314,8 +314,7 @@
             "experimental-disable-platform-implementation": true
           },
           "children": [],
-          "parentComponentUniqueId": 0,
-          "templateId": "_et_7a8c6_test_1"
+          "parentComponentUniqueId": 0
         }
       ]
     ],

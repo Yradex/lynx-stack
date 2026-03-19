@@ -303,19 +303,11 @@ describe('ET list first-screen contract', () => {
         );
       }
     `);
-    const serializedList = mockNativePapi.mockSerializeElementTemplate(listElement) as {
-      attributeSlots?: unknown[];
-    };
-
     expect(serializeToJSX(listElement)).toContain('id="user-list"');
     expect(serializeToJSX(listElement)).toContain('class="shell"');
     expect(serializeToJSX(listElement)).toContain('data-scene="benchmark"');
     expect(serializeToJSX(listElement)).toContain('role="feed"');
     expect(serializeToJSX(listElement)).toContain('style={{"color":"red"}}');
-    expect(serializedList.attributeSlots).toEqual([
-      'shell',
-      { color: 'red' },
-    ]);
     expect(mockNativePapi.nativeLog).toContainEqual(['__SetID', '<list />', 'user-list']);
     expect(mockNativePapi.nativeLog).toContainEqual(['__SetClasses', '<list />', 'shell']);
     expect(mockNativePapi.nativeLog).toContainEqual(['__SetInlineStyles', '<list />', { color: 'red' }]);

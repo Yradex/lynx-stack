@@ -136,64 +136,6 @@ export function splitListItemAttributeSlots(
   };
 }
 
-function annotateListHandle(
-  list: ElementRef,
-  templateKey: string,
-  handleId: number,
-  attributeSlots: SerializableValue[] | null | undefined,
-  options: RuntimeOptions,
-): void {
-  if (!isRecord(list)) {
-    return;
-  }
-
-  try {
-    Object.defineProperties(list, {
-      templateId: {
-        configurable: true,
-        enumerable: true,
-        value: templateKey,
-        writable: true,
-      },
-      __handleId: {
-        configurable: true,
-        enumerable: false,
-        value: handleId,
-        writable: true,
-      },
-      __attributeSlots: {
-        configurable: true,
-        enumerable: false,
-        value: attributeSlots ?? null,
-        writable: true,
-      },
-      __options: {
-        configurable: true,
-        enumerable: false,
-        value: options,
-        writable: true,
-      },
-    });
-  } catch {
-    // Native refs may be host objects that do not reliably preserve arbitrary JS properties.
-  }
-}
-
-function stripInternalListOption(
-  options: ElementTemplateListOptions | undefined,
-): RuntimeOptions | undefined {
-  if (!options) {
-    return undefined;
-  }
-
-  const {
-    [ELEMENT_TEMPLATE_LIST_OPTION]: _list,
-    [ELEMENT_TEMPLATE_ATTRIBUTES_OPTION]: _attributes,
-    ...runtimeOptions
-  } = options;
-  return Object.keys(runtimeOptions).length > 0 ? runtimeOptions : undefined;
-}
-
 function normalizeListCells(
   elementSlots: Array<Array<ElementRef | ElementTemplateListCellRef>> | null | undefined,
 ): ElementTemplateListCellRef[] {
@@ -526,13 +468,12 @@ export function isElementTemplateList(
 }
 
 export function createElementTemplateListWithHandle(
-  templateKey: string,
+  _templateKey: string,
   elementSlots: Array<Array<ElementRef | ElementTemplateListCellRef>> | null | undefined,
   attributeSlots: SerializableValue[] | null | undefined,
   options?: RuntimeOptions,
 ): ElementRef {
   const listOptions = options as ElementTemplateListOptions | undefined;
-  const runtimeOptions = stripInternalListOption(listOptions);
   const pageId = getPageUniqueId();
   const cells = normalizeListCells(elementSlots);
   const handleId = reserveElementTemplateId();
@@ -558,16 +499,6 @@ export function createElementTemplateListWithHandle(
   );
 
   setElementTemplateNativeRef(handleId, list);
-  annotateListHandle(
-    list,
-    templateKey,
-    handleId,
-    attributeSlots,
-    {
-      ...(runtimeOptions ?? {}),
-      handleId,
-    },
-  );
 
   return list;
 }

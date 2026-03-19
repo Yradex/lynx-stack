@@ -27,9 +27,6 @@ interface Frame {
   // Create-time metadata forwarded into __CreateElementTemplate options.
   options: RuntimeOptions | undefined;
 
-  // Current active slot id, -1 means none
-  activeSlotId: number;
-
   // Cached array for current active slot to avoid repeated lookups.
   activeElementSlot: ElementRef[] | undefined;
 }
@@ -49,7 +46,6 @@ export function renderOpcodesIntoElementTemplate(
       attributeSlots: undefined,
       elementSlots: undefined,
       options: undefined,
-      activeSlotId: -1,
       activeElementSlot: undefined,
     },
   ];
@@ -64,7 +60,6 @@ export function renderOpcodesIntoElementTemplate(
           attributeSlots: undefined,
           elementSlots: undefined,
           options: undefined,
-          activeSlotId: -1,
           activeElementSlot: undefined,
         });
         i += 2;
@@ -162,7 +157,6 @@ export function renderOpcodesIntoElementTemplate(
       case __OpSlot: {
         const slotId = opcodes[i + 1] as number;
         const frame = stack[stack.length - 1]!;
-        frame.activeSlotId = slotId;
         const elementSlots = frame.elementSlots ?? (frame.elementSlots = []);
         frame.activeElementSlot = elementSlots[slotId] = [];
         i += 2;

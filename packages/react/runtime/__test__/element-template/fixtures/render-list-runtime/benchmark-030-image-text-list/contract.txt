@@ -12,7 +12,7 @@ Object {
     ],
     Array [
       "__FlushElementTree",
-      "<_et_7a8c6_test_5 />",
+      "<list />",
       Object {
         "elementIDs": Array [
           6,
