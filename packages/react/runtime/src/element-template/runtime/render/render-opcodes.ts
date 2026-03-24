@@ -35,6 +35,105 @@ export interface MainThreadCreateResult {
   rootRefs: ElementRef[];
 }
 
+function appendChildToParent(
+  parentFrame: Frame | undefined,
+  rootRefs: ElementRef[],
+  elementRef: ElementRef,
+): void {
+  if (!parentFrame) {
+    return;
+  }
+
+  if (parentFrame.templateKey === null) {
+    rootRefs.push(elementRef);
+    return;
+  }
+
+  if (!parentFrame.activeElementSlot) {
+    throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
+  }
+
+  parentFrame.activeElementSlot.push(elementRef);
+}
+
+function appendListAwareChildToParent(
+  parentFrame: Frame | undefined,
+  rootRefs: ElementRef[],
+  elementRef: ElementRef,
+  templateKey: string,
+  templateAttributeSlots: SerializableValue[] | null,
+  platformInfo: Record<string, unknown> | null,
+): void {
+  if (!parentFrame) {
+    return;
+  }
+
+  if (parentFrame.templateKey === null) {
+    rootRefs.push(elementRef);
+    return;
+  }
+
+  if (!parentFrame.activeElementSlot) {
+    throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
+  }
+
+  if (isElementTemplateList(parentFrame.options)) {
+    parentFrame.activeElementSlot.push(
+      createElementTemplateListCellRef(
+        elementRef,
+        templateKey,
+        templateAttributeSlots,
+        platformInfo,
+      ),
+    );
+    return;
+  }
+
+  parentFrame.activeElementSlot.push(elementRef);
+}
+
+function createListAwareElementRef(
+  frame: Frame,
+  parentFrame: Frame | undefined,
+  templateKey: string,
+): {
+  elementRef: ElementRef;
+  templateAttributeSlots: SerializableValue[] | null;
+  platformInfo: Record<string, unknown> | null;
+} {
+  const isListCell = Boolean(parentFrame && isElementTemplateList(parentFrame.options));
+  const {
+    templateAttributeSlots,
+    platformInfo,
+  } = isListCell
+    ? splitListItemAttributeSlots(frame.attributeSlots ?? null)
+    : {
+      templateAttributeSlots: frame.attributeSlots ?? null,
+      platformInfo: null,
+    };
+
+  const elementRef = isElementTemplateList(frame.options)
+    ? createElementTemplateListWithHandle(
+      templateKey,
+      frame.elementSlots ?? null,
+      templateAttributeSlots,
+      frame.options,
+    )
+    : createElementTemplateWithHandle(
+      templateKey,
+      null,
+      templateAttributeSlots,
+      frame.elementSlots ?? null,
+      frame.options,
+    );
+
+  return {
+    elementRef,
+    templateAttributeSlots,
+    platformInfo,
+  };
+}
+
 export function renderOpcodesIntoElementTemplate(
   opcodes: unknown[],
 ): MainThreadCreateResult {
@@ -88,54 +187,37 @@ export function renderOpcodesIntoElementTemplate(
         }
 
         const parentFrame = stack[stack.length - 1];
-        const isListCell = Boolean(parentFrame && isElementTemplateList(parentFrame.options));
-        const {
-          templateAttributeSlots,
-          platformInfo,
-        } = isListCell
-          ? splitListItemAttributeSlots(frame.attributeSlots ?? null)
-          : {
-            templateAttributeSlots: frame.attributeSlots ?? null,
-            platformInfo: null,
-          };
+        const currentIsList = isElementTemplateList(frame.options);
+        const parentIsList = Boolean(parentFrame && isElementTemplateList(parentFrame.options));
 
-        const elementRef = isElementTemplateList(frame.options)
-          ? createElementTemplateListWithHandle(
-            templateKey,
-            frame.elementSlots ?? null,
-            templateAttributeSlots,
-            frame.options,
-          )
-          : createElementTemplateWithHandle(
+        if (!currentIsList && !parentIsList) {
+          const elementRef = createElementTemplateWithHandle(
             templateKey,
             null,
-            templateAttributeSlots,
+            frame.attributeSlots ?? null,
             frame.elementSlots ?? null,
             frame.options,
           );
 
-        // Append to parent
-        if (parentFrame) {
-          if (parentFrame.templateKey === null) {
-            rootRefs.push(elementRef);
-          } else {
-            if (!parentFrame.activeElementSlot) {
-              throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
-            }
-            if (isElementTemplateList(parentFrame.options)) {
-              parentFrame.activeElementSlot.push(
-                createElementTemplateListCellRef(
-                  elementRef,
-                  templateKey,
-                  templateAttributeSlots,
-                  platformInfo,
-                ),
-              );
-            } else {
-              parentFrame.activeElementSlot.push(elementRef);
-            }
-          }
+          appendChildToParent(parentFrame, rootRefs, elementRef);
+          i += 1;
+          break;
         }
+
+        const {
+          elementRef,
+          templateAttributeSlots,
+          platformInfo,
+        } = createListAwareElementRef(frame, parentFrame, templateKey);
+
+        appendListAwareChildToParent(
+          parentFrame,
+          rootRefs,
+          elementRef,
+          templateKey,
+          templateAttributeSlots,
+          platformInfo,
+        );
 
         i += 1;
         break;
