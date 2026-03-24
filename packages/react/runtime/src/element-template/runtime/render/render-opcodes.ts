@@ -166,7 +166,7 @@ export function renderOpcodesIntoElementTemplate(
       }
       case __OpEnd: {
         if (stackTop === 0) {
-          throw new Error('Instruction mismatch: Stack underflow at __OpEnd');
+          throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
 
         const templateKey = templateKeyStack[stackTop];
