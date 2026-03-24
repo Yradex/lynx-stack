@@ -20,10 +20,12 @@ export function createElementTemplateWithHandle(
   options?: RuntimeOptions,
 ): ElementRef {
   const handleId = nextId--;
-  const runtimeOptions = normalizeRuntimeOptions({
-    ...options,
-    handleId,
-  });
+  const runtimeOptions = options
+    ? normalizeRuntimeOptions({
+      ...options,
+      handleId,
+    })
+    : { handleId };
   const nativeRef = __CreateElementTemplate(
     templateKey,
     bundleUrl,

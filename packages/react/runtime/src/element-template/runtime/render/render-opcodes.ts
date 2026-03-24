@@ -187,8 +187,25 @@ export function renderOpcodesIntoElementTemplate(
         }
 
         const parentFrame = stack[stack.length - 1];
-        const currentIsList = isElementTemplateList(frame.options);
-        const parentIsList = Boolean(parentFrame && isElementTemplateList(parentFrame.options));
+        const currentOptions = frame.options;
+        const parentOptions = parentFrame?.options;
+
+        if (!currentOptions && !parentOptions) {
+          const elementRef = createElementTemplateWithHandle(
+            templateKey,
+            null,
+            frame.attributeSlots ?? null,
+            frame.elementSlots ?? null,
+            currentOptions,
+          );
+
+          appendChildToParent(parentFrame, rootRefs, elementRef);
+          i += 1;
+          break;
+        }
+
+        const currentIsList = isElementTemplateList(currentOptions);
+        const parentIsList = Boolean(parentFrame && isElementTemplateList(parentOptions));
 
         if (!currentIsList && !parentIsList) {
           const elementRef = createElementTemplateWithHandle(
@@ -196,7 +213,7 @@ export function renderOpcodesIntoElementTemplate(
             null,
             frame.attributeSlots ?? null,
             frame.elementSlots ?? null,
-            frame.options,
+            currentOptions,
           );
 
           appendChildToParent(parentFrame, rootRefs, elementRef);
