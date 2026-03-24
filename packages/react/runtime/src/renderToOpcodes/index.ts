@@ -308,16 +308,12 @@ function _renderToString(
     && typeof type === 'string'
   ) {
     const attributeSlots = props.attributeSlots;
-    if (attributeSlots != null && attributeSlots !== false && typeof attributeSlots !== 'function') {
+    if (attributeSlots !== undefined) {
       opcodes.push(__OpAttr, 'attributeSlots', attributeSlots);
     }
 
     const runtimeOptions = props.options;
-    if (
-      runtimeOptions != null
-      && runtimeOptions !== false
-      && typeof runtimeOptions !== 'function'
-    ) {
+    if (runtimeOptions !== undefined) {
       opcodes.push(__OpAttr, 'options', runtimeOptions);
     }
 
