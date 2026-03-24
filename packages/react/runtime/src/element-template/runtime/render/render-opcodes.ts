@@ -36,49 +36,52 @@ export interface MainThreadCreateResult {
 }
 
 function appendChildToParent(
-  parentFrame: Frame | undefined,
+  parentTemplateKey: string | null | undefined,
+  parentActiveElementSlot: ElementRef[] | undefined,
   rootRefs: ElementRef[],
   elementRef: ElementRef,
 ): void {
-  if (!parentFrame) {
+  if (parentTemplateKey === undefined) {
     return;
   }
 
-  if (parentFrame.templateKey === null) {
+  if (parentTemplateKey === null) {
     rootRefs.push(elementRef);
     return;
   }
 
-  if (!parentFrame.activeElementSlot) {
-    throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
+  if (!parentActiveElementSlot) {
+    throw new Error(`Template '${parentTemplateKey}' received a child outside of any element slot.`);
   }
 
-  parentFrame.activeElementSlot.push(elementRef);
+  parentActiveElementSlot.push(elementRef);
 }
 
 function appendListAwareChildToParent(
-  parentFrame: Frame | undefined,
+  parentTemplateKey: string | null | undefined,
+  parentOptions: RuntimeOptions | undefined,
+  parentActiveElementSlot: ElementRef[] | undefined,
   rootRefs: ElementRef[],
   elementRef: ElementRef,
   templateKey: string,
   templateAttributeSlots: SerializableValue[] | null,
   platformInfo: Record<string, unknown> | null,
 ): void {
-  if (!parentFrame) {
+  if (parentTemplateKey === undefined) {
     return;
   }
 
-  if (parentFrame.templateKey === null) {
+  if (parentTemplateKey === null) {
     rootRefs.push(elementRef);
     return;
   }
 
-  if (!parentFrame.activeElementSlot) {
-    throw new Error(`Template '${parentFrame.templateKey}' received a child outside of any element slot.`);
+  if (!parentActiveElementSlot) {
+    throw new Error(`Template '${parentTemplateKey}' received a child outside of any element slot.`);
   }
 
-  if (isElementTemplateList(parentFrame.options)) {
-    parentFrame.activeElementSlot.push(
+  if (isElementTemplateList(parentOptions)) {
+    parentActiveElementSlot.push(
       createElementTemplateListCellRef(
         elementRef,
         templateKey,
@@ -89,19 +92,19 @@ function appendListAwareChildToParent(
     return;
   }
 
-  parentFrame.activeElementSlot.push(elementRef);
+  parentActiveElementSlot.push(elementRef);
 }
 
 function createListAwareElementRef(
   frame: Frame,
-  parentFrame: Frame | undefined,
+  parentOptions: RuntimeOptions | undefined,
   templateKey: string,
 ): {
   elementRef: ElementRef;
   templateAttributeSlots: SerializableValue[] | null;
   platformInfo: Record<string, unknown> | null;
 } {
-  const isListCell = Boolean(parentFrame && isElementTemplateList(parentFrame.options));
+  const isListCell = Boolean(parentOptions && isElementTemplateList(parentOptions));
   const {
     templateAttributeSlots,
     platformInfo,
@@ -138,40 +141,40 @@ export function renderOpcodesIntoElementTemplate(
   opcodes: unknown[],
 ): MainThreadCreateResult {
   const rootRefs: ElementRef[] = [];
-  const stack: Frame[] = [
-    // Initialize Root Frame
-    {
-      templateKey: null,
-      attributeSlots: undefined,
-      elementSlots: undefined,
-      options: undefined,
-      activeElementSlot: undefined,
-    },
-  ];
+  const templateKeyStack: Array<string | null> = [null];
+  const attributeSlotsStack: Array<SerializableValue[] | undefined> = [undefined];
+  const elementSlotsStack: Array<
+    Array<Array<ElementRef | ReturnType<typeof createElementTemplateListCellRef>>> | undefined
+  > = [undefined];
+  const optionsStack: Array<RuntimeOptions | undefined> = [undefined];
+  const activeElementSlotStack: Array<ElementRef[] | undefined> = [undefined];
+  let stackTop = 0;
 
   for (let i = 0; i < opcodes.length;) {
     const opcode = opcodes[i];
     switch (opcode) {
       case __OpBegin: {
         const vnode = opcodes[i + 1] as { type: string };
-        stack.push({
-          templateKey: vnode.type,
-          attributeSlots: undefined,
-          elementSlots: undefined,
-          options: undefined,
-          activeElementSlot: undefined,
-        });
+        stackTop += 1;
+        templateKeyStack[stackTop] = vnode.type;
+        attributeSlotsStack[stackTop] = undefined;
+        elementSlotsStack[stackTop] = undefined;
+        optionsStack[stackTop] = undefined;
+        activeElementSlotStack[stackTop] = undefined;
         i += 2;
         break;
       }
       case __OpEnd: {
-        const frame = stack.pop();
-        /* v8 ignore next 3 */
-        if (!frame) {
+        if (stackTop === 0) {
           throw new Error('Instruction mismatch: Stack underflow at __OpEnd');
         }
 
-        const templateKey = frame.templateKey;
+        const templateKey = templateKeyStack[stackTop];
+        const attributeSlots = attributeSlotsStack[stackTop];
+        const elementSlots = elementSlotsStack[stackTop];
+        const currentOptions = optionsStack[stackTop];
+        stackTop -= 1;
+
         // If templateKey is null, it means we popped the root frame?
         // But __OpEnd should pair with __OpBegin.
         // The Root frame is manually pushed and has no __OpBegin.
@@ -185,53 +188,63 @@ export function renderOpcodesIntoElementTemplate(
           // So if we pop, we must get a valid component frame.
           throw new Error('Instruction mismatch: Popped root frame at __OpEnd');
         }
+        const concreteTemplateKey = templateKey!;
 
-        const parentFrame = stack[stack.length - 1];
-        const currentOptions = frame.options;
-        const parentOptions = parentFrame?.options;
+        const parentTemplateKey = templateKeyStack[stackTop];
+        const parentOptions = optionsStack[stackTop];
+        const parentActiveElementSlot = activeElementSlotStack[stackTop];
 
         if (!currentOptions && !parentOptions) {
           const elementRef = createElementTemplateWithHandle(
-            templateKey,
+            concreteTemplateKey,
             null,
-            frame.attributeSlots ?? null,
-            frame.elementSlots ?? null,
+            attributeSlots ?? null,
+            elementSlots ?? null,
             currentOptions,
           );
 
-          appendChildToParent(parentFrame, rootRefs, elementRef);
+          appendChildToParent(parentTemplateKey, parentActiveElementSlot, rootRefs, elementRef);
           i += 1;
           break;
         }
 
         const currentIsList = isElementTemplateList(currentOptions);
-        const parentIsList = Boolean(parentFrame && isElementTemplateList(parentOptions));
+        const parentIsList = Boolean(parentOptions && isElementTemplateList(parentOptions));
 
         if (!currentIsList && !parentIsList) {
           const elementRef = createElementTemplateWithHandle(
-            templateKey,
+            concreteTemplateKey,
             null,
-            frame.attributeSlots ?? null,
-            frame.elementSlots ?? null,
+            attributeSlots ?? null,
+            elementSlots ?? null,
             currentOptions,
           );
 
-          appendChildToParent(parentFrame, rootRefs, elementRef);
+          appendChildToParent(parentTemplateKey, parentActiveElementSlot, rootRefs, elementRef);
           i += 1;
           break;
         }
 
+        const frame: Frame = {
+          templateKey: concreteTemplateKey,
+          attributeSlots,
+          elementSlots: elementSlots,
+          options: currentOptions,
+          activeElementSlot: undefined,
+        };
         const {
           elementRef,
           templateAttributeSlots,
           platformInfo,
-        } = createListAwareElementRef(frame, parentFrame, templateKey);
+        } = createListAwareElementRef(frame, parentOptions, concreteTemplateKey);
 
         appendListAwareChildToParent(
-          parentFrame,
+          parentTemplateKey,
+          parentOptions,
+          parentActiveElementSlot,
           rootRefs,
           elementRef,
-          templateKey,
+          concreteTemplateKey,
           templateAttributeSlots,
           platformInfo,
         );
@@ -242,45 +255,41 @@ export function renderOpcodesIntoElementTemplate(
       case __OpAttr: {
         const name = opcodes[i + 1] as string;
         const value = opcodes[i + 2] as SerializableValue;
-        const frame = stack[stack.length - 1];
-        if (frame) {
-          if (name === 'attributeSlots') {
-            frame.attributeSlots = value as SerializableValue[];
-          } else if (name === 'options') {
-            frame.options = value as RuntimeOptions;
-          }
+        if (name === 'attributeSlots') {
+          attributeSlotsStack[stackTop] = value as SerializableValue[];
+        } else if (name === 'options') {
+          optionsStack[stackTop] = value as RuntimeOptions;
         }
         i += 3;
         break;
       }
       case __OpSlot: {
         const slotId = opcodes[i + 1] as number;
-        const frame = stack[stack.length - 1]!;
-        const elementSlots = frame.elementSlots ?? (frame.elementSlots = []);
-        frame.activeElementSlot = elementSlots[slotId] = [];
+        const elementSlots = elementSlotsStack[stackTop] ?? (elementSlotsStack[stackTop] = []);
+        const activeElementSlot = elementSlots[slotId] = [];
+        activeElementSlotStack[stackTop] = activeElementSlot;
         i += 2;
         break;
       }
       case __OpText: {
         const text = opcodes[i + 1] as string;
-        const frame = stack[stack.length - 1];
-        if (frame) {
-          const textRef = createElementTemplateWithHandle(
-            BUILTIN_RAW_TEXT_TEMPLATE_KEY,
-            null,
-            [String(text)],
-            [],
-            undefined,
-          );
+        const textRef = createElementTemplateWithHandle(
+          BUILTIN_RAW_TEXT_TEMPLATE_KEY,
+          null,
+          [String(text)],
+          [],
+          undefined,
+        );
 
-          if (frame.templateKey === null) {
-            rootRefs.push(textRef);
-          } else {
-            if (!frame.activeElementSlot) {
-              throw new Error(`Template '${frame.templateKey}' received a text child outside of any element slot.`);
-            }
-            frame.activeElementSlot.push(textRef);
+        const parentTemplateKey = templateKeyStack[stackTop];
+        if (parentTemplateKey === null) {
+          rootRefs.push(textRef);
+        } else {
+          const activeElementSlot = activeElementSlotStack[stackTop];
+          if (!activeElementSlot) {
+            throw new Error(`Template '${parentTemplateKey}' received a text child outside of any element slot.`);
           }
+          activeElementSlot.push(textRef);
         }
         i += 2;
         break;
