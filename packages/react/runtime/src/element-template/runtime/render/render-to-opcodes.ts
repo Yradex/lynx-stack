@@ -76,11 +76,8 @@ export function renderToString(vnode: any, context: any): any[] {
     _renderToString(
       vnode,
       context || EMPTY_OBJ,
-      false,
-      undefined,
       parent,
       opcodes,
-      0,
     );
   } finally {
     // options._commit, we don't schedule any effects in this library right now,
@@ -154,10 +151,10 @@ function cleanupVNode(vnode) {
   if (ummountHook) ummountHook(vnode);
 }
 
-function renderSlotVNode(vnode, context, isSvgMode, selectValue, opcodes) {
+function renderSlotVNode(vnode, context, opcodes) {
   const props = vnode.props;
   opcodes.push(__OpSlot, props.id);
-  _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+  _renderToString(props.children, context, vnode, opcodes);
   cleanupVNode(vnode);
 }
 
@@ -166,14 +163,12 @@ function renderComponentVNode(
   type,
   props,
   context,
-  isSvgMode,
-  selectValue,
   opcodes,
-  opcodesLength,
 ) {
   let cctx = context;
   let rendered;
   let component;
+  const opcodesLength = opcodes.length;
 
   if (type === Fragment) {
     rendered = props.children;
@@ -224,7 +219,7 @@ function renderComponentVNode(
   rendered = isTopLevelFragment ? rendered.props.children : rendered;
 
   try {
-    _renderToString(rendered, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+    _renderToString(rendered, context, vnode, opcodes);
   } catch (e) {
     if (e && typeof e === 'object' && e.then && component && /* _childDidSuspend */ component.__c) {
       component.setState({ /* _suspended */ __a: true });
@@ -234,7 +229,7 @@ function renderComponentVNode(
         component = vnode[COMPONENT];
 
         opcodes.length = opcodesLength;
-        _renderToString(rendered, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+        _renderToString(rendered, context, vnode, opcodes);
       }
     } else {
       throw e;
@@ -244,7 +239,7 @@ function renderComponentVNode(
   }
 }
 
-function renderEtHostVNode(vnode, props, context, selectValue, opcodes) {
+function renderEtHostVNode(vnode, props, context, opcodes) {
   opcodes.push(__OpBegin, vnode);
 
   const attributeSlots = props.attributeSlots;
@@ -259,14 +254,14 @@ function renderEtHostVNode(vnode, props, context, selectValue, opcodes) {
 
   const children = props.children;
   if (children != null && children !== false && children !== true) {
-    _renderToString(children, context, false, selectValue, vnode, opcodes, opcodes.length);
+    _renderToString(children, context, vnode, opcodes);
   }
 
   cleanupVNode(vnode);
   opcodes.push(__OpEnd);
 }
 
-function renderGenericHostVNode(vnode, props, context, selectValue, opcodes) {
+function renderGenericHostVNode(vnode, props, context, opcodes) {
   opcodes.push(__OpBegin, vnode);
 
   let children;
@@ -296,7 +291,7 @@ function renderGenericHostVNode(vnode, props, context, selectValue, opcodes) {
   if (typeof children === 'string' || typeof children === 'number') {
     opcodes.push(__OpText, children);
   } else if (children != null && children !== false && children !== true) {
-    _renderToString(children, context, false, selectValue, vnode, opcodes, opcodes.length);
+    _renderToString(children, context, vnode, opcodes);
   }
 
   cleanupVNode(vnode);
@@ -307,19 +302,14 @@ function renderGenericHostVNode(vnode, props, context, selectValue, opcodes) {
  * Recursively render VNodes to HTML.
  * @param {VNode|any} vnode
  * @param {any} context
- * @param {boolean} isSvgMode
- * @param {any} selectValue
  * @param {VNode} parent
  * @param opcodes
  */
 function _renderToString(
   vnode,
   context,
-  isSvgMode,
-  selectValue,
   parent,
   opcodes,
-  opcodesLength,
 ) {
   // Ignore non-rendered VNodes/values
   if (vnode == null || vnode === true || vnode === false || vnode === '') {
@@ -341,7 +331,7 @@ function _renderToString(
       const child = vnode[i];
       if (child == null || typeof child === 'boolean') continue;
 
-      _renderToString(child, context, isSvgMode, selectValue, parent, opcodes, opcodes.length);
+      _renderToString(child, context, parent, opcodes);
     }
     return;
   }
@@ -360,23 +350,23 @@ function _renderToString(
   if (typeof type === 'function') {
     /* v8 ignore start */
     if (type === Slot) {
-      renderSlotVNode(vnode, context, isSvgMode, selectValue, opcodes);
+      renderSlotVNode(vnode, context, opcodes);
       return;
     }
     /* v8 ignore stop */
 
-    renderComponentVNode(vnode, type, props, context, isSvgMode, selectValue, opcodes, opcodesLength);
+    renderComponentVNode(vnode, type, props, context, opcodes);
     return;
   }
 
   // ET runtime only renders compiler-generated host nodes through this
   // entry, so string host types can go straight to the ET opcode path.
   if (typeof type === 'string') {
-    renderEtHostVNode(vnode, props, context, selectValue, opcodes);
+    renderEtHostVNode(vnode, props, context, opcodes);
     return;
   }
 
-  renderGenericHostVNode(vnode, props, context, selectValue, opcodes);
+  renderGenericHostVNode(vnode, props, context, opcodes);
   return;
 }
 
