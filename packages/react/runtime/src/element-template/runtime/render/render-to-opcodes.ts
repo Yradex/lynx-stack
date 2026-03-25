@@ -148,6 +148,161 @@ function renderClassComponent(vnode, context) {
   return c.render(c.props, c.state, context);
 }
 
+function cleanupVNode(vnode) {
+  if (afterDiff) afterDiff(vnode);
+  vnode[PARENT] = undefined;
+  if (ummountHook) ummountHook(vnode);
+}
+
+function renderSlotVNode(vnode, context, isSvgMode, selectValue, opcodes) {
+  const props = vnode.props;
+  opcodes.push(__OpSlot, props.id);
+  _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+  cleanupVNode(vnode);
+}
+
+function renderComponentVNode(
+  vnode,
+  type,
+  props,
+  context,
+  isSvgMode,
+  selectValue,
+  opcodes,
+  opcodesLength,
+) {
+  let cctx = context;
+  let rendered;
+  let component;
+
+  if (type === Fragment) {
+    rendered = props.children;
+  } else {
+    const contextType = type.contextType;
+    if (contextType != null) {
+      const provider = context[contextType.__c];
+      cctx = provider ? provider.props.value : contextType.__;
+    }
+
+    if (type.prototype && typeof type.prototype.render === 'function') {
+      rendered = /**#__NOINLINE__**/ renderClassComponent(vnode, cctx);
+      component = vnode[COMPONENT];
+    } else {
+      component = {
+        __v: vnode,
+        props,
+        context: cctx,
+        // silently drop state updates
+        setState: markAsDirty,
+        forceUpdate: markAsDirty,
+        __d: true,
+        // hooks
+        __h: [],
+      };
+      vnode[COMPONENT] = component;
+      component.constructor = type;
+      component.render = doRender;
+
+      let count = 0;
+      while (component[DIRTY] && count++ < 25) {
+        component[DIRTY] = false;
+
+        if (renderHook) renderHook(vnode);
+
+        rendered = component.render(props, component.state, cctx);
+      }
+      component[DIRTY] = true;
+    }
+
+    if (component.getChildContext != null) {
+      context = assign({}, context, component.getChildContext());
+    }
+  }
+
+  const isTopLevelFragment = rendered != null && rendered.type === Fragment
+    && rendered.key == null;
+  rendered = isTopLevelFragment ? rendered.props.children : rendered;
+
+  try {
+    _renderToString(rendered, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+  } catch (e) {
+    if (e && typeof e === 'object' && e.then && component && /* _childDidSuspend */ component.__c) {
+      component.setState({ /* _suspended */ __a: true });
+
+      if (component[DIRTY]) {
+        rendered = renderClassComponent(vnode, context);
+        component = vnode[COMPONENT];
+
+        opcodes.length = opcodesLength;
+        _renderToString(rendered, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+      }
+    } else {
+      throw e;
+    }
+  } finally {
+    cleanupVNode(vnode);
+  }
+}
+
+function renderEtHostVNode(vnode, props, context, selectValue, opcodes) {
+  opcodes.push(__OpBegin, vnode);
+
+  const attributeSlots = props.attributeSlots;
+  if (attributeSlots !== undefined) {
+    opcodes.push(__OpAttr, 'attributeSlots', attributeSlots);
+  }
+
+  const runtimeOptions = props.options;
+  if (runtimeOptions !== undefined) {
+    opcodes.push(__OpAttr, 'options', runtimeOptions);
+  }
+
+  const children = props.children;
+  if (children != null && children !== false && children !== true) {
+    _renderToString(children, context, false, selectValue, vnode, opcodes, opcodes.length);
+  }
+
+  cleanupVNode(vnode);
+  opcodes.push(__OpEnd);
+}
+
+function renderGenericHostVNode(vnode, props, context, selectValue, opcodes) {
+  opcodes.push(__OpBegin, vnode);
+
+  let children;
+  for (const name in props) {
+    const value = props[name];
+
+    switch (name) {
+      case 'children':
+        children = value;
+        continue;
+
+      /* c8 ignore next 5 */
+      case 'key':
+      case 'ref':
+      case '__self':
+      case '__source':
+        continue;
+
+      default: {}
+    }
+
+    if (value != null && value !== false && typeof value !== 'function') {
+      opcodes.push(__OpAttr, name, value);
+    }
+  }
+
+  if (typeof children === 'string' || typeof children === 'number') {
+    opcodes.push(__OpText, children);
+  } else if (children != null && children !== false && children !== true) {
+    _renderToString(children, context, false, selectValue, vnode, opcodes, opcodes.length);
+  }
+
+  cleanupVNode(vnode);
+  opcodes.push(__OpEnd);
+}
+
 /**
  * Recursively render VNodes to HTML.
  * @param {VNode|any} vnode
@@ -199,175 +354,29 @@ function _renderToString(
   if (beforeDiff2) beforeDiff2(vnode, EMPTY_OBJ);
 
   let type = vnode.type,
-    props = vnode.props,
-    cctx = context,
-    contextType,
-    rendered,
-    component;
+    props = vnode.props;
 
   // Invoke rendering on Components
   if (typeof type === 'function') {
     /* v8 ignore start */
     if (type === Slot) {
-      opcodes.push(__OpSlot, props.id);
-      _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
-      if (afterDiff) afterDiff(vnode);
-      vnode[PARENT] = undefined;
-      if (ummountHook) ummountHook(vnode);
+      renderSlotVNode(vnode, context, isSvgMode, selectValue, opcodes);
       return;
     }
     /* v8 ignore stop */
 
-    if (type === Fragment) {
-      rendered = props.children;
-    } else {
-      contextType = type.contextType;
-      if (contextType != null) {
-        const provider = context[contextType.__c];
-        cctx = provider ? provider.props.value : contextType.__;
-      }
-
-      if (type.prototype && typeof type.prototype.render === 'function') {
-        rendered = /**#__NOINLINE__**/ renderClassComponent(vnode, cctx);
-        component = vnode[COMPONENT];
-      } else {
-        component = {
-          __v: vnode,
-          props,
-          context: cctx,
-          // silently drop state updates
-          setState: markAsDirty,
-          forceUpdate: markAsDirty,
-          __d: true,
-          // hooks
-          __h: [],
-        };
-        vnode[COMPONENT] = component;
-        component.constructor = type;
-        component.render = doRender;
-
-        // If a hook invokes setState() to invalidate the component during rendering,
-        // re-render it up to 25 times to allow "settling" of memoized states.
-        // Note:
-        //   This will need to be updated for Preact 11 to use internal.flags rather than component._dirty:
-        //   https://github.com/preactjs/preact/blob/d4ca6fdb19bc715e49fd144e69f7296b2f4daa40/src/diff/component.js#L35-L44
-        let count = 0;
-        while (component[DIRTY] && count++ < 25) {
-          component[DIRTY] = false;
-
-          if (renderHook) renderHook(vnode);
-
-          rendered = component.render(props, component.state, cctx);
-        }
-        component[DIRTY] = true;
-      }
-
-      if (component.getChildContext != null) {
-        context = assign({}, context, component.getChildContext());
-      }
-    }
-    // When a component returns a Fragment node we flatten it in core, so we
-    // need to mirror that logic here too
-    const isTopLevelFragment = rendered != null && rendered.type === Fragment
-      && rendered.key == null;
-    rendered = isTopLevelFragment ? rendered.props.children : rendered;
-
-    // Recurse into children before invoking the after-diff hook
-    try {
-      _renderToString(rendered, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
-    } catch (e) {
-      if (e && typeof e === 'object' && e.then && component && /* _childDidSuspend */ component.__c) {
-        component.setState({ /* _suspended */ __a: true });
-
-        if (component[DIRTY]) {
-          rendered = renderClassComponent(vnode, context);
-          component = vnode[COMPONENT];
-
-          opcodes.length = opcodesLength;
-          _renderToString(rendered, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
-        }
-      } else {
-        throw e;
-      }
-    } finally {
-      if (afterDiff) afterDiff(vnode);
-      vnode[PARENT] = undefined;
-      if (ummountHook) ummountHook(vnode);
-    }
-
+    renderComponentVNode(vnode, type, props, context, isSvgMode, selectValue, opcodes, opcodesLength);
     return;
   }
 
-  opcodes.push(__OpBegin, vnode);
-  // Fast path for ET host nodes. Compiler-generated ET nodes only carry
-  // `children` and optional dynamic `attributeSlots`.
-  if (
-    __USE_ELEMENT_TEMPLATE__
-    && typeof type === 'string'
-  ) {
-    const attributeSlots = props.attributeSlots;
-    if (attributeSlots !== undefined) {
-      opcodes.push(__OpAttr, 'attributeSlots', attributeSlots);
-    }
-
-    const runtimeOptions = props.options;
-    if (runtimeOptions !== undefined) {
-      opcodes.push(__OpAttr, 'options', runtimeOptions);
-    }
-
-    const etChildren = props.children;
-    if (etChildren != null && etChildren !== false && etChildren !== true) {
-      _renderToString(etChildren, context, false, selectValue, vnode, opcodes, opcodes.length);
-    }
-
-    if (afterDiff) afterDiff(vnode);
-    vnode[PARENT] = undefined;
-    if (ummountHook) ummountHook(vnode);
-    opcodes.push(__OpEnd);
+  // ET runtime only renders compiler-generated host nodes through this
+  // entry, so string host types can go straight to the ET opcode path.
+  if (typeof type === 'string') {
+    renderEtHostVNode(vnode, props, context, selectValue, opcodes);
     return;
   }
 
-  let children;
-
-  for (const name in props) {
-    const v = props[name];
-
-    switch (name) {
-      case 'children':
-        children = v;
-        continue;
-
-      // VDOM-specific props
-      /* c8 ignore next 5 */
-      case 'key':
-      case 'ref':
-      case '__self':
-      case '__source':
-        continue;
-
-      default: {}
-    }
-
-    // write this attribute to the buffer
-    if (v != null && v !== false && typeof v !== 'function') {
-      opcodes.push(__OpAttr, name, v);
-    }
-  }
-
-  if (typeof children === 'string' || typeof children === 'number') {
-    // single text child
-    opcodes.push(__OpText, children);
-  } else if (children != null && children !== false && children !== true) {
-    // recurse into this element VNode's children
-    _renderToString(children, context, false, selectValue, vnode, opcodes, opcodes.length);
-  }
-
-  if (afterDiff) afterDiff(vnode);
-  vnode[PARENT] = undefined;
-  if (ummountHook) ummountHook(vnode);
-
-  opcodes.push(__OpEnd);
-
+  renderGenericHostVNode(vnode, props, context, selectValue, opcodes);
   return;
 }
 
