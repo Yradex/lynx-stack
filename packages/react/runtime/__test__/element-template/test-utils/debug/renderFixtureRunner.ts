@@ -9,7 +9,7 @@ import { renderOpcodesIntoElementTemplate } from '../../../../src/element-templa
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { removeCtxNotFoundEventListener } from '../../../../src/lifecycle/patch/error.js';
-import { renderToString } from '../../../../src/renderToOpcodes/index.js';
+import { renderToString } from '../../../../src/element-template/runtime/render/render-to-opcodes.js';
 import {
   assertMissingFile,
   assertOrUpdateTextFile,

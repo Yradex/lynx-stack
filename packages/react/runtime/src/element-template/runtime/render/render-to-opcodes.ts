@@ -25,9 +25,19 @@ import {
   RENDER,
   SKIP_EFFECTS,
   VNODE,
-} from './constants.js';
+} from '../../../renderToOpcodes/constants.js';
 
 /** @typedef {import('preact').VNode} VNode */
+
+let Slot: any;
+
+/**
+ * @internal
+ */
+/* v8 ignore next 3 */
+export function registerSlot(slot: any): void {
+  Slot = slot;
+}
 
 const EMPTY_ARR = [];
 const isArray = /* @__PURE__ */ Array.isArray;
@@ -94,6 +104,8 @@ export const __OpBegin = 0;
 export const __OpEnd = 1;
 export const __OpAttr = 2;
 export const __OpText = 3;
+export const __OpSlot = 4;
+
 /**
  * @param {VNode} vnode
  * @param {Record<string, unknown>} context
@@ -195,6 +207,17 @@ function _renderToString(
 
   // Invoke rendering on Components
   if (typeof type === 'function') {
+    /* v8 ignore start */
+    if (type === Slot) {
+      opcodes.push(__OpSlot, props.id);
+      _renderToString(props.children, context, isSvgMode, selectValue, vnode, opcodes, opcodes.length);
+      if (afterDiff) afterDiff(vnode);
+      vnode[PARENT] = undefined;
+      if (ummountHook) ummountHook(vnode);
+      return;
+    }
+    /* v8 ignore stop */
+
     if (type === Fragment) {
       rendered = props.children;
     } else {
@@ -276,6 +299,33 @@ function _renderToString(
   }
 
   opcodes.push(__OpBegin, vnode);
+  // Fast path for ET host nodes. Compiler-generated ET nodes only carry
+  // `children` and optional dynamic `attributeSlots`.
+  if (
+    __USE_ELEMENT_TEMPLATE__
+    && typeof type === 'string'
+  ) {
+    const attributeSlots = props.attributeSlots;
+    if (attributeSlots !== undefined) {
+      opcodes.push(__OpAttr, 'attributeSlots', attributeSlots);
+    }
+
+    const runtimeOptions = props.options;
+    if (runtimeOptions !== undefined) {
+      opcodes.push(__OpAttr, 'options', runtimeOptions);
+    }
+
+    const etChildren = props.children;
+    if (etChildren != null && etChildren !== false && etChildren !== true) {
+      _renderToString(etChildren, context, false, selectValue, vnode, opcodes, opcodes.length);
+    }
+
+    if (afterDiff) afterDiff(vnode);
+    vnode[PARENT] = undefined;
+    if (ummountHook) ummountHook(vnode);
+    opcodes.push(__OpEnd);
+    return;
+  }
 
   let children;
 

@@ -9,7 +9,7 @@ import { setupPage } from '../../../../src/element-template/runtime/page/page.js
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
-import { renderToString } from '../../../../src/renderToOpcodes/index.js';
+import { renderToString } from '../../../../src/element-template/runtime/render/render-to-opcodes.js';
 import { clearTemplates, registerBuiltinRawTextTemplate, registerTemplates } from '../../test-utils/debug/registry.js';
 import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 import { installMockNativePapi, type MockNativePapi } from '../../test-utils/mock/mockNativePapi.js';

@@ -8,7 +8,7 @@ import {
   isElementTemplateList,
   splitListItemAttributeSlots,
 } from './list.js';
-import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../renderToOpcodes/index.js';
+import { __OpAttr, __OpBegin, __OpEnd, __OpSlot, __OpText } from './render-to-opcodes.js';
 import type { RuntimeOptions, SerializableValue } from '../../protocol/types.js';
 import { createElementTemplateWithHandle } from '../template/handle.js';
 
@@ -202,7 +202,6 @@ export function renderOpcodesIntoElementTemplate(
             elementSlots ?? null,
             currentOptions,
           );
-
           appendChildToParent(parentTemplateKey, parentActiveElementSlot, rootRefs, elementRef);
           i += 1;
           break;
@@ -219,7 +218,6 @@ export function renderOpcodesIntoElementTemplate(
             elementSlots ?? null,
             currentOptions,
           );
-
           appendChildToParent(parentTemplateKey, parentActiveElementSlot, rootRefs, elementRef);
           i += 1;
           break;
@@ -280,7 +278,6 @@ export function renderOpcodesIntoElementTemplate(
           [],
           undefined,
         );
-
         const parentTemplateKey = templateKeyStack[stackTop];
         if (parentTemplateKey === null) {
           rootRefs.push(textRef);
@@ -301,5 +298,7 @@ export function renderOpcodesIntoElementTemplate(
         throw new Error(`Unknown opcode: ${opcode as string | number}`);
     }
   }
-  return { rootRefs };
+  return {
+    rootRefs,
+  };
 }

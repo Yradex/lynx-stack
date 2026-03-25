@@ -27,7 +27,7 @@ describe('element-template native index wiring', () => {
     vi.doUnmock('../../../src/element-template/lynx/env.js');
     vi.doUnmock('../../../src/element-template/lynx/performance.js');
     vi.doUnmock('../../../src/element-template/runtime/page/root-instance.js');
-    vi.doUnmock('../../../src/renderToOpcodes/index.js');
+    vi.doUnmock('../../../src/element-template/runtime/render/render-to-opcodes.js');
     vi.doUnmock('../../../src/element-template/runtime/components/slot.js');
   });
 
@@ -46,7 +46,7 @@ describe('element-template native index wiring', () => {
     const setRoot = vi.fn();
     const initTimingAPI = vi.fn();
 
-    vi.doMock('../../../src/renderToOpcodes/index.js', () => ({
+    vi.doMock('../../../src/element-template/runtime/render/render-to-opcodes.js', () => ({
       registerSlot,
     }));
     vi.doMock('../../../src/element-template/runtime/components/slot.js', () => ({
@@ -120,7 +120,7 @@ describe('element-template native index wiring', () => {
     const setRoot = vi.fn();
     const callDestroyLifetimeFun = vi.fn();
 
-    vi.doMock('../../../src/renderToOpcodes/index.js', () => ({
+    vi.doMock('../../../src/element-template/runtime/render/render-to-opcodes.js', () => ({
       registerSlot,
     }));
     vi.doMock('../../../src/element-template/runtime/components/slot.js', () => ({

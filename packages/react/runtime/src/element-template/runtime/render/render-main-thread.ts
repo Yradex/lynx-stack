@@ -8,7 +8,7 @@
 
 import { renderOpcodesIntoElementTemplate } from './render-opcodes.js';
 import { profileEnd, profileStart } from '../../../debug/utils.js';
-import { render as renderToString } from '../../../renderToOpcodes/index.js';
+import { render as renderToString } from './render-to-opcodes.js';
 import { ElementTemplateLifecycleConstant } from '../../protocol/lifecycle-constant.js';
 import type { SerializedElementTemplate } from '../../protocol/types.js';
 import { __page } from '../page/page.js';
@@ -29,7 +29,7 @@ function renderMainThread(): void {
 
   profileStart('ReactLynx::renderOpcodes');
   try {
-    ({ rootRefs } = renderOpcodesIntoElementTemplate(opcodes));
+    rootRefs = renderOpcodesIntoElementTemplate(opcodes).rootRefs;
     for (const rootRef of rootRefs) {
       __AppendElement(__page, rootRef as FiberElement);
     }

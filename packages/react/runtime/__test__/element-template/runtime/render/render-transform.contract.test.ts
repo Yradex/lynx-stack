@@ -11,7 +11,7 @@ import { transformReactLynx } from '@lynx-js/react-transform';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
-import { renderToString } from '../../../../src/renderToOpcodes/index.js';
+import { renderToString } from '../../../../src/element-template/runtime/render/render-to-opcodes.js';
 import { clearTemplates, registerBuiltinRawTextTemplate, registerTemplates } from '../../test-utils/debug/registry.js';
 import { installMockNativePapi, lastMock } from '../../test-utils/mock/mockNativePapi.js';
 

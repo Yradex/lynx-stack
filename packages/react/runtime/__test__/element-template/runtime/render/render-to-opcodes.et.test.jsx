@@ -11,7 +11,7 @@ import {
   __OpSlot,
   __OpText,
   renderToString,
-} from '../../../../src/renderToOpcodes/index';
+} from '../../../../src/element-template/runtime/render/render-to-opcodes';
 
 describe('Element Template renderToOpcodes', () => {
   let originalUseElementTemplate;

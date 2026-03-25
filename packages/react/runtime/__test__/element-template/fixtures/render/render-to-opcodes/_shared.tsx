@@ -1,4 +1,4 @@
-import { renderToString } from '../../../../../src/renderToOpcodes/index.js';
+import { renderToString } from '../../../../../src/element-template/runtime/render/render-to-opcodes.js';
 
 export type LabelMap = Map<object, string>;
 

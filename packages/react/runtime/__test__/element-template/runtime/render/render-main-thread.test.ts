@@ -4,7 +4,7 @@ import { renderMainThread } from '../../../../src/element-template/runtime/rende
 import { setupPage } from '../../../../src/element-template/runtime/page/page.js';
 import { setRoot } from '../../../../src/element-template/runtime/page/root-instance.js';
 
-vi.mock('../../../../src/renderToOpcodes/index.js', () => ({
+vi.mock('../../../../src/element-template/runtime/render/render-to-opcodes.js', () => ({
   render: vi.fn(),
   registerSlot: vi.fn(),
 }));
@@ -13,7 +13,9 @@ vi.mock('../../../../src/element-template/runtime/render/render-opcodes.js', () 
   renderOpcodesIntoElementTemplate: vi.fn(),
 }));
 
-import { render as mockRender } from '../../../../src/renderToOpcodes/index.js';
+import {
+  render as mockRender,
+} from '../../../../src/element-template/runtime/render/render-to-opcodes.js';
 import { renderOpcodesIntoElementTemplate as mockRenderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 
 describe('renderMainThread', () => {

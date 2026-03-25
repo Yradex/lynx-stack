@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../../../src/renderToOpcodes/index.js', async () => {
-  const actual = await vi.importActual('../../../../src/renderToOpcodes/index.js');
+vi.mock('../../../../src/element-template/runtime/render/render-to-opcodes.js', async () => {
+  const actual = await vi.importActual('../../../../src/element-template/runtime/render/render-to-opcodes.js');
   return {
     ...actual,
     render: vi.fn(),
@@ -15,7 +15,7 @@ import {
   __OpSlot,
   __OpText,
   render as mockRender,
-} from '../../../../src/renderToOpcodes/index.js';
+} from '../../../../src/element-template/runtime/render/render-to-opcodes.js';
 import { renderMainThread } from '../../../../src/element-template/runtime/render/render-main-thread.js';
 import { setupPage } from '../../../../src/element-template/runtime/page/page.js';
 import { setRoot } from '../../../../src/element-template/runtime/page/root-instance.js';

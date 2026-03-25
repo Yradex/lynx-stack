@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderOpcodesIntoElementTemplate } from '../../../../src/element-template/runtime/render/render-opcodes.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
-import { __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../../src/renderToOpcodes/index.js';
+import { __OpBegin, __OpEnd, __OpSlot, __OpText } from '../../../../src/element-template/runtime/render/render-to-opcodes.js';
 
 describe('renderOpcodesIntoElementTemplate', () => {
   const createElementTemplate = vi.fn();
