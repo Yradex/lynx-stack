@@ -1,5 +1,5 @@
 import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
-import { Slot as Slot } from "@lynx-js/react/element-template/internal";
+import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
 const _et_7a8c6_test_5 = "_et_7a8c6_test_5";
 const _et_7a8c6_test_4 = "_et_7a8c6_test_4";
 const _et_7a8c6_test_3 = "_et_7a8c6_test_3";
@@ -7,32 +7,20 @@ const _et_7a8c6_test_2 = "_et_7a8c6_test_2";
 const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
 export function App() {
     return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
-        children: /*#__PURE__*/ _jsx(Slot, {
-            id: 0,
-            children: Array.from({
-                length: 3
-            }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
-                    children: /*#__PURE__*/ _jsx(Slot, {
-                        id: 0,
-                        children: Array.from({
+        children: __etSlot(0, Array.from({
+            length: 3
+        }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+                children: __etSlot(0, Array.from({
+                    length: 16
+                }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
+                        children: __etSlot(0, Array.from({
                             length: 16
-                        }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
-                                children: /*#__PURE__*/ _jsx(Slot, {
-                                    id: 0,
-                                    children: Array.from({
-                                        length: 16
-                                    }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_4, {
-                                            children: /*#__PURE__*/ _jsx(Slot, {
-                                                id: 0,
-                                                children: Array.from({
-                                                    length: 8
-                                                }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_5, {}))
-                                            })
-                                        }))
-                                })
-                            }))
-                    })
-                }))
-        })
+                        }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_4, {
+                                children: __etSlot(0, Array.from({
+                                    length: 8
+                                }).fill(1).map((index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_5, {})))
+                            })))
+                    })))
+            })))
     });
 }

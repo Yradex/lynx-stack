@@ -7,7 +7,6 @@ import { callDestroyLifetimeFun } from './callDestroyLifetimeFun.js';
 import { injectCalledByNative } from './main-thread-api.js';
 import { installOnMtsDestruction } from './mts-destroy.js';
 import { installElementTemplatePatchListener } from './patch-listener.js';
-import { registerSlot } from '../runtime/render/render-to-opcodes.js';
 import { installElementTemplateCommitHook } from '../background/commit-hook.js';
 import { setupBackgroundElementTemplateDocument } from '../background/document.js';
 import { installElementTemplateHydrationListener } from '../background/hydration-listener.js';
@@ -15,12 +14,9 @@ import { BackgroundElementTemplateInstance } from '../background/instance.js';
 import { initProfileHook } from '../debug/profile.js';
 import { setupLynxEnv } from '../lynx/env.js';
 import { initTimingAPI } from '../lynx/performance.js';
-import { Slot } from '../runtime/components/slot.js';
 import { setRoot } from '../runtime/page/root-instance.js';
 
 function init(): void {
-  registerSlot(Slot);
-
   if (__MAIN_THREAD__) {
     injectCalledByNative();
     installElementTemplatePatchListener();

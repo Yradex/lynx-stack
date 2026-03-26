@@ -252,29 +252,16 @@ fn bool_jsx_attr(value: bool) -> JSXAttrValue {
 }
 
 fn wrap_in_slot(slot_ident: &Ident, id: i32, children: Vec<JSXElementChild>) -> JSXElementChild {
-  let slot_name = JSXElementName::Ident(slot_ident.clone());
-  JSXElementChild::JSXElement(Box::new(JSXElement {
+  let children_expr = jsx_children_to_expr(children);
+  JSXElementChild::JSXExprContainer(JSXExprContainer {
     span: DUMMY_SP,
-    opening: JSXOpeningElement {
-      span: DUMMY_SP,
-      name: slot_name.clone(),
-      attrs: vec![JSXAttrOrSpread::JSXAttr(JSXAttr {
-        span: DUMMY_SP,
-        name: JSXAttrName::Ident(IdentName::new("id".into(), DUMMY_SP)),
-        value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-          span: DUMMY_SP,
-          expr: JSXExpr::Expr(Box::new(i32_to_expr(&id))),
-        })),
-      })],
-      self_closing: false,
-      type_args: None,
-    },
-    closing: Some(JSXClosingElement {
-      span: DUMMY_SP,
-      name: slot_name,
-    }),
-    children,
-  }))
+    expr: JSXExpr::Expr(Box::new(quote!(
+      "$slot_ident($id, $children_expr)" as Expr,
+      slot_ident: Ident = slot_ident.clone(),
+      id: Expr = i32_to_expr(&id),
+      children_expr: Expr = children_expr,
+    ))),
+  })
 }
 
 impl DynamicPart {
@@ -1282,7 +1269,7 @@ where
       current_snapshot_defs: vec![],
       current_snapshot_id: None,
       comments,
-      slot_ident: private_ident!("Slot"),
+      slot_ident: private_ident!("__etSlot"),
       used_slot: false,
     }
   }
@@ -2328,8 +2315,8 @@ where
           specifiers: vec![ImportSpecifier::Named(ImportNamedSpecifier {
             span: DUMMY_SP,
             local: self.slot_ident.clone(),
-            imported: Some(ModuleExportName::Ident(Ident::new(
-              "Slot".into(),
+              imported: Some(ModuleExportName::Ident(Ident::new(
+              "__etSlot".into(),
               DUMMY_SP,
               SyntaxContext::default(),
             ))),

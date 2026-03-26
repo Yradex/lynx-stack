@@ -4,13 +4,23 @@
 import type { ComponentChild, ComponentChildren } from 'preact';
 import { createElement } from 'preact';
 
+type ElementTemplateSlotMarker = {
+  __etSlot: true;
+  id: number;
+  children: ComponentChildren;
+};
+
 /**
  * @internal
  */
-export function Slot(props: { id: number; children: ComponentChildren }): ComponentChild {
+export function __etSlot(id: number, children: ComponentChildren): ComponentChild {
   if (__BACKGROUND__) {
     // @ts-expect-error - 'slot' is not a standard JSX element but we support it in our adapter
-    return createElement('slot', { id: props.id }, props.children);
+    return createElement('slot', { id }, children);
   }
-  return props.children;
+  return {
+    __etSlot: true,
+    id,
+    children,
+  } as ElementTemplateSlotMarker;
 }

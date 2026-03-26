@@ -27,14 +27,11 @@ describe('element-template native index wiring', () => {
     vi.doUnmock('../../../src/element-template/lynx/env.js');
     vi.doUnmock('../../../src/element-template/lynx/performance.js');
     vi.doUnmock('../../../src/element-template/runtime/page/root-instance.js');
-    vi.doUnmock('../../../src/element-template/runtime/render/render-to-opcodes.js');
-    vi.doUnmock('../../../src/element-template/runtime/components/slot.js');
   });
 
   it('installs main-thread wiring only on main thread', async () => {
     envManager.resetEnv('main');
 
-    const registerSlot = vi.fn();
     const injectCalledByNative = vi.fn();
     const installElementTemplatePatchListener = vi.fn();
     const installOnMtsDestruction = vi.fn();
@@ -46,12 +43,6 @@ describe('element-template native index wiring', () => {
     const setRoot = vi.fn();
     const initTimingAPI = vi.fn();
 
-    vi.doMock('../../../src/element-template/runtime/render/render-to-opcodes.js', () => ({
-      registerSlot,
-    }));
-    vi.doMock('../../../src/element-template/runtime/components/slot.js', () => ({
-      Slot: Symbol('Slot'),
-    }));
     vi.doMock('../../../src/element-template/native/main-thread-api.js', () => ({
       injectCalledByNative,
     }));
@@ -88,7 +79,6 @@ describe('element-template native index wiring', () => {
 
     await import('../../../src/element-template/native/index.js');
 
-    expect(registerSlot).toHaveBeenCalledTimes(1);
     expect(injectCalledByNative).toHaveBeenCalledTimes(1);
     expect(installElementTemplatePatchListener).toHaveBeenCalledTimes(1);
     expect(installOnMtsDestruction).toHaveBeenCalledTimes(1);
@@ -107,7 +97,6 @@ describe('element-template native index wiring', () => {
     process.env['NODE_ENV'] = 'production';
     globalThis.lynx.performance.isProfileRecording = vi.fn(() => true);
 
-    const registerSlot = vi.fn();
     const injectCalledByNative = vi.fn();
     const installElementTemplatePatchListener = vi.fn();
     const installOnMtsDestruction = vi.fn();
@@ -120,12 +109,6 @@ describe('element-template native index wiring', () => {
     const setRoot = vi.fn();
     const callDestroyLifetimeFun = vi.fn();
 
-    vi.doMock('../../../src/element-template/runtime/render/render-to-opcodes.js', () => ({
-      registerSlot,
-    }));
-    vi.doMock('../../../src/element-template/runtime/components/slot.js', () => ({
-      Slot: Symbol('Slot'),
-    }));
     vi.doMock('../../../src/element-template/native/main-thread-api.js', () => ({
       injectCalledByNative,
     }));
@@ -167,7 +150,6 @@ describe('element-template native index wiring', () => {
 
     await import('../../../src/element-template/native/index.js');
 
-    expect(registerSlot).toHaveBeenCalledTimes(1);
     expect(setRoot).toHaveBeenCalledTimes(1);
     expect(setupBackgroundElementTemplateDocument).toHaveBeenCalledTimes(1);
     expect(installElementTemplateHydrationListener).toHaveBeenCalledTimes(1);

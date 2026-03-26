@@ -29,14 +29,8 @@ import {
 
 /** @typedef {import('preact').VNode} VNode */
 
-let Slot: any;
-
-/**
- * @internal
- */
-/* v8 ignore next 3 */
-export function registerSlot(slot: any): void {
-  Slot = slot;
+function isEtSlotMarker(vnode) {
+  return vnode != null && vnode.__etSlot === true;
 }
 
 const EMPTY_ARR = [];
@@ -151,11 +145,9 @@ function cleanupVNode(vnode) {
   if (ummountHook) ummountHook(vnode);
 }
 
-function renderSlotVNode(vnode, context, opcodes) {
-  const props = vnode.props;
-  opcodes.push(__OpSlot, props.id);
-  _renderToString(props.children, context, vnode, opcodes);
-  cleanupVNode(vnode);
+function renderEtSlotMarker(vnode, context, opcodes) {
+  opcodes.push(__OpSlot, vnode.id);
+  _renderToString(vnode.children, context, vnode, opcodes);
 }
 
 function renderComponentVNode(
@@ -336,6 +328,11 @@ function _renderToString(
     return;
   }
 
+  if (isEtSlotMarker(vnode)) {
+    renderEtSlotMarker(vnode, context, opcodes);
+    return;
+  }
+
   // VNodes have {constructor:undefined} to prevent JSON injection:
   // if (vnode.constructor !== undefined) return;
 
@@ -348,13 +345,6 @@ function _renderToString(
 
   // Invoke rendering on Components
   if (typeof type === 'function') {
-    /* v8 ignore start */
-    if (type === Slot) {
-      renderSlotVNode(vnode, context, opcodes);
-      return;
-    }
-    /* v8 ignore stop */
-
     renderComponentVNode(vnode, type, props, context, opcodes);
     return;
   }

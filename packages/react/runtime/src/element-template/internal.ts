@@ -53,4 +53,4 @@ export type { Options } from 'preact';
 // export { transformToWorklet } from '../worklet/call/transformToWorklet.js';
 // export { registerWorkletOnBackground } from '../worklet/hmr.js';
 // export { loadWorkletRuntime } from '@lynx-js/react/worklet-runtime/bindings';
-export { Slot } from './runtime/components/slot.js';
+export { __etSlot } from './runtime/components/slot.js';

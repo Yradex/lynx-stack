@@ -6,7 +6,7 @@ import {
   BackgroundElementTemplateInstance,
   BUILTIN_RAW_TEXT_TEMPLATE_KEY,
 } from '../../../../../src/element-template/background/instance.js';
-import { Slot } from '../../../../../src/element-template/runtime/components/slot.js';
+import { __etSlot } from '../../../../../src/element-template/runtime/components/slot.js';
 
 describe('Background Element Template Adapter', () => {
   let doc: BackgroundElementTemplateDocument;
@@ -70,10 +70,10 @@ describe('Background Element Template Adapter', () => {
     });
   });
 
-  describe('Slot Component', () => {
+  describe('__etSlot', () => {
     it('returns <slot> element in background', () => {
       vi.stubGlobal('__BACKGROUND__', true);
-      const vnode = Slot({ id: 10, children: 'content' }) as unknown as {
+      const vnode = __etSlot(10, 'content') as unknown as {
         type: string;
         props: { id: number; children: unknown };
       };
@@ -85,10 +85,14 @@ describe('Background Element Template Adapter', () => {
       vi.unstubAllGlobals();
     });
 
-    it('returns children transparently in main thread (default)', () => {
+    it('returns marker in main thread (default)', () => {
       vi.stubGlobal('__BACKGROUND__', false);
-      const res = Slot({ id: 10, children: 'content' });
-      expect(res).toBe('content');
+      const res = __etSlot(10, 'content');
+      expect(res).toMatchObject({
+        __etSlot: true,
+        id: 10,
+        children: 'content',
+      });
       vi.unstubAllGlobals();
     });
   });
