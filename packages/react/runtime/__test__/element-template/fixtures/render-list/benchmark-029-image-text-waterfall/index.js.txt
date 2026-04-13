@@ -1,5 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
+import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
 const posts = [
     {
         id: 1,
@@ -46,38 +45,46 @@ export function App() {
             attributeSlots: [
                 card.authorAvatar
             ],
-            children: __etSlot(0, card.authorName)
+            children: [
+                card.authorName
+            ]
         });
     const HeartIcon = ()=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {});
-    const renderCardStats = (card)=>/*#__PURE__*/ _jsxs(_et_7a8c6_test_3, {
+    const renderCardStats = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
             attributeSlots: [
                 `heart-icon ${card.liked ? 'liked' : ''}`
             ],
             children: [
-                __etSlot(0, /*#__PURE__*/ _jsx(HeartIcon, {})),
-                __etSlot(1, card.likes)
+                /*#__PURE__*/ _jsx(HeartIcon, {}),
+                card.likes
             ]
         });
     const renderCardBottomInfo = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_4, {
-            children: __etSlot(0, [
-                renderAuthorInfo(card),
-                renderCardStats(card)
-            ])
+            children: [
+                [
+                    renderAuthorInfo(card),
+                    renderCardStats(card)
+                ]
+            ]
         });
     const renderCardTags = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_5, {
-            children: __etSlot(0, card.tags.map((tag, index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_6, {
-                    children: __etSlot(0, tag)
-                }, index)))
-        });
-    const renderCardBody = (card)=>/*#__PURE__*/ _jsxs(_et_7a8c6_test_7, {
             children: [
-                __etSlot(0, card.title),
-                __etSlot(1, [
+                card.tags.map((tag, index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_6, {
+                        children: [
+                            tag
+                        ]
+                    }, index))
+            ]
+        });
+    const renderCardBody = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_7, {
+            children: [
+                card.title,
+                [
                     renderCardBottomInfo(card),
                     renderCardTags(card)
-                ]),
-                __etSlot(2, card.content),
-                __etSlot(3, card.creationDate)
+                ],
+                card.content,
+                card.creationDate
             ]
         });
     const renderCard = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_8, {
@@ -87,7 +94,9 @@ export function App() {
                 },
                 card.coverImage
             ],
-            children: __etSlot(0, renderCardBody(card))
+            children: [
+                renderCardBody(card)
+            ]
         });
     return /*#__PURE__*/ _jsx(_et_7a8c6_test_9, {
         options: {
@@ -125,6 +134,8 @@ export function App() {
                 }
             ]
         },
-        children: __etSlot(0, posts.map((post)=>renderCard(post)))
+        children: [
+            posts.map((post)=>renderCard(post))
+        ]
     });
 }

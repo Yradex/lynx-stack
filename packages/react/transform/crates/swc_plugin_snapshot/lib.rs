@@ -264,6 +264,73 @@ fn wrap_in_slot(slot_ident: &Ident, id: i32, children: Vec<JSXElementChild>) -> 
   })
 }
 
+fn unwrap_et_slot_expr(expr: &Expr, slot_ident: &Ident) -> Option<(usize, Expr)> {
+  let Expr::Call(call_expr) = expr else {
+    return None;
+  };
+  let Callee::Expr(callee) = &call_expr.callee else {
+    return None;
+  };
+  let Expr::Ident(ident) = &**callee else {
+    return None;
+  };
+  if ident.sym != slot_ident.sym && ident.sym.as_ref() != "__etSlot" {
+    return None;
+  }
+  if call_expr.args.len() != 2 {
+    return None;
+  }
+
+  let slot_id = match &*call_expr.args[0].expr {
+    Expr::Lit(Lit::Num(Number { value, .. })) if *value >= 0.0 => *value as usize,
+    _ => return None,
+  };
+
+  Some((slot_id, *call_expr.args[1].expr.clone()))
+}
+
+fn lower_lepus_et_children_expr(expr: Expr, slot_ident: &Ident) -> Option<Expr> {
+  match expr {
+    Expr::Call(_) => {
+      let (slot_id, child_expr) = unwrap_et_slot_expr(&expr, slot_ident)?;
+      let mut slots = vec![None; slot_id + 1];
+      slots[slot_id] = Some(ExprOrSpread {
+        spread: None,
+        expr: Box::new(child_expr),
+      });
+      Some(Expr::Array(ArrayLit {
+        span: DUMMY_SP,
+        elems: slots,
+      }))
+    }
+    Expr::Array(array) => {
+      let mut slots: Vec<Option<ExprOrSpread>> = vec![];
+
+      for elem in &array.elems {
+        let Some(elem) = elem else {
+          return None;
+        };
+        let Some((slot_id, child_expr)) = unwrap_et_slot_expr(&elem.expr, slot_ident) else {
+          return None;
+        };
+        if slots.len() <= slot_id {
+          slots.resize(slot_id + 1, None);
+        }
+        slots[slot_id] = Some(ExprOrSpread {
+          spread: None,
+          expr: Box::new(child_expr),
+        });
+      }
+
+      Some(Expr::Array(ArrayLit {
+        span: DUMMY_SP,
+        elems: slots,
+      }))
+    }
+    _ => None,
+  }
+}
+
 impl DynamicPart {
   fn to_updater(&self, runtime_id: Expr, target: TransformTarget, exp_index: i32) -> Expr {
     match target {
@@ -1984,7 +2051,9 @@ where
           }),
         };
         snapshot_children.push(if use_element_template {
-          self.used_slot = true;
+          if target != TransformTarget::LEPUS {
+            self.used_slot = true;
+          }
           wrap_in_slot(&self.slot_ident, 0, vec![child])
         } else {
           child
@@ -2010,7 +2079,9 @@ where
                 }),
               };
               snapshot_children.push(if use_element_template {
-                self.used_slot = true;
+                if target != TransformTarget::LEPUS {
+                  self.used_slot = true;
+                }
                 wrap_in_slot(&self.slot_ident, element_index, vec![child])
               } else {
                 child
@@ -2034,7 +2105,9 @@ where
                 }),
               };
               snapshot_children.push(if use_element_template {
-                self.used_slot = true;
+                if target != TransformTarget::LEPUS {
+                  self.used_slot = true;
+                }
                 wrap_in_slot(&self.slot_ident, element_index, vec![child])
               } else {
                 child
@@ -2051,7 +2124,9 @@ where
             DynamicPart::Slot(children, element_index) => {
               // snapshot_values.push(None);
               if use_element_template {
-                self.used_slot = true;
+                if target != TransformTarget::LEPUS {
+                  self.used_slot = true;
+                }
                 snapshot_children.push(wrap_in_slot(&self.slot_ident, element_index, children));
               } else {
                 snapshot_children.extend(children);
@@ -2205,6 +2280,35 @@ where
       self.current_snapshot_defs.push(snapshot_def);
     }
 
+    let inline_children_attr = if self.cfg.experimental_enable_element_template
+      && target == TransformTarget::LEPUS
+      && !snapshot_children.is_empty()
+    {
+      Some(JSXAttrOrSpread::JSXAttr(JSXAttr {
+        span: DUMMY_SP,
+        name: JSXAttrName::Ident(IdentName::new("children".into(), DUMMY_SP)),
+        value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
+          span: DUMMY_SP,
+          expr: JSXExpr::Expr(Box::new(
+            lower_lepus_et_children_expr(
+              jsx_children_to_expr(snapshot_children.clone()),
+              &self.slot_ident,
+            )
+            .unwrap_or_else(|| jsx_children_to_expr(snapshot_children.clone())),
+          )),
+        })),
+      }))
+    } else {
+      None
+    };
+
+    let rendered_children = if inline_children_attr.is_some() {
+      vec![]
+    } else {
+      snapshot_children
+    };
+    let rendered_children_is_empty = rendered_children.is_empty();
+
     *node = JSXElement {
       span: node.span(),
       opening: JSXOpeningElement {
@@ -2238,13 +2342,16 @@ where
               }))
             }
           };
+          if let Some(children_attr) = inline_children_attr {
+            snapshot_attrs.push(children_attr);
+          }
           snapshot_attrs
         },
-        self_closing: wrap_dynamic_part.dynamic_part_count == 0,
+        self_closing: rendered_children_is_empty,
         type_args: None,
       },
-      children: snapshot_children,
-      closing: if wrap_dynamic_part.dynamic_part_count == 0 {
+      children: rendered_children,
+      closing: if rendered_children_is_empty {
         None
       } else {
         Some(JSXClosingElement {
@@ -2315,7 +2422,7 @@ where
           specifiers: vec![ImportSpecifier::Named(ImportNamedSpecifier {
             span: DUMMY_SP,
             local: self.slot_ident.clone(),
-              imported: Some(ModuleExportName::Ident(Ident::new(
+            imported: Some(ModuleExportName::Ident(Ident::new(
               "__etSlot".into(),
               DUMMY_SP,
               SyntaxContext::default(),

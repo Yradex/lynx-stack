@@ -1,5 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
+import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
 const posts = [
     {
         id: 1,
@@ -41,7 +40,7 @@ const _et_7a8c6_test_4 = "_et_7a8c6_test_4";
 const _et_7a8c6_test_3 = "_et_7a8c6_test_3";
 const _et_7a8c6_test_5 = "_et_7a8c6_test_5";
 export function App() {
-    const renderCard1 = (card)=>/*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+    const renderCard1 = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
             attributeSlots: [
                 {
                     "item-key": card.id.toString()
@@ -49,11 +48,11 @@ export function App() {
                 card.coverImage
             ],
             children: [
-                __etSlot(0, card.title),
-                __etSlot(1, `${card.likes} million people are searching`)
+                card.title,
+                `${card.likes} million people are searching`
             ]
         });
-    const renderCard2 = (card)=>/*#__PURE__*/ _jsxs(_et_7a8c6_test_2, {
+    const renderCard2 = (card)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
             attributeSlots: [
                 {
                     "item-key": card.id.toString()
@@ -61,8 +60,8 @@ export function App() {
                 card.coverImage
             ],
             children: [
-                __etSlot(0, card.content),
-                __etSlot(1, `${card.authorName} ${card.commentCount} comments ${card.creationDate}`)
+                card.content,
+                `${card.authorName} ${card.commentCount} comments ${card.creationDate}`
             ]
         });
     const renderCard3 = (card)=>{
@@ -71,20 +70,20 @@ export function App() {
             card.coverImage,
             card.coverImage
         ];
-        return /*#__PURE__*/ _jsxs(_et_7a8c6_test_3, {
+        return /*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
             attributeSlots: [
                 {
                     "item-key": card.id.toString()
                 }
             ],
             children: [
-                __etSlot(0, card.content),
-                __etSlot(1, images.map((image, index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_4, {
+                card.content,
+                images.map((image, index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_4, {
                         attributeSlots: [
                             image
                         ]
-                    }, index))),
-                __etSlot(2, `${card.shareCount} shares ${card.creationDate}`)
+                    }, index)),
+                `${card.shareCount} shares ${card.creationDate}`
             ]
         });
     };
@@ -118,10 +117,12 @@ export function App() {
                 }
             ]
         },
-        children: __etSlot(0, posts.map((post, index)=>{
-            if (index % 3 === 0) return renderCard1(post);
-            if (index % 3 === 1) return renderCard2(post);
-            return renderCard3(post);
-        }))
+        children: [
+            posts.map((post, index)=>{
+                if (index % 3 === 0) return renderCard1(post);
+                if (index % 3 === 1) return renderCard2(post);
+                return renderCard3(post);
+            })
+        ]
     });
 }

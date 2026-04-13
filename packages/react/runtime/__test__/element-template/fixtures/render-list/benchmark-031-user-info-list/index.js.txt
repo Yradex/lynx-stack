@@ -1,5 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
+import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
 const posts = [
     {
         data: {
@@ -38,7 +37,7 @@ export function App() {
         else if (index === 1) indexColor = '#F76A4F';
         else if (index === 2) indexColor = '#F4CB5F';
         else indexColor = '#AEADB2';
-        return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+        return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
             attributeSlots: [
                 {
                     "item-key": card.id.toString()
@@ -49,10 +48,10 @@ export function App() {
                 card.coverImage
             ],
             children: [
-                __etSlot(0, index + 1),
-                __etSlot(1, card.authorName),
-                __etSlot(2, `${card.likes} million people are watching`),
-                __etSlot(3, `${card.commentCount} M+`)
+                index + 1,
+                card.authorName,
+                `${card.likes} million people are watching`,
+                `${card.commentCount} M+`
             ]
         });
     };
@@ -86,6 +85,8 @@ export function App() {
                 }
             ]
         },
-        children: __etSlot(0, posts.map((post, index)=>renderCard(post.data, index)))
+        children: [
+            posts.map((post, index)=>renderCard(post.data, index))
+        ]
     });
 }

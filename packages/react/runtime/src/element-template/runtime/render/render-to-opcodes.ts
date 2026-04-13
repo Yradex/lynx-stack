@@ -150,6 +150,17 @@ function renderEtSlotMarker(vnode, context, opcodes) {
   _renderToString(vnode.children, context, vnode, opcodes);
 }
 
+function renderEtSlotArray(children, context, vnode, opcodes) {
+  for (let slotId = 0; slotId < children.length; slotId += 1) {
+    const slotChildren = children[slotId];
+    if (slotChildren == null || slotChildren === false || slotChildren === true) {
+      continue;
+    }
+    opcodes.push(__OpSlot, slotId);
+    _renderToString(slotChildren, context, vnode, opcodes);
+  }
+}
+
 function renderComponentVNode(
   vnode,
   type,
@@ -246,7 +257,11 @@ function renderEtHostVNode(vnode, props, context, opcodes) {
 
   const children = props.children;
   if (children != null && children !== false && children !== true) {
-    _renderToString(children, context, vnode, opcodes);
+    if (isArray(children)) {
+      renderEtSlotArray(children, context, vnode, opcodes);
+    } else {
+      _renderToString(children, context, vnode, opcodes);
+    }
   }
 
   cleanupVNode(vnode);

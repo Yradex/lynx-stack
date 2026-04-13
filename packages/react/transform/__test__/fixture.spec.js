@@ -152,13 +152,14 @@ export class A extends Component {
 
     expect(result.code).toMatchInlineSnapshot(`
       "import { jsx as _jsx } from "react/jsx-runtime";
-      import { __etSlot as __etSlot } from "@lynx-js/react";
       import { Component } from "@lynx-js/react";
       const _et_2d408_test_1 = "_et_2d408_test_1";
       export class A extends Component {
           render() {
               return /*#__PURE__*/ _jsx(_et_2d408_test_1, {
-                  children: __etSlot(0, name)
+                  children: [
+                      name
+                  ]
               });
           }
       }

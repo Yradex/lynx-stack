@@ -1,11 +1,12 @@
 import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
 import { Component } from '@lynx-js/react';
 const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
 class Inner extends Component {
     render() {
         return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
-            children: __etSlot(0, this.props.message)
+            children: [
+                this.props.message
+            ]
         });
     }
 }
@@ -13,9 +14,11 @@ const _et_7a8c6_test_2 = "_et_7a8c6_test_2";
 export class App extends Component {
     render() {
         return /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
-            children: __etSlot(0, /*#__PURE__*/ _jsx(Inner, {
-                message: "X"
-            }))
+            children: [
+                /*#__PURE__*/ _jsx(Inner, {
+                    message: "X"
+                })
+            ]
         });
     }
 }

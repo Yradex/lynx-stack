@@ -30,4 +30,16 @@ describe('Element Template renderToOpcodes', () => {
     expect(opcodes).toContain(__OpBegin);
     expect(opcodes).toContain(__OpEnd);
   });
+
+  it('should emit slot opcodes for ET host slot arrays', () => {
+    const Template = '_et_test_root';
+    const opcodes = renderToString(
+      <Template children={[null, null, null, <text>marker</text>]} />,
+    );
+
+    expect(opcodes[0]).toBe(__OpBegin);
+    expect(opcodes).toContain(__OpSlot);
+    expect(opcodes[opcodes.indexOf(__OpSlot) + 1]).toBe(3);
+    expect(opcodes).toContain(__OpEnd);
+  });
 });

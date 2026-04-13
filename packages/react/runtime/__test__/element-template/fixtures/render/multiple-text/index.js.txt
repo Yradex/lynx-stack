@@ -1,5 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
+import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
 import { Component } from '@lynx-js/react';
 const _et_7a8c6_test_2 = "_et_7a8c6_test_2";
 const _et_7a8c6_test_3 = "_et_7a8c6_test_3";
@@ -11,16 +10,20 @@ export class App extends Component {
             'B',
             'C'
         ];
-        return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+        return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
             children: [
-                __etSlot(0, items),
-                __etSlot(1, items.map((item)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
-                        children: __etSlot(0, item)
-                    }))),
-                __etSlot(2, items),
-                __etSlot(3, items.map((item)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
-                        children: __etSlot(0, item)
-                    })))
+                items,
+                items.map((item)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+                        children: [
+                            item
+                        ]
+                    })),
+                items,
+                items.map((item)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
+                        children: [
+                            item
+                        ]
+                    }))
             ]
         });
     }

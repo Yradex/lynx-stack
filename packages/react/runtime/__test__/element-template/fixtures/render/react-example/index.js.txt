@@ -1,5 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
+import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
 import { useCallback, useEffect, useState } from '@lynx-js/react';
 const arrow = './assets/arrow.png';
 const lynxLogo = './assets/lynx-logo.png';
@@ -16,13 +15,13 @@ export function App() {
         'background-only';
         setAlterLogo((prevAlterLogo)=>!prevAlterLogo);
     }, []);
-    return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+    return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
         attributeSlots: [
             1,
             arrow
         ],
         children: [
-            __etSlot(0, alterLogo ? /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+            alterLogo ? /*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
                 attributeSlots: [
                     reactLynxLogo
                 ]
@@ -30,8 +29,8 @@ export function App() {
                 attributeSlots: [
                     lynxLogo
                 ]
-            })),
-            __etSlot(1, ' src/App.tsx ')
+            }),
+            ' src/App.tsx '
         ]
     });
 }

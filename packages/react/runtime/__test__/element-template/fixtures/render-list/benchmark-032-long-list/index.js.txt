@@ -1,5 +1,4 @@
 import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
 const colors = [
     '#FF0033',
     '#F76A4F',
@@ -36,20 +35,26 @@ export function App() {
                     }
                 ]
             },
-            children: __etSlot(0, colors.map((color, index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
-                    attributeSlots: [
-                        {
-                            "item-key": index.toString()
-                        },
-                        {
-                            backgroundColor: color,
-                            height: '16.8px'
-                        }
-                    ],
-                    children: __etSlot(0, index)
-                })))
+            children: [
+                colors.map((color, index)=>/*#__PURE__*/ _jsx(_et_7a8c6_test_2, {
+                        attributeSlots: [
+                            {
+                                "item-key": index.toString()
+                            },
+                            {
+                                backgroundColor: color,
+                                height: '16.8px'
+                            }
+                        ],
+                        children: [
+                            index
+                        ]
+                    }))
+            ]
         });
     return /*#__PURE__*/ _jsx(_et_7a8c6_test_3, {
-        children: __etSlot(0, renderContent())
+        children: [
+            renderContent()
+        ]
     });
 }

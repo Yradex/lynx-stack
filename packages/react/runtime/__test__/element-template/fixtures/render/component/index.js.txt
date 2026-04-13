@@ -1,15 +1,14 @@
-import { jsxs as _jsxs } from "@lynx-js/react/jsx-runtime";
-import { __etSlot as __etSlot } from "@lynx-js/react/element-template/internal";
+import { jsx as _jsx } from "@lynx-js/react/jsx-runtime";
 const _et_7a8c6_test_1 = "_et_7a8c6_test_1";
 export function App() {
     const x = null;
     const y = 2;
     const z = 3;
-    return /*#__PURE__*/ _jsxs(_et_7a8c6_test_1, {
+    return /*#__PURE__*/ _jsx(_et_7a8c6_test_1, {
         children: [
-            __etSlot(0, x),
-            __etSlot(1, y),
-            __etSlot(2, z)
+            x,
+            y,
+            z
         ]
     });
 }
