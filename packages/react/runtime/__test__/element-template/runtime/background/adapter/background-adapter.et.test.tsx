@@ -85,14 +85,11 @@ describe('Background Element Template Adapter', () => {
       vi.unstubAllGlobals();
     });
 
-    it('returns marker in main thread (default)', () => {
+    it('throws in main thread (default)', () => {
       vi.stubGlobal('__BACKGROUND__', false);
-      const res = __etSlot(10, 'content');
-      expect(res).toMatchObject({
-        __etSlot: true,
-        id: 10,
-        children: 'content',
-      });
+      expect(() => __etSlot(10, 'content')).toThrow(
+        '__etSlot() should not run on the main thread. LEPUS ET children are lowered to slot arrays at compile time.',
+      );
       vi.unstubAllGlobals();
     });
   });

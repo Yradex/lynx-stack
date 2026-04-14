@@ -29,10 +29,6 @@ import {
 
 /** @typedef {import('preact').VNode} VNode */
 
-function isEtSlotMarker(vnode) {
-  return vnode != null && vnode.__etSlot === true;
-}
-
 const EMPTY_ARR = [];
 const isArray = /* @__PURE__ */ Array.isArray;
 const assign = /* @__PURE__ */ Object.assign;
@@ -145,15 +141,20 @@ function cleanupVNode(vnode) {
   if (ummountHook) ummountHook(vnode);
 }
 
-function renderEtSlotMarker(vnode, context, opcodes) {
-  opcodes.push(__OpSlot, vnode.id);
-  _renderToString(vnode.children, context, vnode, opcodes);
+function shouldRenderEtChild(child) {
+  return child != null && child !== false && child !== true;
 }
 
-function renderEtSlotArray(children, context, vnode, opcodes) {
-  for (let slotId = 0; slotId < children.length; slotId += 1) {
-    const slotChildren = children[slotId];
-    if (slotChildren == null || slotChildren === false || slotChildren === true) {
+function isCompiledEtHostType(type) {
+  return type === '__et_builtin_raw_text__'
+    || type.startsWith('_et_')
+    || type.includes(':_et_');
+}
+
+function renderEtSlotArray(slotChildrenById, context, vnode, opcodes) {
+  for (let slotId = 0; slotId < slotChildrenById.length; slotId += 1) {
+    const slotChildren = slotChildrenById[slotId];
+    if (!shouldRenderEtChild(slotChildren)) {
       continue;
     }
     opcodes.push(__OpSlot, slotId);
@@ -242,7 +243,7 @@ function renderComponentVNode(
   }
 }
 
-function renderEtHostVNode(vnode, props, context, opcodes) {
+function renderCompiledEtHostVNode(vnode, props, context, opcodes) {
   opcodes.push(__OpBegin, vnode);
 
   const attributeSlots = props.attributeSlots;
@@ -255,17 +256,25 @@ function renderEtHostVNode(vnode, props, context, opcodes) {
     opcodes.push(__OpAttr, 'options', runtimeOptions);
   }
 
-  const children = props.children;
-  if (children != null && children !== false && children !== true) {
-    if (isArray(children)) {
-      renderEtSlotArray(children, context, vnode, opcodes);
-    } else {
-      _renderToString(children, context, vnode, opcodes);
-    }
+  // ET host nodes are compiler-generated and encode dynamic element slots in
+  // `children`, so the runtime can interpret the prop as a slot array directly.
+  const elementSlots = props.children;
+  if (elementSlots !== undefined) {
+    renderEtSlotArray(elementSlots, context, vnode, opcodes);
   }
 
   cleanupVNode(vnode);
   opcodes.push(__OpEnd);
+}
+
+function renderStringHostVNode(type, vnode, props, context, opcodes) {
+  // TODO(element-template): remove this split once the remaining runtime-only
+  // fixtures stop sending plain string hosts through the ET render path.
+  if (isCompiledEtHostType(type)) {
+    renderCompiledEtHostVNode(vnode, props, context, opcodes);
+  } else {
+    renderGenericHostVNode(vnode, props, context, opcodes);
+  }
 }
 
 function renderGenericHostVNode(vnode, props, context, opcodes) {
@@ -343,11 +352,6 @@ function _renderToString(
     return;
   }
 
-  if (isEtSlotMarker(vnode)) {
-    renderEtSlotMarker(vnode, context, opcodes);
-    return;
-  }
-
   // VNodes have {constructor:undefined} to prevent JSON injection:
   // if (vnode.constructor !== undefined) return;
 
@@ -364,10 +368,8 @@ function _renderToString(
     return;
   }
 
-  // ET runtime only renders compiler-generated host nodes through this
-  // entry, so string host types can go straight to the ET opcode path.
   if (typeof type === 'string') {
-    renderEtHostVNode(vnode, props, context, opcodes);
+    renderStringHostVNode(type, vnode, props, context, opcodes);
     return;
   }
 

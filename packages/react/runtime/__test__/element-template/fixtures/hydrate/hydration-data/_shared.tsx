@@ -1,9 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { vi } from 'vitest';
 
 import { root } from '../../../../../src/element-template/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../../src/element-template/protocol/lifecycle-constant.js';
 import { resetTemplateId } from '../../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../../src/element-template/runtime/template/registry.js';
+import { loadCompiledFixtureApp } from '../../../test-utils/debug/compiledFixtureApp.js';
 import { ElementTemplateEnvManager } from '../../../test-utils/debug/envManager.js';
 import { installMockNativePapi } from '../../../test-utils/mock/mockNativePapi.js';
 
@@ -60,7 +64,23 @@ function defineCase(name: string, runner: CaseRunner): void {
   cases[name] = runner;
 }
 
-export function runCaseByName(name: string): unknown {
+export async function runCaseByName(name: string, fixtureDir?: string): Promise<unknown> {
+  const sourcePath = fixtureDir ? path.join(fixtureDir, 'source.tsx') : null;
+  if (sourcePath && fs.existsSync(sourcePath)) {
+    const context = setup();
+    try {
+      const App = await loadCompiledFixtureApp(sourcePath);
+      context.envManager.switchToMainThread();
+      root.render(<App />);
+      renderPage();
+      root.render(<App />);
+      context.envManager.switchToBackground();
+      return [...context.hydrationData];
+    } finally {
+      teardown(context);
+    }
+  }
+
   const runner = cases[name];
   if (!runner) {
     throw new Error(`Unknown hydration-data case: ${name}`);

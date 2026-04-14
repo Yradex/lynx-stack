@@ -4,12 +4,6 @@
 import type { ComponentChild, ComponentChildren } from 'preact';
 import { createElement } from 'preact';
 
-type ElementTemplateSlotMarker = {
-  __etSlot: true;
-  id: number;
-  children: ComponentChildren;
-};
-
 /**
  * @internal
  */
@@ -18,9 +12,7 @@ export function __etSlot(id: number, children: ComponentChildren): ComponentChil
     // @ts-expect-error - 'slot' is not a standard JSX element but we support it in our adapter
     return createElement('slot', { id }, children);
   }
-  return {
-    __etSlot: true,
-    id,
-    children,
-  } as ElementTemplateSlotMarker;
+  throw new Error(
+    '__etSlot() should not run on the main thread. LEPUS ET children are lowered to slot arrays at compile time.',
+  );
 }

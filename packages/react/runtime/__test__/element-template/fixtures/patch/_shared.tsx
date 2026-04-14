@@ -2,9 +2,11 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { createElement } from 'preact';
 import { vi } from 'vitest';
 
 import { BackgroundElementTemplateInstance } from '../../../../src/element-template/background/instance.js';
+import { hydrate as hydrateBackground } from '../../../../src/element-template/background/hydrate.js';
 import { installMockNativePapi } from '../../test-utils/mock/mockNativePapi.js';
 import {
   installElementTemplatePatchListener,
@@ -15,19 +17,26 @@ import {
   resetElementTemplateHydrationListener,
 } from '../../../../src/element-template/background/hydration-listener.js';
 import { installElementTemplateCommitHook } from '../../../../src/element-template/background/commit-hook.js';
+import '../../../../src/element-template/native/index.js';
 import { ElementTemplateLifecycleConstant } from '../../../../src/element-template/protocol/lifecycle-constant.js';
 import type {
   ElementTemplateUpdateCommitContext,
   SerializedElementTemplate,
 } from '../../../../src/element-template/protocol/types.js';
 import { root } from '../../../../src/element-template/client/root.js';
+import { __page } from '../../../../src/element-template/runtime/page/page.js';
 import { __root as internalRoot } from '../../../../src/element-template/runtime/page/root-instance.js';
 import { resetTemplateId } from '../../../../src/element-template/runtime/template/handle.js';
 import { ElementTemplateRegistry } from '../../../../src/element-template/runtime/template/registry.js';
 import { registerBuiltinRawTextTemplate } from '../../test-utils/debug/registry.js';
 import { ElementTemplateEnvManager } from '../../test-utils/debug/envManager.js';
-
-declare const renderPage: () => void;
+import { compileFixtureSource } from '../../test-utils/debug/compiledFixtureCompiler.js';
+import {
+  loadCompiledFixtureModule,
+  type CompiledFixtureModuleExports,
+} from '../../test-utils/debug/compiledFixtureModule.js';
+import { primeCompiledFixtureTemplates } from '../../test-utils/debug/compiledFixtureRegistry.js';
+import { serializeToJSX } from '../../test-utils/debug/serializer.js';
 
 interface RootWithFirstChild {
   firstChild: BackgroundElementTemplateInstance | null;
@@ -181,7 +190,7 @@ export function renderAndCollect(App: () => JSX.Element, context: PatchContext):
 } {
   root.render(<App />);
   context.envManager.switchToMainThread();
-  renderPage();
+  (globalThis as { renderPage: () => void }).renderPage();
   context.envManager.switchToBackground();
 
   const before = context.hydrationData[0];
@@ -196,4 +205,72 @@ export function renderAndCollect(App: () => JSX.Element, context: PatchContext):
   }
 
   return { before, after };
+}
+
+function resolveCompiledFixtureProps(
+  moduleExports: CompiledFixtureModuleExports,
+  thread: 'main' | 'background',
+): Record<string, unknown> {
+  return thread === 'main'
+    ? (moduleExports.mainProps ?? {})
+    : (moduleExports.backgroundProps ?? {});
+}
+
+export async function runCompiledPatchScenario(sourcePath: string): Promise<{
+  files: {
+    'after-jsx.txt': string;
+    'before-jsx.txt': string;
+    'ops.txt': ElementTemplateUpdateCommandStream;
+  };
+}> {
+  const context = setupPatchContext();
+  try {
+    const mainArtifact = await compileFixtureSource(sourcePath, { target: 'LEPUS' });
+    primeCompiledFixtureTemplates(mainArtifact);
+    const mainModule = await loadCompiledFixtureModule(mainArtifact);
+
+    const backgroundArtifact = await compileFixtureSource(sourcePath, { target: 'JS' });
+    const backgroundModule = await loadCompiledFixtureModule(backgroundArtifact);
+
+    context.envManager.switchToBackground();
+    root.render(createElement(
+      backgroundModule.App,
+      resolveCompiledFixtureProps(backgroundModule, 'background'),
+    ));
+
+    context.envManager.switchToMainThread();
+    root.render(createElement(
+      mainModule.App,
+      resolveCompiledFixtureProps(mainModule, 'main'),
+    ));
+    (globalThis as { renderPage: () => void }).renderPage();
+    const beforeJSX = serializeToJSX(__page);
+
+    context.envManager.switchToBackground();
+    const beforeData = context.hydrationData[0];
+    if (!beforeData) {
+      throw new Error('Missing compiled patch hydration data.');
+    }
+
+    const backgroundRoot = internalRoot as unknown as RootWithFirstChild;
+    const afterData = backgroundRoot.firstChild;
+    if (!afterData) {
+      throw new Error('Missing compiled patch background root child.');
+    }
+
+    const ops = hydrateBackground(beforeData, afterData);
+
+    context.envManager.switchToMainThread();
+    const afterJSX = serializeToJSX(__page);
+
+    return {
+      files: {
+        'before-jsx.txt': beforeJSX,
+        'after-jsx.txt': afterJSX,
+        'ops.txt': ops,
+      },
+    };
+  } finally {
+    teardownPatchContext(context);
+  }
 }

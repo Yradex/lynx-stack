@@ -11,7 +11,6 @@ import {
   __OpText,
   renderToString,
 } from '../../../../src/element-template/runtime/render/render-to-opcodes';
-import { __etSlot } from '../../../../src/element-template/runtime/components/slot';
 
 describe('Element Template renderToOpcodes', () => {
   it('should export correct opcodes', () => {
@@ -20,15 +19,6 @@ describe('Element Template renderToOpcodes', () => {
     expect(__OpAttr).toBe(2);
     expect(__OpText).toBe(3);
     expect(__OpSlot).toBe(4);
-  });
-
-  it('should emit slot opcode for ET slot marker', () => {
-    const opcodes = renderToString(__etSlot(3, <text>marker</text>));
-
-    expect(opcodes[0]).toBe(__OpSlot);
-    expect(opcodes[1]).toBe(3);
-    expect(opcodes).toContain(__OpBegin);
-    expect(opcodes).toContain(__OpEnd);
   });
 
   it('should emit slot opcodes for ET host slot arrays', () => {
@@ -41,5 +31,27 @@ describe('Element Template renderToOpcodes', () => {
     expect(opcodes).toContain(__OpSlot);
     expect(opcodes[opcodes.indexOf(__OpSlot) + 1]).toBe(3);
     expect(opcodes).toContain(__OpEnd);
+  });
+
+  it('should skip empty slot entries when rendering ET host slot arrays', () => {
+    const Template = '_et_test_root';
+    const opcodes = renderToString(
+      <Template children={[false, 'first', null, true, 'second']} />,
+    );
+
+    const normalized = opcodes.map(item => (typeof item === 'object' ? '<vnode>' : item));
+    expect(normalized).toEqual([
+      __OpBegin,
+      '<vnode>',
+      __OpSlot,
+      1,
+      __OpText,
+      'first',
+      __OpSlot,
+      4,
+      __OpText,
+      'second',
+      __OpEnd,
+    ]);
   });
 });

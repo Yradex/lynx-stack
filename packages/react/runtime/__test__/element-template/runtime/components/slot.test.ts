@@ -10,14 +10,11 @@ describe('__etSlot', () => {
     vi.unstubAllGlobals();
   });
 
-  it('should return marker in main thread', () => {
+  it('should throw in main thread', () => {
     vi.stubGlobal('__BACKGROUND__', false);
     const children = 'test children';
-    const result = __etSlot(0, children);
-    expect(result).toMatchObject({
-      __etSlot: true,
-      id: 0,
-      children,
-    });
+    expect(() => __etSlot(0, children)).toThrow(
+      '__etSlot() should not run on the main thread. LEPUS ET children are lowered to slot arrays at compile time.',
+    );
   });
 });

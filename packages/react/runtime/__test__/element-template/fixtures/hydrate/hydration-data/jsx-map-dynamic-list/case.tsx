@@ -1,5 +1,5 @@
 import { runCaseByName } from '../_shared.js';
 
-export function run() {
-  return runCaseByName('jsx-map-dynamic-list');
+export function run({ fixtureDir }: { fixtureDir: string }) {
+  return runCaseByName('jsx-map-dynamic-list', fixtureDir);
 }

@@ -1,5 +1,5 @@
 import { runCaseByName } from '../_shared.js';
 
-export function run() {
-  return runCaseByName('text-children');
+export function run({ fixtureDir }: { fixtureDir: string }) {
+  return runCaseByName('text-children', fixtureDir);
 }

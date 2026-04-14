@@ -264,6 +264,16 @@ fn wrap_in_slot(slot_ident: &Ident, id: i32, children: Vec<JSXElementChild>) -> 
   })
 }
 
+fn expr_to_jsx_child(expr: Expr) -> JSXElementChild {
+  match expr {
+    Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
+    _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
+      span: DUMMY_SP,
+      expr: JSXExpr::Expr(Box::new(expr)),
+    }),
+  }
+}
+
 fn unwrap_et_slot_expr(expr: &Expr, slot_ident: &Ident) -> Option<(usize, Expr)> {
   let Expr::Call(call_expr) = expr else {
     return None;
@@ -289,46 +299,40 @@ fn unwrap_et_slot_expr(expr: &Expr, slot_ident: &Ident) -> Option<(usize, Expr)>
   Some((slot_id, *call_expr.args[1].expr.clone()))
 }
 
-fn lower_lepus_et_children_expr(expr: Expr, slot_ident: &Ident) -> Option<Expr> {
-  match expr {
-    Expr::Call(_) => {
-      let (slot_id, child_expr) = unwrap_et_slot_expr(&expr, slot_ident)?;
-      let mut slots = vec![None; slot_id + 1];
-      slots[slot_id] = Some(ExprOrSpread {
-        spread: None,
-        expr: Box::new(child_expr),
-      });
-      Some(Expr::Array(ArrayLit {
-        span: DUMMY_SP,
-        elems: slots,
-      }))
-    }
-    Expr::Array(array) => {
-      let mut slots: Vec<Option<ExprOrSpread>> = vec![];
+fn build_et_slot_array_expr(entries: Vec<(usize, Expr)>) -> Expr {
+  let mut slots: Vec<Option<ExprOrSpread>> = vec![];
 
-      for elem in &array.elems {
-        let Some(elem) = elem else {
-          return None;
-        };
-        let Some((slot_id, child_expr)) = unwrap_et_slot_expr(&elem.expr, slot_ident) else {
-          return None;
-        };
-        if slots.len() <= slot_id {
-          slots.resize(slot_id + 1, None);
-        }
-        slots[slot_id] = Some(ExprOrSpread {
-          spread: None,
-          expr: Box::new(child_expr),
-        });
-      }
-
-      Some(Expr::Array(ArrayLit {
-        span: DUMMY_SP,
-        elems: slots,
-      }))
+  for (slot_id, child_expr) in entries {
+    if slots.len() <= slot_id {
+      slots.resize(slot_id + 1, None);
     }
-    _ => None,
+    slots[slot_id] = Some(ExprOrSpread {
+      spread: None,
+      expr: Box::new(child_expr),
+    });
   }
+
+  Expr::Array(ArrayLit {
+    span: DUMMY_SP,
+    elems: slots,
+  })
+}
+
+fn lower_lepus_et_children_expr(expr: Expr, slot_ident: &Ident) -> Option<Expr> {
+  let slot_entries = match expr {
+    Expr::Call(_) => vec![unwrap_et_slot_expr(&expr, slot_ident)?],
+    Expr::Array(array) => array
+      .elems
+      .iter()
+      .map(|elem| {
+        let elem = elem.as_ref()?;
+        unwrap_et_slot_expr(&elem.expr, slot_ident)
+      })
+      .collect::<Option<Vec<_>>>()?,
+    _ => return None,
+  };
+
+  Some(build_et_slot_array_expr(slot_entries))
 }
 
 impl DynamicPart {
@@ -2042,14 +2046,7 @@ where
     let slot_expr = match (dynamic_part_children.len(), dynamic_part_children.first()) {
       (0, _) => Expr::Lit(Lit::Null(Null { span: DUMMY_SP })),
       (1, Some(DynamicPart::Children(expr, 0))) => {
-        let expr = expr.clone();
-        let child = match expr {
-          Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
-          _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
-            span: DUMMY_SP,
-            expr: JSXExpr::Expr(Box::new(expr)),
-          }),
-        };
+        let child = expr_to_jsx_child(expr.clone());
         snapshot_children.push(if use_element_template {
           if target != TransformTarget::LEPUS {
             self.used_slot = true;
@@ -2071,13 +2068,7 @@ where
             DynamicPart::Spread(_, _) => {}
             DynamicPart::ListChildren(expr, element_index) => {
               // snapshot_values.push(None);
-              let child = match expr {
-                Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
-                _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
-                  span: DUMMY_SP,
-                  expr: JSXExpr::Expr(Box::new(expr)),
-                }),
-              };
+              let child = expr_to_jsx_child(expr);
               snapshot_children.push(if use_element_template {
                 if target != TransformTarget::LEPUS {
                   self.used_slot = true;
@@ -2097,13 +2088,7 @@ where
             }
             DynamicPart::Children(expr, element_index) => {
               // snapshot_values.push(None);
-              let child = match expr {
-                Expr::JSXElement(jsx) => JSXElementChild::JSXElement(jsx),
-                _ => JSXElementChild::JSXExprContainer(JSXExprContainer {
-                  span: DUMMY_SP,
-                  expr: JSXExpr::Expr(Box::new(expr)),
-                }),
-              };
+              let child = expr_to_jsx_child(expr);
               snapshot_children.push(if use_element_template {
                 if target != TransformTarget::LEPUS {
                   self.used_slot = true;
@@ -2284,18 +2269,18 @@ where
       && target == TransformTarget::LEPUS
       && !snapshot_children.is_empty()
     {
+      let children_expr = jsx_children_to_expr(snapshot_children.clone());
+      // LEPUS ET host nodes rely on children being lowered to slot arrays.
+      // Failing fast here keeps the transform/runtime contract explicit instead
+      // of silently emitting a shape the main-thread runtime no longer accepts.
+      let lowered_children_expr = lower_lepus_et_children_expr(children_expr.clone(), &self.slot_ident)
+        .expect("LEPUS ET children should already be lowered to slot arrays");
       Some(JSXAttrOrSpread::JSXAttr(JSXAttr {
         span: DUMMY_SP,
         name: JSXAttrName::Ident(IdentName::new("children".into(), DUMMY_SP)),
         value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
           span: DUMMY_SP,
-          expr: JSXExpr::Expr(Box::new(
-            lower_lepus_et_children_expr(
-              jsx_children_to_expr(snapshot_children.clone()),
-              &self.slot_ident,
-            )
-            .unwrap_or_else(|| jsx_children_to_expr(snapshot_children.clone())),
-          )),
+          expr: JSXExpr::Expr(Box::new(lowered_children_expr)),
         })),
       }))
     } else {
