@@ -14,6 +14,30 @@ This directory contains the dedicated test suite for `src/element-template/**`.
 - `fixtures/`: fixture data used by integration-style suites.
 - `test-utils/`: mocks, serializers, fixture runners, and shared ET-only helpers.
 
+## Test Layers
+
+- `imports/` and `internal/` are architecture guardrails.
+  They should stay stable unless the ET entrypoint boundary itself changes.
+- Narrow module tests under `runtime/`, `native/`, `debug/`, and `lynx/` primarily validate local module behavior.
+  They may move when source modules are split or renamed, but their behavioral assertions should remain stable.
+- Fixture-driven suites validate cross-module contracts.
+  These are the primary protection for render, hydration, patch, and compiled ET flows.
+- List first-screen contract tests are intentionally higher-level than a single helper or module.
+  They protect `__CreateList`, `update-list-info`, callback timing, and cell materialization as one user-visible contract.
+
+## Test Infrastructure Roles
+
+- `test-utils/mock/` owns fake native and environment surfaces:
+  - mock native PAPI
+  - mock JSContext
+  - performance / global setup helpers
+- `test-utils/debug/` owns ET-specific execution helpers:
+  - fixture runners
+  - compiled render runners
+  - serializer / template registry helpers
+  - debug-only thread or update runners
+- When runtime internals are refactored, prefer updating `test-utils/debug/` adapters instead of rewriting many suites independently.
+
 ## Placement Rules
 
 - If a test targets one source module or one small group of closely related modules, place it under the matching source-domain directory.
@@ -29,6 +53,14 @@ This directory contains the dedicated test suite for `src/element-template/**`.
 - Most case-driven suites should use `runCaseModuleFixtureTests(...)` from [test-utils/debug/fixtureRunner.ts](/Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/__test__/element-template/test-utils/debug/fixtureRunner.ts).
 - Compiled render fixtures should use [test-utils/debug/renderFixtureRunner.ts](/Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/__test__/element-template/test-utils/debug/renderFixtureRunner.ts) so compile, template blessing, and render assertions stay in one ET-specific runner instead of being reimplemented per suite.
 - Expected `lynx.reportError` calls should be declared via `reportErrorCount` on fixture case modules or asserted locally and then reset explicitly before teardown.
+
+## Stability Rules
+
+- Refactors may change helper names, file locations, or runner internals, but should not silently relax:
+  - contract test assertions
+  - fixture output shape
+  - import-boundary guardrails
+- If a runtime refactor requires broad test updates, update the shared runner or adapter layer first, then keep high-level contract expectations intact where possible.
 
 ## Commands
 
