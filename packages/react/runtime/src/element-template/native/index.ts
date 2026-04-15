@@ -27,6 +27,7 @@ function init(): void {
   }
 
   if (__BACKGROUND__) {
+    console.log('experimentalEnableElementTemplate:', __USE_ELEMENT_TEMPLATE__);
     setRoot(new BackgroundElementTemplateInstance('root'));
     setupBackgroundElementTemplateDocument();
     installElementTemplateHydrationListener();
