@@ -15,8 +15,8 @@ const __dirname = path.dirname(__filename);
 const FIXTURE_DIR = path.resolve(__dirname, './fixtures/render/basic-page');
 const SOURCE_PATH = path.join(FIXTURE_DIR, 'source.tsx');
 
-describe.skip('Rossi render fixture scaffold', () => {
-  it('shows the intended compile -> adapt -> run -> compare shape', async () => {
+describe('Rossi render fixture scaffold', () => {
+  it('runs the basic-page fixture through Rossi and matches first-screen expectations', async () => {
     const mainArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'LEPUS' });
     const backgroundArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'JS' });
     const compiledInput = adaptCompiledFixtureToRossiInput({
@@ -49,14 +49,9 @@ describe.skip('Rossi render fixture scaffold', () => {
     expect(request.assembly.environment.main.installRenderPageEntrypoint).toBe(true);
     expect(request.assembly.environment.background?.installRenderPageEntrypoint).toBe(false);
     expect(result.runner).toBe('rossi');
-    expect(result.status).toBe('failed');
-    expect(result.diagnostics).toEqual([
-      expect.objectContaining({
-        code: 'compiled-artifact-runtime-adapter-missing',
-      }),
-    ]);
-    expect(expected.tree).toContain('Hello Rossi');
-    expect(expected.trace).toEqual([{ phase: 'first-screen-render' }]);
-    expect(expected.diagnostics).toEqual([]);
+    expect(result.status).toBe('ok');
+    expect(result.tree).toBe(expected.tree);
+    expect(result.trace).toEqual(expected.trace);
+    expect(result.diagnostics).toEqual(expected.diagnostics);
   });
 });

@@ -63,7 +63,7 @@ export interface RossiEtExpectedOutputs {
 }
 
 export interface RossiEtObservedResult {
-  status: 'scaffold' | 'failed';
+  status: 'scaffold' | 'ok' | 'failed';
   runner: 'rossi';
   tree: string | null;
   trace: unknown[];

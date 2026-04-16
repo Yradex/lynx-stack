@@ -18,6 +18,9 @@ When Rossi root values are present, the local bridge should now exercise them
 and surface structured "not implemented yet" diagnostics instead of stopping at
 pure capability probing.
 
+Once Phase 7 lands, successful fixture runs should return an explicit `ok`
+result. `scaffold` remains reserved for intentionally incomplete bridge paths.
+
 ## Proposed Layout
 
 - `fixtures/`

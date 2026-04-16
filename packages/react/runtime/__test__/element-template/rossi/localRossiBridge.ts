@@ -2,6 +2,8 @@ import type {
   CompiledArtifactAdapterFactory,
   CompiledArtifactWorkspaceFactory,
 } from '/Users/bytedance/lynx/repos/lynx/rossi/src/runtime/compiled/index.js';
+import type { TraceEvent } from '/Users/bytedance/lynx/repos/lynx/rossi/src/core/types.js';
+import type { DualThreadRunResult } from '/Users/bytedance/lynx/repos/lynx/rossi/src/runtime/dual-thread/types.js';
 import type { IsolatedThreadLauncher } from '/Users/bytedance/lynx/repos/lynx/rossi/src/runtime/isolated/index.js';
 
 import { createCompiledArtifactAdapterSetup } from './createCompiledArtifactAdapterSetup.js';
@@ -11,6 +13,8 @@ export interface RossiRootModuleLike {
   rossiProjectName?: unknown;
   load?: unknown;
   DualThreadOrchestrator?: unknown;
+  Bridge?: unknown;
+  HostTreeProjection?: unknown;
   compiledArtifactAdapterFactory?: unknown;
   compiledArtifactWorkspaceFactory?: unknown;
   isolatedThreadLauncher?: unknown;
@@ -129,6 +133,43 @@ function readIsolatedThreadLauncher(
   return null;
 }
 
+function readDualThreadOrchestrator(
+  rossiModule: RossiRootModuleLike,
+):
+  | (new(options: {
+    bridge: object;
+    mainThreadSource: object;
+    backgroundProducer: object;
+    projection: object;
+  }) => { run(): Promise<DualThreadRunResult> })
+  | null
+{
+  const candidate = rossiModule.DualThreadOrchestrator;
+  return typeof candidate === 'function' ? candidate as never : null;
+}
+
+function readBridgeConstructor(
+  rossiModule: RossiRootModuleLike,
+): (new() => object) | null {
+  const candidate = rossiModule.Bridge;
+  return typeof candidate === 'function' ? candidate as never : null;
+}
+
+function readHostTreeProjectionConstructor(
+  rossiModule: RossiRootModuleLike,
+): (new() => object) | null {
+  const candidate = rossiModule.HostTreeProjection;
+  return typeof candidate === 'function' ? candidate as never : null;
+}
+
+function normalizeFixtureTrace(trace: readonly TraceEvent[]): unknown[] {
+  return trace
+    .filter(event => event.phase === 'first-screen-render')
+    .map(event => ({
+      phase: event.phase,
+    }));
+}
+
 /**
  * Keep the first bridge local to the ET test area so Rossi's global public
  * surface does not need to change before the contract is proven useful.
@@ -142,6 +183,9 @@ export function createLocalRossiBridge(
   const adapterFactory = readCompiledArtifactAdapterFactory(rossiModule);
   const workspaceFactory = readCompiledArtifactWorkspaceFactory(rossiModule);
   const launcher = readIsolatedThreadLauncher(rossiModule);
+  const Orchestrator = readDualThreadOrchestrator(rossiModule);
+  const Bridge = readBridgeConstructor(rossiModule);
+  const HostTreeProjection = readHostTreeProjectionConstructor(rossiModule);
   const supportsCompiledArtifactSubstrate = !!adapterFactory && !!workspaceFactory && !!launcher;
 
   return {
@@ -169,24 +213,42 @@ export function createLocalRossiBridge(
           }
 
           if (result === null && adapter !== null) {
-            try {
-              const renderResult = await adapter.mainSource.renderFirstScreen();
-              if (!renderResult.ok) {
-                result = createFailedResult(renderResult.diagnostics);
+            if (Orchestrator && Bridge && HostTreeProjection && adapter.backgroundProducer) {
+              try {
+                const orchestrator = new Orchestrator({
+                  bridge: new Bridge(),
+                  mainThreadSource: adapter.mainSource,
+                  backgroundProducer: adapter.backgroundProducer,
+                  projection: new HostTreeProjection(),
+                });
+                const runResult = await orchestrator.run();
+                if (runResult.status !== 'ok') {
+                  result = createFailedResult(runResult.diagnostics);
+                } else {
+                  const tree = await adapter.handle.threads.main.call(
+                    '__ROSSI_COMPILED_ARTIFACT_READ_PAGE_JSX__',
+                    [],
+                  );
+                  result = {
+                    status: 'ok',
+                    runner: 'rossi',
+                    tree: typeof tree === 'string' ? tree : null,
+                    trace: normalizeFixtureTrace(runResult.trace),
+                    diagnostics: runResult.diagnostics,
+                  };
+                }
+              } catch (error) {
+                result = createThrownFailureResult(request, 'render-first-screen', error);
               }
-            } catch (error) {
-              result = createThrownFailureResult(request, 'render-first-screen', error);
-            }
-          }
-
-          if (result === null && adapter !== null) {
-            try {
-              const bootstrapResult = await adapter.backgroundProducer?.bootstrap();
-              if (bootstrapResult && !bootstrapResult.ok) {
-                result = createFailedResult(bootstrapResult.diagnostics);
+            } else {
+              try {
+                const renderResult = await adapter.mainSource.renderFirstScreen();
+                if (!renderResult.ok) {
+                  result = createFailedResult(renderResult.diagnostics);
+                }
+              } catch (error) {
+                result = createThrownFailureResult(request, 'render-first-screen', error);
               }
-            } catch (error) {
-              result = createThrownFailureResult(request, 'bootstrap', error);
             }
           }
 

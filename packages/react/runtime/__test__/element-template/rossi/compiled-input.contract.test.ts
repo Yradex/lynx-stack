@@ -193,18 +193,34 @@ describe('Rossi compiled input contract', () => {
         entryUrl: 'file:///tmp/rossi-et-contract/background.js',
       },
     });
-    expect(writes).toEqual([
-      {
-        thread: 'main',
-        code: request.input.main.code,
-        suggestedFileName: 'main-entry.js',
-      },
-      {
-        thread: 'background',
-        code: request.input.background?.code ?? '',
-        suggestedFileName: 'background-entry.js',
-      },
-    ]);
+    expect(writes).toHaveLength(4);
+    expect(writes[0]).toEqual({
+      thread: 'main',
+      code: expect.stringContaining(
+        'file:///Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/jsx-runtime/index.js',
+      ),
+      suggestedFileName: 'main-artifact.js',
+    });
+    expect(writes[0]?.code).toContain('__REGISTER_ELEMENT_TEMPLATES__');
+    expect(writes[1]).toEqual({
+      thread: 'main',
+      code: expect.stringContaining('__ROSSI_COMPILED_ARTIFACT_RENDER_FIRST_SCREEN__'),
+      suggestedFileName: 'main-entry.mjs',
+    });
+    expect(writes[1]?.code).toContain('compiledModule.mainProps ?? {"greeting":"hello"} ?? undefined');
+    expect(writes[2]).toEqual({
+      thread: 'background',
+      code: expect.stringContaining(
+        'file:///Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/jsx-runtime/index.js',
+      ),
+      suggestedFileName: 'background-artifact.js',
+    });
+    expect(writes[2]?.code).toContain('__REGISTER_ELEMENT_TEMPLATES__');
+    expect(writes[3]).toEqual({
+      thread: 'background',
+      code: expect.stringContaining('__ROSSI_COMPILED_ARTIFACT_ACCEPT_FIRST_SCREEN__'),
+      suggestedFileName: 'background-entry.mjs',
+    });
 
     const thread = await setup.launcher.launch({
       name: 'rossi-et-main',
