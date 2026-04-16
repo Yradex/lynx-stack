@@ -11,6 +11,9 @@ This directory contains the dedicated test suite for `src/element-template/**`.
 - `lynx/`: tests for Lynx-facing timing and performance integration.
 - `internal/`: tests for internal compatibility or guard behavior.
 - `imports/`: guardrail tests that enforce import boundaries or entrypoint constraints.
+- `rossi/`: experimental Rossi-backed fixture scaffolding. This area is for
+  future adapter and fixture-shape exploration and is not part of the current
+  production ET test harness.
 - `fixtures/`: fixture data used by integration-style suites.
 - `test-utils/`: mocks, serializers, fixture runners, and shared ET-only helpers.
 
@@ -53,6 +56,10 @@ This directory contains the dedicated test suite for `src/element-template/**`.
 - Most case-driven suites should use `runCaseModuleFixtureTests(...)` from [test-utils/debug/fixtureRunner.ts](/Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/__test__/element-template/test-utils/debug/fixtureRunner.ts).
 - Compiled render fixtures should use [test-utils/debug/renderFixtureRunner.ts](/Users/bytedance/lynx/workspace.worktrees/element-template-demo/rspeedy/lynx-stack/packages/react/runtime/__test__/element-template/test-utils/debug/renderFixtureRunner.ts) so compile, template blessing, and render assertions stay in one ET-specific runner instead of being reimplemented per suite.
 - Expected `lynx.reportError` calls should be declared via `reportErrorCount` on fixture case modules or asserted locally and then reset explicitly before teardown.
+- Experimental Rossi fixtures should prefer declarative inputs and expected
+  outputs over imperative `case.tsx` scripts. Treat `rossi/` as a staging area
+  for future runner design rather than an extension of the current ET-only
+  script harness.
 
 ## Stability Rules
 

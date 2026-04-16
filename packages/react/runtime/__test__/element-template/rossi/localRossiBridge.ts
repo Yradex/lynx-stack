@@ -1,0 +1,128 @@
+import type {
+  CompiledArtifactAdapterFactory,
+  CompiledArtifactWorkspaceFactory,
+} from '/Users/bytedance/lynx/repos/lynx/rossi/src/runtime/compiled/index.js';
+import type { IsolatedThreadLauncher } from '/Users/bytedance/lynx/repos/lynx/rossi/src/runtime/isolated/index.js';
+
+import { createCompiledArtifactAdapterSetup } from './createCompiledArtifactAdapterSetup.js';
+import type { RossiEtFixtureRequest, RossiEtObservedResult } from './fixtureContract.js';
+
+export interface RossiRootModuleLike {
+  rossiProjectName?: unknown;
+  load?: unknown;
+  DualThreadOrchestrator?: unknown;
+  compiledArtifactAdapterFactory?: unknown;
+  compiledArtifactWorkspaceFactory?: unknown;
+  isolatedThreadLauncher?: unknown;
+}
+
+export interface RossiEtLocalBridge {
+  kind: 'et-test-local-bridge';
+  projectName: string | null;
+  supportsCompiledArtifactSubstrate: boolean;
+  runCompiledFixture(request: RossiEtFixtureRequest): Promise<RossiEtObservedResult>;
+}
+
+function readCompiledArtifactAdapterFactory(
+  rossiModule: RossiRootModuleLike,
+): CompiledArtifactAdapterFactory | null {
+  const candidate = rossiModule.compiledArtifactAdapterFactory;
+  if (
+    candidate
+    && typeof candidate === 'object'
+    && 'create' in candidate
+    && typeof candidate.create === 'function'
+  ) {
+    return candidate as CompiledArtifactAdapterFactory;
+  }
+
+  return null;
+}
+
+function readCompiledArtifactWorkspaceFactory(
+  rossiModule: RossiRootModuleLike,
+): CompiledArtifactWorkspaceFactory | null {
+  const candidate = rossiModule.compiledArtifactWorkspaceFactory;
+  if (
+    candidate
+    && typeof candidate === 'object'
+    && 'create' in candidate
+    && typeof candidate.create === 'function'
+  ) {
+    return candidate as CompiledArtifactWorkspaceFactory;
+  }
+
+  return null;
+}
+
+function readIsolatedThreadLauncher(
+  rossiModule: RossiRootModuleLike,
+): IsolatedThreadLauncher | null {
+  const candidate = rossiModule.isolatedThreadLauncher;
+  if (
+    candidate
+    && typeof candidate === 'object'
+    && 'launch' in candidate
+    && typeof candidate.launch === 'function'
+  ) {
+    return candidate as IsolatedThreadLauncher;
+  }
+
+  return null;
+}
+
+/**
+ * Keep the first bridge local to the ET test area so Rossi's global public
+ * surface does not need to change before the contract is proven useful.
+ */
+export function createLocalRossiBridge(
+  rossiModule: RossiRootModuleLike,
+): RossiEtLocalBridge {
+  const projectName = typeof rossiModule.rossiProjectName === 'string'
+    ? rossiModule.rossiProjectName
+    : null;
+  const adapterFactory = readCompiledArtifactAdapterFactory(rossiModule);
+  const workspaceFactory = readCompiledArtifactWorkspaceFactory(rossiModule);
+  const launcher = readIsolatedThreadLauncher(rossiModule);
+  const supportsCompiledArtifactSubstrate = !!adapterFactory && !!workspaceFactory && !!launcher;
+
+  return {
+    kind: 'et-test-local-bridge',
+    projectName,
+    supportsCompiledArtifactSubstrate,
+    async runCompiledFixture(request) {
+      if (adapterFactory && workspaceFactory && launcher) {
+        await adapterFactory.create(
+          createCompiledArtifactAdapterSetup({
+            request,
+            workspaceFactory,
+            launcher,
+          }),
+        );
+      }
+
+      return {
+        status: 'scaffold',
+        runner: 'rossi',
+        tree: null,
+        trace: [],
+        diagnostics: [
+          {
+            level: 'info',
+            code: 'rossi-et-local-bridge-unimplemented',
+            message:
+              'The ET-local Rossi bridge is only documenting the intended compiled-input plus execution-assembly handoff. No real Rossi substrate or runtime adapter is wired yet.',
+            detail: {
+              mode: request.input.mode,
+              hasBackgroundArtifact: !!request.input.background,
+              materializer: request.assembly.materializer.kind,
+              mainEnvironment: request.assembly.environment.main.thread,
+              hasBackgroundEnvironment: !!request.assembly.environment.background,
+              supportsCompiledArtifactSubstrate,
+            },
+          },
+        ],
+      };
+    },
+  };
+}
