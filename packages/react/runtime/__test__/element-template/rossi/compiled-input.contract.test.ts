@@ -7,6 +7,12 @@ import { compileFixtureSource } from '../test-utils/debug/compiledFixtureCompile
 
 import { adaptCompiledFixtureToRossiInput, adaptCompiledFixtureToRossiRequest } from './adaptCompiledFixture.js';
 import { createCompiledArtifactAdapterSetup } from './createCompiledArtifactAdapterSetup.js';
+import type {
+  CompiledArtifactAdapterSetup,
+  CompiledArtifactWorkspaceWriteOptions,
+} from '/Users/bytedance/lynx/repos/lynx/rossi/src/runtime/compiled/index.js';
+import { createLocalRossiBridge } from './localRossiBridge.js';
+import type { RossiEtFixtureRequest } from './fixtureContract.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -222,5 +228,304 @@ describe('Rossi compiled input contract', () => {
     expect(globals.get('__ROSSI_ET_INSTALL_ELEMENT_TEMPLATE_REGISTRY__')).toBe(true);
     expect(globals.get('__ROSSI_ET_INSTALL_RENDER_PAGE_ENTRYPOINT__')).toBe(false);
     expect(globals.get('__ROSSI_ET_PROPS__')).toEqual({ seed: 1 });
+  });
+
+  it('uses Rossi root values when they are available and surfaces Rossi-owned adapter diagnostics', async () => {
+    const mainArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'LEPUS' });
+    const backgroundArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'JS' });
+    const request = adaptCompiledFixtureToRossiRequest({
+      mode: 'render',
+      main: mainArtifact,
+      background: backgroundArtifact,
+    });
+    const createCalls: unknown[] = [];
+    const bridge = createLocalRossiBridge({
+      rossiProjectName: 'rossi',
+      compiledArtifactWorkspaceFactory: {
+        async create() {
+          return {
+            rootDir: '/tmp/rossi-et-bridge',
+            async writeModule(options: CompiledArtifactWorkspaceWriteOptions) {
+              return {
+                thread: options.thread,
+                filePath: `/tmp/rossi-et-bridge/${options.thread}.js`,
+                fileUrl: `file:///tmp/rossi-et-bridge/${options.thread}.js`,
+              };
+            },
+            async dispose() {},
+          };
+        },
+      },
+      isolatedThreadLauncher: {
+        async launch() {
+          return {
+            kind: 'worker-thread',
+            async evaluateModule() {},
+            async call() {
+              return undefined;
+            },
+            async setGlobal() {},
+            async getGlobal() {
+              return undefined;
+            },
+            async dispose() {},
+          };
+        },
+      },
+      compiledArtifactAdapterFactory: {
+        async create(setup: CompiledArtifactAdapterSetup<RossiEtFixtureRequest>) {
+          createCalls.push(setup);
+          return {
+            handle: {
+              workspace: {
+                rootDir: '/tmp/rossi-et-bridge',
+                async writeModule() {
+                  throw new Error('not used');
+                },
+                async dispose() {},
+              },
+              threads: {
+                main: {
+                  kind: 'worker-thread',
+                  async evaluateModule() {},
+                  async call() {
+                    return undefined;
+                  },
+                  async setGlobal() {},
+                  async getGlobal() {
+                    return undefined;
+                  },
+                  async dispose() {},
+                },
+              },
+              async dispose() {},
+            },
+            mainSource: {
+              async renderFirstScreen() {
+                return {
+                  ok: false,
+                  diagnostics: [
+                    {
+                      level: 'error',
+                      code: 'compiled-artifact-runtime-adapter-missing',
+                      message: 'not implemented yet',
+                      detail: {
+                        adapter: 'main-source',
+                      },
+                    },
+                  ],
+                };
+              },
+            },
+          };
+        },
+      },
+    });
+
+    const result = await bridge.runCompiledFixture(request);
+
+    expect(bridge.supportsCompiledArtifactSubstrate).toBe(true);
+    expect(createCalls).toHaveLength(1);
+    expect(result.status).toBe('failed');
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'compiled-artifact-runtime-adapter-missing',
+      }),
+    ]);
+  });
+
+  it('maps Rossi runtime throws into structured bridge diagnostics', async () => {
+    const mainArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'LEPUS' });
+    const backgroundArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'JS' });
+    const request = adaptCompiledFixtureToRossiRequest({
+      mode: 'render',
+      main: mainArtifact,
+      background: backgroundArtifact,
+    });
+    const bridge = createLocalRossiBridge({
+      rossiProjectName: 'rossi',
+      compiledArtifactWorkspaceFactory: {
+        async create() {
+          return {
+            rootDir: '/tmp/rossi-et-bridge',
+            async writeModule(options: CompiledArtifactWorkspaceWriteOptions) {
+              return {
+                thread: options.thread,
+                filePath: `/tmp/rossi-et-bridge/${options.thread}.js`,
+                fileUrl: `file:///tmp/rossi-et-bridge/${options.thread}.js`,
+              };
+            },
+            async dispose() {},
+          };
+        },
+      },
+      isolatedThreadLauncher: {
+        async launch() {
+          return {
+            kind: 'worker-thread',
+            async evaluateModule() {},
+            async call() {
+              return undefined;
+            },
+            async setGlobal() {},
+            async getGlobal() {
+              return undefined;
+            },
+            async dispose() {},
+          };
+        },
+      },
+      compiledArtifactAdapterFactory: {
+        async create(_setup: CompiledArtifactAdapterSetup<RossiEtFixtureRequest>) {
+          return {
+            handle: {
+              workspace: {
+                rootDir: '/tmp/rossi-et-bridge',
+                async writeModule() {
+                  throw new Error('not used');
+                },
+                async dispose() {},
+              },
+              threads: {
+                main: {
+                  kind: 'worker-thread',
+                  async evaluateModule() {},
+                  async call() {
+                    return undefined;
+                  },
+                  async setGlobal() {},
+                  async getGlobal() {
+                    return undefined;
+                  },
+                  async dispose() {},
+                },
+              },
+              async dispose() {},
+            },
+            mainSource: {
+              async renderFirstScreen() {
+                throw new Error('render exploded');
+              },
+            },
+          };
+        },
+      },
+    });
+
+    const result = await bridge.runCompiledFixture(request);
+
+    expect(result.status).toBe('failed');
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'rossi-et-local-bridge-runtime-threw',
+        detail: expect.objectContaining({
+          stage: 'render-first-screen',
+          errorMessage: 'render exploded',
+        }),
+      }),
+    ]);
+  });
+
+  it('keeps cleanup throws inside structured bridge diagnostics', async () => {
+    const mainArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'LEPUS' });
+    const backgroundArtifact = await compileFixtureSource(SOURCE_PATH, { target: 'JS' });
+    const request = adaptCompiledFixtureToRossiRequest({
+      mode: 'render',
+      main: mainArtifact,
+      background: backgroundArtifact,
+    });
+    const bridge = createLocalRossiBridge({
+      rossiProjectName: 'rossi',
+      compiledArtifactWorkspaceFactory: {
+        async create() {
+          return {
+            rootDir: '/tmp/rossi-et-bridge',
+            async writeModule(options: CompiledArtifactWorkspaceWriteOptions) {
+              return {
+                thread: options.thread,
+                filePath: `/tmp/rossi-et-bridge/${options.thread}.js`,
+                fileUrl: `file:///tmp/rossi-et-bridge/${options.thread}.js`,
+              };
+            },
+            async dispose() {},
+          };
+        },
+      },
+      isolatedThreadLauncher: {
+        async launch() {
+          return {
+            kind: 'worker-thread',
+            async evaluateModule() {},
+            async call() {
+              return undefined;
+            },
+            async setGlobal() {},
+            async getGlobal() {
+              return undefined;
+            },
+            async dispose() {},
+          };
+        },
+      },
+      compiledArtifactAdapterFactory: {
+        async create(_setup: CompiledArtifactAdapterSetup<RossiEtFixtureRequest>) {
+          return {
+            handle: {
+              workspace: {
+                rootDir: '/tmp/rossi-et-bridge',
+                async writeModule() {
+                  throw new Error('not used');
+                },
+                async dispose() {},
+              },
+              threads: {
+                main: {
+                  kind: 'worker-thread',
+                  async evaluateModule() {},
+                  async call() {
+                    return undefined;
+                  },
+                  async setGlobal() {},
+                  async getGlobal() {
+                    return undefined;
+                  },
+                  async dispose() {},
+                },
+              },
+              async dispose() {
+                throw new Error('dispose exploded');
+              },
+            },
+            mainSource: {
+              async renderFirstScreen() {
+                return {
+                  ok: false,
+                  diagnostics: [
+                    {
+                      level: 'error',
+                      code: 'compiled-artifact-runtime-adapter-missing',
+                      message: 'not implemented yet',
+                    },
+                  ],
+                };
+              },
+            },
+          };
+        },
+      },
+    });
+
+    const result = await bridge.runCompiledFixture(request);
+
+    expect(result.status).toBe('failed');
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'rossi-et-local-bridge-runtime-threw',
+        detail: expect.objectContaining({
+          stage: 'dispose',
+          errorMessage: 'dispose exploded',
+        }),
+      }),
+    ]);
   });
 });

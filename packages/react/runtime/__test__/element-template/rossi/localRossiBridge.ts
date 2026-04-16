@@ -23,6 +23,39 @@ export interface RossiEtLocalBridge {
   runCompiledFixture(request: RossiEtFixtureRequest): Promise<RossiEtObservedResult>;
 }
 
+function createFailedResult(
+  diagnostics: RossiEtObservedResult['diagnostics'],
+): RossiEtObservedResult {
+  return {
+    status: 'failed',
+    runner: 'rossi',
+    tree: null,
+    trace: [],
+    diagnostics: [...diagnostics],
+  };
+}
+
+function createThrownFailureResult(
+  request: RossiEtFixtureRequest,
+  stage: 'create' | 'render-first-screen' | 'bootstrap' | 'dispose',
+  error: unknown,
+): RossiEtObservedResult {
+  return createFailedResult([
+    {
+      level: 'error',
+      code: 'rossi-et-local-bridge-runtime-threw',
+      message: `Rossi compiled-artifact ${stage} threw before producing structured diagnostics.`,
+      detail: {
+        mode: request.input.mode,
+        hasBackgroundArtifact: !!request.input.background,
+        stage,
+        errorName: error instanceof Error ? error.name : null,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      },
+    },
+  ]);
+}
+
 function readCompiledArtifactAdapterFactory(
   rossiModule: RossiRootModuleLike,
 ): CompiledArtifactAdapterFactory | null {
@@ -92,12 +125,80 @@ export function createLocalRossiBridge(
     supportsCompiledArtifactSubstrate,
     async runCompiledFixture(request) {
       if (adapterFactory && workspaceFactory && launcher) {
-        await adapterFactory.create(
-          createCompiledArtifactAdapterSetup({
-            request,
-            workspaceFactory,
-            launcher,
-          }),
+        let adapter:
+          | Awaited<ReturnType<CompiledArtifactAdapterFactory['create']>>
+          | null = null;
+        let result: RossiEtObservedResult | null = null;
+
+        try {
+          try {
+            adapter = await adapterFactory.create(
+              createCompiledArtifactAdapterSetup({
+                request,
+                workspaceFactory,
+                launcher,
+              }),
+            );
+          } catch (error) {
+            result = createThrownFailureResult(request, 'create', error);
+          }
+
+          if (result === null && adapter !== null) {
+            try {
+              const renderResult = await adapter.mainSource.renderFirstScreen();
+              if (!renderResult.ok) {
+                result = createFailedResult(renderResult.diagnostics);
+              }
+            } catch (error) {
+              result = createThrownFailureResult(request, 'render-first-screen', error);
+            }
+          }
+
+          if (result === null && adapter !== null) {
+            try {
+              const bootstrapResult = await adapter.backgroundProducer?.bootstrap();
+              if (bootstrapResult && !bootstrapResult.ok) {
+                result = createFailedResult(bootstrapResult.diagnostics);
+              }
+            } catch (error) {
+              result = createThrownFailureResult(request, 'bootstrap', error);
+            }
+          }
+
+          if (result === null) {
+            result = {
+              status: 'scaffold',
+              runner: 'rossi',
+              tree: null,
+              trace: [],
+              diagnostics: [
+                {
+                  level: 'info',
+                  code: 'rossi-et-local-bridge-observation-unimplemented',
+                  message:
+                    'Rossi substrate wiring is now active, but ET-facing observation assembly is not implemented yet.',
+                  detail: {
+                    mode: request.input.mode,
+                    hasBackgroundArtifact: !!request.input.background,
+                  },
+                },
+              ],
+            };
+          }
+        } finally {
+          if (adapter !== null) {
+            try {
+              await adapter.handle.dispose();
+            } catch (error) {
+              result = createThrownFailureResult(request, 'dispose', error);
+            }
+          }
+        }
+
+        return result ?? createThrownFailureResult(
+          request,
+          'dispose',
+          new Error('Rossi ET bridge reached an unexpected empty result state.'),
         );
       }
 

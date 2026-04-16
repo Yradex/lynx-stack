@@ -44,15 +44,15 @@ describe.skip('Rossi render fixture scaffold', () => {
     expect(typeof rossi.rossiProjectName).toBe('string');
     expect(bridge.kind).toBe('et-test-local-bridge');
     expect(bridge.projectName).toBe('rossi');
-    expect(bridge.supportsCompiledArtifactSubstrate).toBe(false);
+    expect(bridge.supportsCompiledArtifactSubstrate).toBe(true);
     expect(request.assembly.materializer.kind).toBe('et-test-artifact-materializer');
     expect(request.assembly.environment.main.installRenderPageEntrypoint).toBe(true);
     expect(request.assembly.environment.background?.installRenderPageEntrypoint).toBe(false);
     expect(result.runner).toBe('rossi');
-    expect(result.status).toBe('scaffold');
+    expect(result.status).toBe('failed');
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
-        code: 'rossi-et-local-bridge-unimplemented',
+        code: 'compiled-artifact-runtime-adapter-missing',
       }),
     ]);
     expect(expected.tree).toContain('Hello Rossi');

@@ -12,8 +12,11 @@ The intent is different from the existing ET fixture harness:
 - Test-local scripts should shrink to optional escape hatches instead of being
   the default control plane.
 
-This scaffold is intentionally incomplete. It is only here to make the
-proposed shape concrete before any real runner wiring starts.
+This scaffold is intentionally incomplete. It exists to make the handoff shape
+concrete while Rossi's compiled-artifact runtime adapters are still landing.
+When Rossi root values are present, the local bridge should now exercise them
+and surface structured "not implemented yet" diagnostics instead of stopping at
+pure capability probing.
 
 ## Proposed Layout
 
@@ -138,7 +141,6 @@ This scaffold now targets Rossi's substrate contracts directly:
 
 ## Non-goals For This Scaffold
 
-- no runner wiring
-- no real Rossi execution yet
+- no full ET first-screen execution yet
 - no inclusion in current ET fixture runners
 - no promise that these filenames are final
