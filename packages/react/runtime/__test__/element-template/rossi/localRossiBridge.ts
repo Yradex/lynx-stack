@@ -56,6 +56,31 @@ function createThrownFailureResult(
   ]);
 }
 
+function appendCleanupFailure(
+  current: RossiEtObservedResult | null,
+  disposeFailure: RossiEtObservedResult,
+): RossiEtObservedResult {
+  if (current === null) {
+    return disposeFailure;
+  }
+
+  const disposeDiagnostics = [...disposeFailure.diagnostics];
+  if (current.status === 'failed') {
+    return {
+      ...current,
+      diagnostics: [...current.diagnostics, ...disposeDiagnostics],
+    };
+  }
+
+  return {
+    status: 'failed',
+    runner: current.runner,
+    tree: current.tree,
+    trace: current.trace,
+    diagnostics: [...current.diagnostics, ...disposeDiagnostics],
+  };
+}
+
 function readCompiledArtifactAdapterFactory(
   rossiModule: RossiRootModuleLike,
 ): CompiledArtifactAdapterFactory | null {
@@ -190,7 +215,10 @@ export function createLocalRossiBridge(
             try {
               await adapter.handle.dispose();
             } catch (error) {
-              result = createThrownFailureResult(request, 'dispose', error);
+              result = appendCleanupFailure(
+                result,
+                createThrownFailureResult(request, 'dispose', error),
+              );
             }
           }
         }

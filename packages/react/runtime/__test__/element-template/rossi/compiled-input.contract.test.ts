@@ -520,6 +520,9 @@ describe('Rossi compiled input contract', () => {
     expect(result.status).toBe('failed');
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
+        code: 'compiled-artifact-runtime-adapter-missing',
+      }),
+      expect.objectContaining({
         code: 'rossi-et-local-bridge-runtime-threw',
         detail: expect.objectContaining({
           stage: 'dispose',
