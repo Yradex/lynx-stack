@@ -97,7 +97,7 @@ describe('renderMainThread contract', () => {
       null,
       ['hello'],
       [],
-      { handleId: -1 },
+      -1,
     ]);
     expect(nativeLog).toContainEqual([
       '__CreateElementTemplate',

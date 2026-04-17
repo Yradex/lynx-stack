@@ -7,9 +7,7 @@
       "Waterfall card one"
     ],
     [],
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -19,9 +17,7 @@
       "Ada"
     ],
     [],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -42,9 +38,7 @@
         }
       ]
     ],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__CreateElementTemplate",
@@ -52,9 +46,7 @@
     null,
     null,
     null,
-    {
-      "handleId": -4
-    }
+    -4
   ],
   [
     "__CreateElementTemplate",
@@ -64,9 +56,7 @@
       "1.2M"
     ],
     [],
-    {
-      "handleId": -5
-    }
+    -5
   ],
   [
     "__CreateElementTemplate",
@@ -97,9 +87,7 @@
         }
       ]
     ],
-    {
-      "handleId": -6
-    }
+    -6
   ],
   [
     "__CreateElementTemplate",
@@ -219,9 +207,7 @@
         }
       ]
     ],
-    {
-      "handleId": -7
-    }
+    -7
   ],
   [
     "__CreateElementTemplate",
@@ -231,9 +217,7 @@
       "react"
     ],
     [],
-    {
-      "handleId": -8
-    }
+    -8
   ],
   [
     "__CreateElementTemplate",
@@ -252,9 +236,7 @@
         }
       ]
     ],
-    {
-      "handleId": -9
-    }
+    -9
   ],
   [
     "__CreateElementTemplate",
@@ -264,9 +246,7 @@
       "lynx"
     ],
     [],
-    {
-      "handleId": -10
-    }
+    -10
   ],
   [
     "__CreateElementTemplate",
@@ -285,9 +265,7 @@
         }
       ]
     ],
-    {
-      "handleId": -11
-    }
+    -11
   ],
   [
     "__CreateElementTemplate",
@@ -348,9 +326,7 @@
         }
       ]
     ],
-    {
-      "handleId": -12
-    }
+    -12
   ],
   [
     "__CreateElementTemplate",
@@ -360,9 +336,7 @@
       "Benchmark waterfall content one"
     ],
     [],
-    {
-      "handleId": -13
-    }
+    -13
   ],
   [
     "__CreateElementTemplate",
@@ -372,9 +346,7 @@
       "2025-01-01"
     ],
     [],
-    {
-      "handleId": -14
-    }
+    -14
   ],
   [
     "__CreateElementTemplate",
@@ -608,9 +580,7 @@
         }
       ]
     ],
-    {
-      "handleId": -15
-    }
+    -15
   ],
   [
     "__CreateElementTemplate",
@@ -912,9 +882,7 @@
         }
       ]
     ],
-    {
-      "handleId": -16
-    }
+    -16
   ],
   [
     "__CreateElementTemplate",
@@ -924,9 +892,7 @@
       "Waterfall card two"
     ],
     [],
-    {
-      "handleId": -17
-    }
+    -17
   ],
   [
     "__CreateElementTemplate",
@@ -936,9 +902,7 @@
       "Linus"
     ],
     [],
-    {
-      "handleId": -18
-    }
+    -18
   ],
   [
     "__CreateElementTemplate",
@@ -959,9 +923,7 @@
         }
       ]
     ],
-    {
-      "handleId": -19
-    }
+    -19
   ],
   [
     "__CreateElementTemplate",
@@ -969,9 +931,7 @@
     null,
     null,
     null,
-    {
-      "handleId": -20
-    }
+    -20
   ],
   [
     "__CreateElementTemplate",
@@ -981,9 +941,7 @@
       "980K"
     ],
     [],
-    {
-      "handleId": -21
-    }
+    -21
   ],
   [
     "__CreateElementTemplate",
@@ -1014,9 +972,7 @@
         }
       ]
     ],
-    {
-      "handleId": -22
-    }
+    -22
   ],
   [
     "__CreateElementTemplate",
@@ -1136,9 +1092,7 @@
         }
       ]
     ],
-    {
-      "handleId": -23
-    }
+    -23
   ],
   [
     "__CreateElementTemplate",
@@ -1148,9 +1102,7 @@
       "et"
     ],
     [],
-    {
-      "handleId": -24
-    }
+    -24
   ],
   [
     "__CreateElementTemplate",
@@ -1169,9 +1121,7 @@
         }
       ]
     ],
-    {
-      "handleId": -25
-    }
+    -25
   ],
   [
     "__CreateElementTemplate",
@@ -1181,9 +1131,7 @@
       "snapshot"
     ],
     [],
-    {
-      "handleId": -26
-    }
+    -26
   ],
   [
     "__CreateElementTemplate",
@@ -1202,9 +1150,7 @@
         }
       ]
     ],
-    {
-      "handleId": -27
-    }
+    -27
   ],
   [
     "__CreateElementTemplate",
@@ -1265,9 +1211,7 @@
         }
       ]
     ],
-    {
-      "handleId": -28
-    }
+    -28
   ],
   [
     "__CreateElementTemplate",
@@ -1277,9 +1221,7 @@
       "Benchmark waterfall content two"
     ],
     [],
-    {
-      "handleId": -29
-    }
+    -29
   ],
   [
     "__CreateElementTemplate",
@@ -1289,9 +1231,7 @@
       "2025-01-02"
     ],
     [],
-    {
-      "handleId": -30
-    }
+    -30
   ],
   [
     "__CreateElementTemplate",
@@ -1525,9 +1465,7 @@
         }
       ]
     ],
-    {
-      "handleId": -31
-    }
+    -31
   ],
   [
     "__CreateElementTemplate",
@@ -1829,9 +1767,7 @@
         }
       ]
     ],
-    {
-      "handleId": -32
-    }
+    -32
   ],
   [
     "__CreateList",

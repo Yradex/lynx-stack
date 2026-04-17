@@ -7,9 +7,7 @@
       "./assets/lynx-logo.png"
     ],
     null,
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -19,9 +17,7 @@
       " src/App.tsx "
     ],
     [],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -54,9 +50,7 @@
         }
       ]
     ],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__AppendElement",

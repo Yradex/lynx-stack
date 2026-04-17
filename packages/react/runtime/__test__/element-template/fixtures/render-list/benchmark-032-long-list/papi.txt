@@ -7,9 +7,7 @@
       "0"
     ],
     [],
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -33,9 +31,7 @@
         }
       ]
     ],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -45,9 +41,7 @@
       "1"
     ],
     [],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__CreateElementTemplate",
@@ -71,9 +65,7 @@
         }
       ]
     ],
-    {
-      "handleId": -4
-    }
+    -4
   ],
   [
     "__CreateElementTemplate",
@@ -83,9 +75,7 @@
       "2"
     ],
     [],
-    {
-      "handleId": -5
-    }
+    -5
   ],
   [
     "__CreateElementTemplate",
@@ -109,9 +99,7 @@
         }
       ]
     ],
-    {
-      "handleId": -6
-    }
+    -6
   ],
   [
     "__CreateElementTemplate",
@@ -121,9 +109,7 @@
       "3"
     ],
     [],
-    {
-      "handleId": -7
-    }
+    -7
   ],
   [
     "__CreateElementTemplate",
@@ -147,9 +133,7 @@
         }
       ]
     ],
-    {
-      "handleId": -8
-    }
+    -8
   ],
   [
     "__CreateElementTemplate",
@@ -159,9 +143,7 @@
       "4"
     ],
     [],
-    {
-      "handleId": -9
-    }
+    -9
   ],
   [
     "__CreateElementTemplate",
@@ -185,9 +167,7 @@
         }
       ]
     ],
-    {
-      "handleId": -10
-    }
+    -10
   ],
   [
     "__CreateElementTemplate",
@@ -197,9 +177,7 @@
       "5"
     ],
     [],
-    {
-      "handleId": -11
-    }
+    -11
   ],
   [
     "__CreateElementTemplate",
@@ -223,9 +201,7 @@
         }
       ]
     ],
-    {
-      "handleId": -12
-    }
+    -12
   ],
   [
     "__CreateList",
@@ -318,9 +294,7 @@
         }
       ]
     ],
-    {
-      "handleId": -14
-    }
+    -14
   ],
   [
     "__AppendElement",

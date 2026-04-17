@@ -7,9 +7,7 @@
       "2"
     ],
     [],
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -19,9 +17,7 @@
       "3"
     ],
     [],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -51,9 +47,7 @@
         }
       ]
     ],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__AppendElement",

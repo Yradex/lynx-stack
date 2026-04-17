@@ -82,7 +82,7 @@ export class BackgroundElementTemplateInstance {
     this.type = type;
     this.nodeType = isBuiltinRawTextTemplateKey(type) ? 3 : 1;
     this.attributeSlots = initialAttributeSlots ? normalizeAttributeSlots(initialAttributeSlots) : [];
-    this.options = normalizeRuntimeOptions(initialOptions);
+    this.options = initialOptions;
     backgroundElementTemplateInstanceManager.register(this);
   }
 
@@ -99,10 +99,12 @@ export class BackgroundElementTemplateInstance {
       null,
       normalizeAttributeSlots(this.attributeSlots),
       this.elementSlots.map((children) => children.map((child) => child.instanceId)),
-      normalizeRuntimeOptions({
-        ...this.options,
-        handleId: this.instanceId,
-      }) ?? null,
+      this.options
+        ? {
+          ...this.options,
+          handleId: this.instanceId,
+        }
+        : { handleId: this.instanceId },
     );
   }
 
@@ -286,7 +288,7 @@ export class BackgroundElementTemplateInstance {
       }
       syncElementSlotChildren(this.parent, this.partId, collectChildren(this));
     } else if (key === 'options' && isRuntimeOptions(value)) {
-      this.options = normalizeRuntimeOptions(value);
+      this.options = value;
     } else if (key === '__spread' || key === 'elementSlots' || key === 'children') {
       return;
     } else {
@@ -341,17 +343,4 @@ function normalizeAttributeSlotValue(value: SerializableValue | undefined): Seri
 
 function isRuntimeOptions(value: unknown): value is RuntimeOptions {
   return value != null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function normalizeRuntimeOptions(
-  options: RuntimeOptions | undefined,
-): RuntimeOptions | undefined {
-  if (!options) {
-    return undefined;
-  }
-  const normalizedEntries = Object.entries(options)
-    .filter(([, value]) => value !== undefined);
-  return normalizedEntries.length > 0
-    ? Object.fromEntries(normalizedEntries) as RuntimeOptions
-    : undefined;
 }

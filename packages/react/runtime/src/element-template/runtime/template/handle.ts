@@ -21,11 +21,11 @@ export function createElementTemplateWithHandle(
 ): ElementRef {
   const handleId = nextId--;
   const runtimeOptions = options
-    ? normalizeRuntimeOptions({
+    ? {
       ...options,
       handleId,
-    })
-    : { handleId };
+    }
+    : handleId;
   const nativeRef = __CreateElementTemplate(
     templateKey,
     bundleUrl,
@@ -44,12 +44,4 @@ export function resetTemplateId(): void {
 export function destroyElementTemplateId(id: number): void {
   deleteElementTemplateNativeRef(id);
   // __ReleaseElement(nativeRef);
-}
-
-function normalizeRuntimeOptions(
-  options: RuntimeOptions,
-): RuntimeOptions {
-  const normalizedEntries = Object.entries(options)
-    .filter(([, value]) => value !== undefined);
-  return Object.fromEntries(normalizedEntries) as RuntimeOptions;
 }

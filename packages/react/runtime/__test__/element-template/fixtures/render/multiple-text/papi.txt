@@ -7,9 +7,7 @@
       "A"
     ],
     [],
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -19,9 +17,7 @@
       "B"
     ],
     [],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -31,9 +27,7 @@
       "C"
     ],
     [],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__CreateElementTemplate",
@@ -43,9 +37,7 @@
       "A"
     ],
     [],
-    {
-      "handleId": -4
-    }
+    -4
   ],
   [
     "__CreateElementTemplate",
@@ -64,9 +56,7 @@
         }
       ]
     ],
-    {
-      "handleId": -5
-    }
+    -5
   ],
   [
     "__CreateElementTemplate",
@@ -76,9 +66,7 @@
       "B"
     ],
     [],
-    {
-      "handleId": -6
-    }
+    -6
   ],
   [
     "__CreateElementTemplate",
@@ -97,9 +85,7 @@
         }
       ]
     ],
-    {
-      "handleId": -7
-    }
+    -7
   ],
   [
     "__CreateElementTemplate",
@@ -109,9 +95,7 @@
       "C"
     ],
     [],
-    {
-      "handleId": -8
-    }
+    -8
   ],
   [
     "__CreateElementTemplate",
@@ -130,9 +114,7 @@
         }
       ]
     ],
-    {
-      "handleId": -9
-    }
+    -9
   ],
   [
     "__CreateElementTemplate",
@@ -142,9 +124,7 @@
       "A"
     ],
     [],
-    {
-      "handleId": -10
-    }
+    -10
   ],
   [
     "__CreateElementTemplate",
@@ -154,9 +134,7 @@
       "B"
     ],
     [],
-    {
-      "handleId": -11
-    }
+    -11
   ],
   [
     "__CreateElementTemplate",
@@ -166,9 +144,7 @@
       "C"
     ],
     [],
-    {
-      "handleId": -12
-    }
+    -12
   ],
   [
     "__CreateElementTemplate",
@@ -178,9 +154,7 @@
       "A"
     ],
     [],
-    {
-      "handleId": -13
-    }
+    -13
   ],
   [
     "__CreateElementTemplate",
@@ -199,9 +173,7 @@
         }
       ]
     ],
-    {
-      "handleId": -14
-    }
+    -14
   ],
   [
     "__CreateElementTemplate",
@@ -211,9 +183,7 @@
       "B"
     ],
     [],
-    {
-      "handleId": -15
-    }
+    -15
   ],
   [
     "__CreateElementTemplate",
@@ -232,9 +202,7 @@
         }
       ]
     ],
-    {
-      "handleId": -16
-    }
+    -16
   ],
   [
     "__CreateElementTemplate",
@@ -244,9 +212,7 @@
       "C"
     ],
     [],
-    {
-      "handleId": -17
-    }
+    -17
   ],
   [
     "__CreateElementTemplate",
@@ -265,9 +231,7 @@
         }
       ]
     ],
-    {
-      "handleId": -18
-    }
+    -18
   ],
   [
     "__CreateElementTemplate",
@@ -470,9 +434,7 @@
         }
       ]
     ],
-    {
-      "handleId": -19
-    }
+    -19
   ],
   [
     "__AppendElement",

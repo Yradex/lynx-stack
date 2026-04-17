@@ -51,10 +51,12 @@ export function applyElementTemplateUpdateCommands(
           bundleUrl,
           normalizeAttributeSlots(attributeSlots),
           resolvedElementSlots.value,
-          normalizeRuntimeOptions({
-            ...(createOptions ?? {}),
-            handleId,
-          }),
+          createOptions
+            ? {
+              ...createOptions,
+              handleId,
+            }
+            : { handleId },
         );
 
         if (nativeRef) {
@@ -203,15 +205,4 @@ function normalizeAttributeSlots(
     return attributeSlots;
   }
   return attributeSlots.map((value) => (value === undefined ? null : value));
-}
-
-function normalizeRuntimeOptions(
-  options: RuntimeOptions | null | undefined,
-): RuntimeOptions | null | undefined {
-  if (options == null) {
-    return options;
-  }
-  const normalizedEntries = Object.entries(options)
-    .filter(([, value]) => value !== undefined);
-  return Object.fromEntries(normalizedEntries) as RuntimeOptions;
 }

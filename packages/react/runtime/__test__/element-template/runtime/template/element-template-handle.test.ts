@@ -58,7 +58,7 @@ describe('ElementTemplateHandle', () => {
       null,
       ['text'],
       null,
-      { handleId: -1 },
+      -1,
     );
     expect(ElementTemplateRegistry.get(-1)).toBe(mockCreatedNativeRef);
   });
@@ -67,8 +67,8 @@ describe('ElementTemplateHandle', () => {
     createElementTemplateWithHandle('_et_first', null, null, null);
     createElementTemplateWithHandle('_et_second', null, null, null);
 
-    expect(mockCreateElementTemplate.mock.calls[0]?.[4]).toEqual({ handleId: -1 });
-    expect(mockCreateElementTemplate.mock.calls[1]?.[4]).toEqual({ handleId: -2 });
+    expect(mockCreateElementTemplate.mock.calls[0]?.[4]).toEqual(-1);
+    expect(mockCreateElementTemplate.mock.calls[1]?.[4]).toEqual(-2);
     expect(ElementTemplateRegistry.get(-1)).toBe(mockCreatedNativeRef);
     expect(ElementTemplateRegistry.get(-2)).toBe(mockCreatedNativeRef);
   });

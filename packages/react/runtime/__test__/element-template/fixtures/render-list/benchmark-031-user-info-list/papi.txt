@@ -7,9 +7,7 @@
       "1"
     ],
     [],
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -19,9 +17,7 @@
       "Ada"
     ],
     [],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -31,9 +27,7 @@
       "1.2 million people are watching"
     ],
     [],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__CreateElementTemplate",
@@ -43,9 +37,7 @@
       "30 M+"
     ],
     [],
-    {
-      "handleId": -4
-    }
+    -4
   ],
   [
     "__CreateElementTemplate",
@@ -99,9 +91,7 @@
         }
       ]
     ],
-    {
-      "handleId": -5
-    }
+    -5
   ],
   [
     "__CreateElementTemplate",
@@ -111,9 +101,7 @@
       "2"
     ],
     [],
-    {
-      "handleId": -6
-    }
+    -6
   ],
   [
     "__CreateElementTemplate",
@@ -123,9 +111,7 @@
       "Linus"
     ],
     [],
-    {
-      "handleId": -7
-    }
+    -7
   ],
   [
     "__CreateElementTemplate",
@@ -135,9 +121,7 @@
       "2.4 million people are watching"
     ],
     [],
-    {
-      "handleId": -8
-    }
+    -8
   ],
   [
     "__CreateElementTemplate",
@@ -147,9 +131,7 @@
       "28 M+"
     ],
     [],
-    {
-      "handleId": -9
-    }
+    -9
   ],
   [
     "__CreateElementTemplate",
@@ -203,9 +185,7 @@
         }
       ]
     ],
-    {
-      "handleId": -10
-    }
+    -10
   ],
   [
     "__CreateElementTemplate",
@@ -215,9 +195,7 @@
       "3"
     ],
     [],
-    {
-      "handleId": -11
-    }
+    -11
   ],
   [
     "__CreateElementTemplate",
@@ -227,9 +205,7 @@
       "Grace"
     ],
     [],
-    {
-      "handleId": -12
-    }
+    -12
   ],
   [
     "__CreateElementTemplate",
@@ -239,9 +215,7 @@
       "3.6 million people are watching"
     ],
     [],
-    {
-      "handleId": -13
-    }
+    -13
   ],
   [
     "__CreateElementTemplate",
@@ -251,9 +225,7 @@
       "45 M+"
     ],
     [],
-    {
-      "handleId": -14
-    }
+    -14
   ],
   [
     "__CreateElementTemplate",
@@ -307,9 +279,7 @@
         }
       ]
     ],
-    {
-      "handleId": -15
-    }
+    -15
   ],
   [
     "__CreateList",

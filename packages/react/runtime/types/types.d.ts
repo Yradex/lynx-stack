@@ -169,7 +169,7 @@ declare global {
     bundleUrl: string | null | undefined,
     attributeSlots: SerializableValue[] | null | undefined,
     elementSlots: ElementRef[][] | null | undefined,
-    options?: RuntimeOptions | undefined | null,
+    options?: RuntimeOptions | number | undefined | null,
   ): ElementRef;
 
   declare function __SetAttributeOfElementTemplate(

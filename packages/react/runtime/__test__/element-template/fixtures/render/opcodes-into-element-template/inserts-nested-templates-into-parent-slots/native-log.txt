@@ -7,9 +7,7 @@ Array [
       "X",
     ],
     Array [],
-    Object {
-      "handleId": -1,
-    },
+    -1,
   ],
   Array [
     "__CreateElementTemplate",
@@ -30,9 +28,7 @@ Array [
         },
       ],
     ],
-    Object {
-      "handleId": -2,
-    },
+    -2,
   ],
   Array [
     "__CreateElementTemplate",
@@ -68,9 +64,7 @@ Array [
         },
       ],
     ],
-    Object {
-      "handleId": -3,
-    },
+    -3,
   ],
   Array [
     "__AppendElement",

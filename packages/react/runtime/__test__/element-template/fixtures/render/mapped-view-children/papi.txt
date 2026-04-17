@@ -7,9 +7,7 @@
       "A"
     ],
     [],
-    {
-      "handleId": -1
-    }
+    -1
   ],
   [
     "__CreateElementTemplate",
@@ -30,9 +28,7 @@
         }
       ]
     ],
-    {
-      "handleId": -2
-    }
+    -2
   ],
   [
     "__CreateElementTemplate",
@@ -42,9 +38,7 @@
       "B"
     ],
     [],
-    {
-      "handleId": -3
-    }
+    -3
   ],
   [
     "__CreateElementTemplate",
@@ -65,9 +59,7 @@
         }
       ]
     ],
-    {
-      "handleId": -4
-    }
+    -4
   ],
   [
     "__CreateElementTemplate",
@@ -77,9 +69,7 @@
       "C"
     ],
     [],
-    {
-      "handleId": -5
-    }
+    -5
   ],
   [
     "__CreateElementTemplate",
@@ -100,9 +90,7 @@
         }
       ]
     ],
-    {
-      "handleId": -6
-    }
+    -6
   ],
   [
     "__CreateElementTemplate",
@@ -206,9 +194,7 @@
         }
       ]
     ],
-    {
-      "handleId": -7
-    }
+    -7
   ],
   [
     "__AppendElement",
